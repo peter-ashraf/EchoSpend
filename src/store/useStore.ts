@@ -44,6 +44,10 @@ interface AppState {
   // Backup
   exportData: () => Promise<string>;
   importData: (jsonData: string) => Promise<boolean>;
+
+  // Offline Voice
+  setOfflineVoiceStatus: (status: 'not-asked' | 'declined' | 'ready') => Promise<void>;
+  removeWhisperCache: () => Promise<void>;
 }
 
 export const useStore = create<AppState>((set, get) => {
@@ -296,6 +300,29 @@ export const useStore = create<AppState>((set, get) => {
         console.error('Import failed', e);
         return false;
       }
-    }
+    },
+
+    setOfflineVoiceStatus: async (status) => {
+      await get().updateSettings({ offlineVoiceStatus: status });
+    },
+
+    removeWhisperCache: async () => {
+      // Clear all browser caches that may contain the Whisper ONNX model files
+      try {
+        const cacheNames = await caches.keys();
+        for (const name of cacheNames) {
+          const cache = await caches.open(name);
+          const keys = await cache.keys();
+          for (const request of keys) {
+            if (request.url.includes('whisper') || request.url.includes('.onnx') || request.url.includes('Xenova')) {
+              await cache.delete(request);
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('Cache deletion failed:', e);
+      }
+      await get().updateSettings({ offlineVoiceStatus: 'not-asked' });
+    },
   };
 });

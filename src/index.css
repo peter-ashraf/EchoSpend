@@ -13,17 +13,93 @@
   --shadow-glass: 0 4px 30px rgba(0, 0, 0, 0.3);
 }
 
+/* ─── Theme Custom Properties ─────────────────────────────── */
+:root {
+  /* Dark (default) */
+  --app-bg: #0a0a0a;
+  --app-surface: #171717;       /* neutral-900 */
+  --app-surface-2: #262626;     /* neutral-800 */
+  --app-border: rgba(255,255,255,0.08);
+  --app-text: #f5f5f5;
+  --app-text-muted: #a3a3a3;    /* neutral-400 */
+  --app-header-bg: rgba(10,10,10,0.85);
+  --app-nav-bg: rgba(10,10,10,0.92);
+  --app-card-bg: rgba(23,23,23,0.7);
+}
+
+[data-theme="light"] {
+  --app-bg: #f5f5f5;
+  --app-surface: #ffffff;
+  --app-surface-2: #e5e5e5;
+  --app-border: rgba(0,0,0,0.1);
+  --app-text: #0a0a0a;
+  --app-text-muted: #525252;    /* neutral-600 */
+  --app-header-bg: rgba(245,245,245,0.90);
+  --app-nav-bg: rgba(245,245,245,0.95);
+  --app-card-bg: rgba(255,255,255,0.9);
+}
+
+/* ─── Global Base ─────────────────────────────────────────── */
 @layer base {
+  html {
+    /* Smooth color transitions when switching themes */
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
   body {
-    background-color: var(--color-background);
-    color: white;
+    background-color: var(--app-bg);
+    color: var(--app-text);
     font-family: 'Inter', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     min-height: 100vh;
-    background-image: radial-gradient(circle at 15% 50%, rgba(139, 92, 246, 0.15), transparent 25%),
-                      radial-gradient(circle at 85% 30%, rgba(59, 130, 246, 0.15), transparent 25%);
-    background-attachment: fixed;
   }
+
+  /* Scoped theme overrides for the root app container */
+  #root {
+    background-color: var(--app-bg);
+    color: var(--app-text);
+    min-height: 100vh;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  /* Light mode: main page backgrounds */
+  [data-theme="light"] .theme-bg {
+    background-color: var(--app-bg) !important;
+  }
+  [data-theme="light"] .theme-surface {
+    background-color: var(--app-surface) !important;
+    border-color: var(--app-border) !important;
+    color: var(--app-text) !important;
+  }
+  [data-theme="light"] .theme-text {
+    color: var(--app-text) !important;
+  }
+  [data-theme="light"] .theme-text-muted {
+    color: var(--app-text-muted) !important;
+  }
+
+  /* Light mode: Tailwind dark neutral overrides for key layers */
+  [data-theme="light"] .bg-neutral-950 { background-color: var(--app-bg) !important; }
+  [data-theme="light"] .bg-neutral-900 { background-color: var(--app-surface) !important; }
+  [data-theme="light"] .bg-neutral-900\/60 { background-color: rgba(255,255,255,0.8) !important; }
+  [data-theme="light"] .bg-neutral-900\/90 { background-color: rgba(255,255,255,0.95) !important; }
+  [data-theme="light"] .bg-neutral-950\/80 { background-color: rgba(245,245,245,0.88) !important; }
+  [data-theme="light"] .bg-neutral-950\/90 { background-color: rgba(245,245,245,0.95) !important; }
+  [data-theme="light"] .bg-neutral-950\/60 { background-color: rgba(245,245,245,0.7) !important; }
+  [data-theme="light"] .bg-neutral-800 { background-color: var(--app-surface-2) !important; }
+  [data-theme="light"] .bg-neutral-800\/40 { background-color: rgba(229,229,229,0.5) !important; }
+  [data-theme="light"] .border-neutral-800 { border-color: var(--app-border) !important; }
+  [data-theme="light"] .border-neutral-800\/60 { border-color: rgba(0,0,0,0.08) !important; }
+  [data-theme="light"] .border-neutral-800\/80 { border-color: rgba(0,0,0,0.1) !important; }
+  [data-theme="light"] .text-white { color: #0a0a0a !important; }
+  [data-theme="light"] .text-neutral-50 { color: #0a0a0a !important; }
+  [data-theme="light"] .text-neutral-300 { color: #404040 !important; }
+  [data-theme="light"] .text-neutral-400 { color: #525252 !important; }
+  [data-theme="light"] .text-neutral-500 { color: #737373 !important; }
+  [data-theme="light"] .divide-neutral-800\/80 > * + * { border-color: rgba(0,0,0,0.08) !important; }
+
+  /* Keep teal accent colours unchanged in light mode */
+  [data-theme="light"] .text-\[\#0a7ea4\] { color: #0a7ea4 !important; }
 }
 
 @layer components {

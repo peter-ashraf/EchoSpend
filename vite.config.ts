@@ -13,7 +13,8 @@ export default defineConfig({
         enabled: true,
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,jpg,svg,ts,tsx}']
+        globPatterns: ['**/*.{js,css,html,ico,png,jpg,svg,ts,tsx,onnx,json}'],
+        maximumFileSizeToCacheInBytes: 100 * 1024 * 1024, // Allow up to 100MB for Whisper model
       },
       manifest: {
         name: 'EchoSpend - Voice Budget & Expense',

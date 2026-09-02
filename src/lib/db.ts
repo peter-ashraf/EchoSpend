@@ -9,6 +9,12 @@ export interface Settings {
   voiceLanguage: 'en-US' | 'ar-EG';
   monthlyBudget: number;
   onboarded: boolean;
+  /** 'not-asked' = first-use prompt not yet shown; 'declined' = user said no; 'ready' = model cached */
+  offlineVoiceStatus: 'not-asked' | 'declined' | 'ready';
+  /** Whether biometric lock is enabled */
+  biometricLock: boolean;
+  /** Stored WebAuthn credential id (base64url) */
+  biometricCredentialId?: string;
 }
 
 export interface Wallet {
@@ -97,7 +103,7 @@ let dbPromise: Promise<IDBPDatabase<EchoSpendDB>>;
 
 export async function getDB() {
   if (!dbPromise) {
-    dbPromise = openDB<EchoSpendDB>('EchoSpendDB', 4, {
+    dbPromise = openDB<EchoSpendDB>('EchoSpendDB', 5, {
       upgrade(db, oldVersion) {
         if (oldVersion < 1) {
           db.createObjectStore('wallets', { keyPath: 'id' });
@@ -119,6 +125,7 @@ export async function getDB() {
             db.createObjectStore('streaks', { keyPath: 'id' });
           }
         }
+        // v5: no new stores, new settings fields patched in seedDatabase()
       },
     });
   }
@@ -138,6 +145,8 @@ export async function seedDatabase() {
       voiceLanguage: 'ar-EG',
       monthlyBudget: 25000,
       onboarded: false,
+      offlineVoiceStatus: 'not-asked',
+      biometricLock: false,
     };
     await db.put('settings', defaultSettings);
   } else {
@@ -154,6 +163,14 @@ export async function seedDatabase() {
       }
       if (!currentSettings.monthlyBudget) {
         currentSettings.monthlyBudget = 25000;
+        updated = true;
+      }
+      if (!currentSettings.offlineVoiceStatus) {
+        currentSettings.offlineVoiceStatus = 'not-asked';
+        updated = true;
+      }
+      if (currentSettings.biometricLock === undefined) {
+        currentSettings.biometricLock = false;
         updated = true;
       }
       if (updated) await db.put('settings', currentSettings);

@@ -1,16 +1,24 @@
 import { useStore } from '../../store/useStore';
 import { getTranslation } from '../../lib/i18n';
-import { Waveform, Moon, Sun, CaretRight, Translate, UserCircle, Trash, Warning, CurrencyDollar } from '@phosphor-icons/react';
-import { useState } from 'react';
+import { Waveform, Moon, Sun, CaretRight, Translate, UserCircle, Trash, Warning, CurrencyDollar, Desktop, WifiSlash, CloudArrowDown, Fingerprint, Check, Lock, X } from '@phosphor-icons/react';
+import { useState, useEffect } from 'react';
 import { CategoryIcon } from '../ui/CategoryIcon';
 import { ActionSheet } from '../ui/ActionSheet';
 import { Modal } from '../ui/Modal';
 import { CategoryForm } from '../forms/CategoryForm';
 import type { Category } from '../../store/useStore';
 import { Plus } from '@phosphor-icons/react';
+import { isBiometricSupported, registerBiometric, clearBiometricCredential } from '../../lib/biometricAuth';
 
-export function SettingsView() {
-  const { settings, categories, updateSettings, initData } = useStore();
+interface SettingsViewProps {
+  onStartWhisperDownload?: () => void;
+  whisperDownloadProgress?: number;
+  whisperDownloadStatus?: string;
+  isWhisperDownloading?: boolean;
+}
+
+export function SettingsView({ onStartWhisperDownload, isWhisperDownloading }: SettingsViewProps) {
+  const { settings, categories, updateSettings, initData, removeWhisperCache } = useStore();
   const [langSheetOpen, setLangSheetOpen] = useState(false);
   const [voiceLangSheetOpen, setVoiceLangSheetOpen] = useState(false);
   const [currencySheetOpen, setCurrencySheetOpen] = useState(false);
@@ -19,6 +27,10 @@ export function SettingsView() {
   const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
   const [newBudget, setNewBudget] = useState('');
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+  const [biometricSupported, setBiometricSupported] = useState<boolean | null>(null);
+  const [biometricLoading, setBiometricLoading] = useState(false);
+  const [biometricError, setBiometricError] = useState<string | null>(null);
+  const [isRemoveWhisperModalOpen, setIsRemoveWhisperModalOpen] = useState(false);
 
   if (!settings) return null;
   const lang = settings.language;
@@ -43,6 +55,35 @@ export function SettingsView() {
     await initData();
     setIsResetModalOpen(false);
     window.location.reload();
+  };
+
+  // Check biometric support on mount
+  useEffect(() => {
+    isBiometricSupported().then(setBiometricSupported);
+  }, []);
+
+  const handleBiometricToggle = async () => {
+    if (!biometricSupported) return;
+    setBiometricLoading(true);
+    setBiometricError(null);
+    try {
+      if (settings?.biometricLock) {
+        // Disable
+        clearBiometricCredential();
+        await updateSettings({ biometricLock: false, biometricCredentialId: undefined });
+      } else {
+        // Enable
+        const credentialId = await registerBiometric();
+        await updateSettings({ biometricLock: true, biometricCredentialId: credentialId });
+      }
+    } catch (err: any) {
+      const msg = err?.name === 'NotAllowedError'
+        ? 'Setup cancelled — try again.'
+        : err?.message || 'Biometric setup failed.';
+      setBiometricError(msg);
+    } finally {
+      setBiometricLoading(false);
+    }
   };
 
   return (
@@ -194,24 +235,156 @@ export function SettingsView() {
             </div>
           </button>
 
-          {/* Dark / Light Mode */}
-          <button 
-            onClick={() => updateSettings({ theme: settings.theme === 'dark' ? 'light' : 'dark' })}
-            className="py-3.5 flex justify-between items-center w-full active:scale-[0.99] transition-all"
-          >
+          {/* Theme Selector: Light / System / Dark */}
+          <div className="py-3.5 flex justify-between items-center w-full">
             <div className="flex items-center gap-3 text-white font-medium text-sm">
-              {settings.theme === 'dark' ? <Moon size={20} className="text-[#0a7ea4]" /> : <Sun size={20} className="text-[#0a7ea4]" />}
-              <span>Dark Theme</span>
+              {settings.theme === 'dark'
+                ? <Moon size={20} className="text-[#0a7ea4]" />
+                : settings.theme === 'light'
+                ? <Sun size={20} className="text-[#0a7ea4]" />
+                : <Desktop size={20} className="text-[#0a7ea4]" />}
+              <div>
+                <p className="text-sm font-bold text-white">Appearance</p>
+                <p className="text-xs text-neutral-400">
+                  {settings.theme === 'system'
+                    ? `System (${window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'})`
+                    : settings.theme === 'dark' ? 'Dark mode' : 'Light mode'}
+                </p>
+              </div>
             </div>
-            <div className={`w-11 h-6 rounded-full transition-colors relative ${settings.theme === 'dark' ? 'bg-[#0a7ea4]' : 'bg-neutral-800'}`}>
-              <div className={`w-5 h-5 rounded-full bg-white absolute top-0.5 transition-transform ${settings.theme === 'dark' ? 'left-5' : 'left-0.5'}`} />
+            <div className="flex items-center gap-1 bg-neutral-950/70 rounded-xl p-1 border border-neutral-800">
+              {(['light', 'system', 'dark'] as const).map((t) => (
+                <button
+                  key={t}
+                  onClick={() => updateSettings({ theme: t })}
+                  className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold capitalize transition-all ${
+                    settings.theme === t
+                      ? 'bg-[#0a7ea4] text-white shadow-sm'
+                      : 'text-neutral-400 hover:text-white'
+                  }`}
+                >
+                  {t === 'light' ? <Sun size={13} weight={settings.theme === t ? 'fill' : 'regular'} /> : null}
+                  {t === 'system' ? <Desktop size={13} weight={settings.theme === t ? 'fill' : 'regular'} /> : null}
+                  {t === 'dark' ? <Moon size={13} weight={settings.theme === t ? 'fill' : 'regular'} /> : null}
+                </button>
+              ))}
             </div>
-          </button>
+          </div>
 
         </div>
       </div>
 
-      {/* Section 3: Danger Zone / Reset */}
+      {/* Section 3: Offline Voice Package */}
+      <div className="space-y-3">
+        <span className="text-xs font-bold uppercase tracking-wider text-neutral-400 px-1">Offline Voice</span>
+        <div className="bg-neutral-900/60 border border-neutral-800/80 rounded-3xl p-5 space-y-4">
+          <div className="flex items-start gap-3">
+            <div className="p-2 rounded-xl bg-[#0a7ea4]/10 text-[#0a7ea4] flex-shrink-0">
+              <WifiSlash size={20} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-white">Offline Voice Package</p>
+              <p className="text-xs text-neutral-400 mt-0.5">
+                {settings.offlineVoiceStatus === 'ready'
+                  ? 'Whisper AI model is downloaded. Mic works offline.'
+                  : settings.offlineVoiceStatus === 'declined'
+                  ? 'Download declined — voice requires internet.'
+                  : 'Not downloaded — voice requires internet.'}
+              </p>
+            </div>
+            {settings.offlineVoiceStatus === 'ready' && (
+              <div className="w-6 h-6 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center flex-shrink-0">
+                <Check size={13} className="text-emerald-400" weight="bold" />
+              </div>
+            )}
+          </div>
+
+          {isWhisperDownloading && (
+            <div className="space-y-1.5">
+              <div className="h-2 bg-neutral-800 rounded-full overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-[#0a7ea4] to-[#2dd4bf] rounded-full animate-pulse" style={{ width: '60%' }} />
+              </div>
+              <p className="text-xs text-neutral-400 text-center">Downloading model...</p>
+            </div>
+          )}
+
+          {settings.offlineVoiceStatus !== 'ready' && !isWhisperDownloading && (
+            <button
+              onClick={onStartWhisperDownload}
+              className="w-full py-3 px-4 rounded-2xl bg-[#0a7ea4]/10 border border-[#0a7ea4]/30 text-[#0a7ea4] hover:bg-[#0a7ea4]/20 flex items-center justify-center gap-2 text-xs font-bold transition-all active:scale-95"
+            >
+              <CloudArrowDown size={16} weight="bold" />
+              Download Offline Package (~40 MB)
+            </button>
+          )}
+
+          {settings.offlineVoiceStatus === 'ready' && (
+            <button
+              onClick={() => setIsRemoveWhisperModalOpen(true)}
+              className="w-full py-3 px-4 rounded-2xl bg-red-500/8 border border-red-500/20 text-red-400 hover:bg-red-500/15 flex items-center justify-center gap-2 text-xs font-bold transition-all active:scale-95"
+            >
+              <X size={14} weight="bold" />
+              Remove Offline Package
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Section 4: Security */}
+      <div className="space-y-3">
+        <span className="text-xs font-bold uppercase tracking-wider text-neutral-400 px-1">Security</span>
+        <div className="bg-neutral-900/60 border border-neutral-800/80 rounded-3xl p-5 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-[#0a7ea4]/10 text-[#0a7ea4]">
+                <Fingerprint size={20} />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-white">Biometric App Lock</p>
+                <p className="text-xs text-neutral-400">
+                  {biometricSupported === false
+                    ? 'Not supported on this device'
+                    : settings.biometricLock
+                    ? 'Locks on every app open'
+                    : 'Face ID / Touch ID / Fingerprint'}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={handleBiometricToggle}
+              disabled={biometricSupported === false || biometricLoading}
+              className={`relative w-12 h-6 rounded-full transition-colors duration-300 disabled:opacity-40 ${
+                settings.biometricLock ? 'bg-[#0a7ea4]' : 'bg-neutral-700'
+              }`}
+            >
+              <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-300 ${
+                settings.biometricLock ? 'translate-x-6' : 'translate-x-0.5'
+              }`} />
+              {biometricLoading && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                </div>
+              )}
+            </button>
+          </div>
+
+          {biometricError && (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-red-500/10 border border-red-500/20">
+              <Warning size={14} className="text-red-400 flex-shrink-0" />
+              <p className="text-[11px] text-red-300">{biometricError}</p>
+            </div>
+          )}
+
+          {settings.biometricLock && (
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-500/8 border border-emerald-500/20">
+              <Lock size={12} className="text-emerald-400" />
+              <p className="text-[11px] text-emerald-300 font-medium">Lock screen active — app requires biometrics to open</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Section 5: Data Management */}
       <div className="space-y-3">
         <span className="text-xs font-bold uppercase tracking-wider text-red-400 px-1">Data Management</span>
 
@@ -345,6 +518,36 @@ export function SettingsView() {
           onSuccess={() => setIsCategoryModalOpen(false)} 
           initialData={editingCategory} 
         />
+      </Modal>
+
+      <Modal isOpen={isRemoveWhisperModalOpen} onClose={() => setIsRemoveWhisperModalOpen(false)} title="Remove Offline Package">
+        <div className="space-y-4">
+          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3">
+            <Warning size={22} className="text-amber-400 flex-shrink-0" weight="fill" />
+            <p className="text-sm text-neutral-300">
+              This will remove the Whisper AI model (~40 MB) from your device. Voice input will require internet again.
+            </p>
+          </div>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => setIsRemoveWhisperModalOpen(false)}
+              className="flex-1 py-3 rounded-xl border border-neutral-800 text-neutral-300 text-sm font-semibold"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={async () => {
+                setIsRemoveWhisperModalOpen(false);
+                await removeWhisperCache();
+              }}
+              className="flex-1 py-3 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-sm font-bold"
+            >
+              Remove Package
+            </button>
+          </div>
+        </div>
       </Modal>
 
     </div>
