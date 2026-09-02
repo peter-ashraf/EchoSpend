@@ -10,15 +10,16 @@ import { SettingsView } from './components/views/SettingsView';
 import { Modal } from './components/ui/Modal';
 import { TransactionForm } from './components/forms/TransactionForm';
 import { SmsImportModal } from './components/modals/SmsImportModal';
+import { VoiceConfirmModal } from './components/modals/VoiceConfirmModal';
 import { VoiceMicButton } from './components/ui/VoiceMicButton';
-import { parseVoiceInput } from './lib/parseVoice';
+import { parseVoiceInput, type ParsedVoiceTransaction } from './lib/parseVoice';
 
 function App() {
   const { initData, isLoading, settings, categories, wallets } = useStore();
   const [activeTab, setActiveTab] = useState<NavTab>('dashboard');
-  const [isTxModalOpen, setIsTxModalOpen] = useState(false);
+  const [isManualTxOpen, setIsManualTxOpen] = useState(false);
   const [isSmsModalOpen, setIsSmsModalOpen] = useState(false);
-  const [initialTxData, setInitialTxData] = useState<any>(undefined);
+  const [voiceParsedData, setVoiceParsedData] = useState<ParsedVoiceTransaction | null>(null);
 
   useEffect(() => {
     initData();
@@ -41,19 +42,17 @@ function App() {
   const handleVoiceTranscript = (text: string) => {
     const defaultWalletId = wallets[0]?.id || '';
     const parsedData = parseVoiceInput(text, categories, wallets, defaultWalletId);
-    setInitialTxData(parsedData);
-    setIsTxModalOpen(true);
+    setVoiceParsedData(parsedData);
   };
 
   const openNewTx = () => {
-    setInitialTxData(undefined);
-    setIsTxModalOpen(true);
+    setIsManualTxOpen(true);
   };
 
   if (isLoading || !settings) {
     return (
       <div className="min-h-screen bg-neutral-950 flex flex-col items-center justify-center space-y-4">
-        <div className="w-12 h-12 rounded-2xl bg-[#0a7ea4] flex items-center justify-center text-white font-black text-xl shadow-lg shadow-[#0a7ea4]/30 animate-pulse">
+        <div className="w-14 h-14 rounded-3xl bg-[#0a7ea4] flex items-center justify-center text-white font-black text-2xl shadow-xl shadow-[#0a7ea4]/30 animate-pulse">
           S
         </div>
         <div className="w-8 h-8 border-3 border-[#0a7ea4]/30 border-t-[#0a7ea4] rounded-full animate-spin" />
@@ -107,22 +106,32 @@ function App() {
       </AppLayout>
 
       {/* Floating Center Voice Button (Say Signature Mic) */}
-      <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40">
+      <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-40">
         <VoiceMicButton onTranscript={handleVoiceTranscript} />
       </div>
 
-      {/* Manual / Voice Transaction Form Modal */}
+      {/* Manual Transaction Modal */}
       <Modal 
-        isOpen={isTxModalOpen} 
-        onClose={() => setIsTxModalOpen(false)}
-        title={initialTxData ? "Confirm Voice Entry" : "Add Transaction"}
+        isOpen={isManualTxOpen} 
+        onClose={() => setIsManualTxOpen(false)}
+        title="Add Transaction"
       >
         <TransactionForm 
-          key={initialTxData ? JSON.stringify(initialTxData) : 'new'}
-          onSuccess={() => setIsTxModalOpen(false)} 
-          initialData={initialTxData} 
+          key="manual-tx"
+          onSuccess={() => setIsManualTxOpen(false)} 
         />
       </Modal>
+
+      {/* Voice Review & Confirmation Modal */}
+      <VoiceConfirmModal
+        isOpen={!!voiceParsedData}
+        onClose={() => setVoiceParsedData(null)}
+        data={voiceParsedData}
+        onConfirm={() => {
+          setVoiceParsedData(null);
+          setActiveTab('dashboard');
+        }}
+      />
 
       {/* Bank SMS Auto-Import Modal */}
       <SmsImportModal

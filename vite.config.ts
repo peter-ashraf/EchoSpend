@@ -2,6 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
+// https://vitejs.dev/config/
 export default defineConfig({
   base: './',
   plugins: [
@@ -9,29 +10,37 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       devOptions: {
-        enabled: true, // Allow testing PWA in dev mode
+        enabled: true,
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,ts,tsx}']
+        globPatterns: ['**/*.{js,css,html,ico,png,jpg,svg,ts,tsx}']
       },
       manifest: {
-        name: 'EchoSpend',
-        short_name: 'EchoSpend',
-        description: 'Voice-First Personal Finance Tracker',
-        theme_color: '#0B0D17',
-        background_color: '#0B0D17',
+        name: 'Say - Hands free budget',
+        short_name: 'Say',
+        description: 'Effortless Expense Tracking with Your Voice and Smart Insights',
+        theme_color: '#0a0a0a',
+        background_color: '#0a0a0a',
         display: 'standalone',
+        orientation: 'portrait',
         icons: [
-          // Fallback minimal icons to prevent errors
           {
-            src: 'https://via.placeholder.com/192x192.png?text=ES',
+            src: './icon-192.png',
             sizes: '192x192',
-            type: 'image/png'
+            type: 'image/png',
+            purpose: 'any maskable'
           },
           {
-            src: 'https://via.placeholder.com/512x512.png?text=ES',
+            src: './icon-512.png',
             sizes: '512x512',
-            type: 'image/png'
+            type: 'image/png',
+            purpose: 'any maskable'
+          },
+          {
+            src: './apple-touch-icon.png',
+            sizes: '180x180',
+            type: 'image/png',
+            purpose: 'any'
           }
         ]
       }

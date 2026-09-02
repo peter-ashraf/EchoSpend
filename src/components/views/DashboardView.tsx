@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useStore } from '../../store/useStore';
+import type { Transaction } from '../../lib/db';
+import { EditTransactionModal } from '../modals/EditTransactionModal';
 import { CaretLeft, CaretRight, Sparkle, Fire, CreditCard, ArrowRight, Microphone, ChatTeardropText, Check } from '@phosphor-icons/react';
 
 interface DashboardViewProps {
@@ -16,6 +18,7 @@ const MONTH_NAMES = [
 export function DashboardView({ onNavigateToCards }: DashboardViewProps) {
   const { settings, wallets, transactions, categories, streak, selectedMonth, setSelectedMonth } = useStore();
   const [filterSource, setFilterSource] = useState<'all' | 'voice' | 'sms'>('all');
+  const [editingTx, setEditingTx] = useState<Transaction | null>(null);
 
   const currencySymbol = settings?.currency || 'EGP';
   const monthlyBudget = settings?.monthlyBudget || 25000;
@@ -82,7 +85,7 @@ export function DashboardView({ onNavigateToCards }: DashboardViewProps) {
   }, [monthTransactions, filterSource]);
 
   return (
-    <div className="space-y-6 pb-24 max-w-lg mx-auto">
+    <div className="space-y-6 pb-28 max-w-lg mx-auto">
       
       {/* 1. Month Selector Header (Say style) */}
       <div className="flex items-center justify-between px-2">
@@ -159,7 +162,7 @@ export function DashboardView({ onNavigateToCards }: DashboardViewProps) {
         </div>
       </div>
 
-      {/* 3. Habit Tracking Streak Pill (Say Feature) */}
+      {/* 3. Habit Tracking Streak Pill */}
       <div className="p-4 rounded-3xl bg-neutral-900/60 border border-neutral-800/80 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
@@ -270,15 +273,16 @@ export function DashboardView({ onNavigateToCards }: DashboardViewProps) {
               <p className="text-xs text-neutral-600">Tap the mic below or paste a bank SMS to log</p>
             </div>
           ) : (
-            displayTransactions.slice(0, 10).map(tx => {
+            displayTransactions.slice(0, 15).map(tx => {
               const category = categories.find(c => c.id === tx.categoryId);
               const wallet = wallets.find(w => w.id === tx.walletId);
               const isIncome = tx.type === 'income';
 
               return (
-                <div
+                <button
                   key={tx.id}
-                  className="p-4 flex items-center justify-between hover:bg-neutral-800/40 transition-colors"
+                  onClick={() => setEditingTx(tx)}
+                  className="w-full p-4 flex items-center justify-between hover:bg-neutral-800/40 active:bg-neutral-800/60 transition-colors text-left"
                 >
                   <div className="flex items-center gap-3">
                     <div
@@ -323,12 +327,19 @@ export function DashboardView({ onNavigateToCards }: DashboardViewProps) {
                       {new Date(tx.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>
-                </div>
+                </button>
               );
             })
           )}
         </div>
       </div>
+
+      {/* Edit / Delete Transaction Modal */}
+      <EditTransactionModal
+        isOpen={!!editingTx}
+        onClose={() => setEditingTx(null)}
+        transaction={editingTx}
+      />
     </div>
   );
 }
