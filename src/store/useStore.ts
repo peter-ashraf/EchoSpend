@@ -73,10 +73,10 @@ export const useStore = create<AppState>((set, get) => {
       const subscriptions = await db.getAll('subscriptions');
       const streak = await db.get('streaks', 'main-streak') || {
         id: 'main-streak',
-        currentStreak: 5,
-        bestStreak: 14,
-        lastActiveDate: new Date().toISOString().split('T')[0],
-        history: [new Date().toISOString().split('T')[0]]
+        currentStreak: 0,
+        bestStreak: 0,
+        lastActiveDate: '',
+        history: []
       };
       
       // Sort transactions newest first

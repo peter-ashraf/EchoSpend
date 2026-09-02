@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { Fingerprint, Lock, Warning, ArrowClockwise } from '@phosphor-icons/react';
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { authenticateWithBiometric } from '../../lib/biometricAuth';
 import { useStore } from '../../store/useStore';
 
@@ -13,7 +13,7 @@ export function BiometricLockScreen({ onUnlocked }: BiometricLockScreenProps) {
   const [status, setStatus] = useState<'idle' | 'authenticating' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
 
-  const handleUnlock = async () => {
+  const handleUnlock = useCallback(async () => {
     if (!settings?.biometricCredentialId) return;
     setStatus('authenticating');
     setErrorMsg('');
@@ -33,7 +33,11 @@ export function BiometricLockScreen({ onUnlocked }: BiometricLockScreenProps) {
       setErrorMsg(msg);
       setStatus('error');
     }
-  };
+  }, [settings?.biometricCredentialId, onUnlocked]);
+
+  useEffect(() => {
+    handleUnlock();
+  }, [handleUnlock]);
 
   return (
     <AnimatePresence>

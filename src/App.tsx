@@ -71,9 +71,11 @@ function App() {
     }
   }, [settings?.theme]);
 
-  // ── Whisper: mark as ready if already cached ──────────────────────────
+  // ── First-run prompt for offline voice package ────────────────────────
   useEffect(() => {
-    if (settings?.offlineVoiceStatus === 'ready') {
+    if (settings && settings.offlineVoiceStatus === 'not-asked') {
+      setShowOfflineConsent(true);
+    } else if (settings?.offlineVoiceStatus === 'ready') {
       setWhisperStatus('ready');
       whisperReadyRef.current = true;
     }

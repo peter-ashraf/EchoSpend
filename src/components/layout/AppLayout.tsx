@@ -24,7 +24,7 @@ export function AppLayout({ children, activeTab, onTabChange, onAddTransaction, 
     <div className={`min-h-screen bg-neutral-950 text-neutral-50 flex flex-col ${lang === 'ar' ? 'font-arabic' : 'font-sans'}`}>
       
       {/* Top Header (Say Brand) */}
-      <header className="flex items-center justify-between px-5 py-4 bg-neutral-950/80 backdrop-blur-xl sticky top-0 z-30 border-b border-neutral-800/60 max-w-lg mx-auto w-full">
+      <header className="flex items-center justify-between px-5 pb-4 pt-safe-top bg-neutral-950/80 backdrop-blur-xl sticky top-0 z-30 border-b border-neutral-800/60 max-w-lg mx-auto w-full">
         {/* Brand */}
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#0a7ea4] to-[#2dd4bf] flex items-center justify-center text-neutral-950 font-black text-sm shadow-md shadow-[#0a7ea4]/30">

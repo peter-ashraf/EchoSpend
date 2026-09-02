@@ -177,34 +177,58 @@ export async function seedDatabase() {
     }
   }
 
+  // Purge legacy mock data if present in IndexedDB
+  const existingTxs = await db.getAll('transactions');
+  for (const tx of existingTxs) {
+    if (['tx-1', 'tx-2', 'tx-3', 'tx-4'].includes(tx.id)) {
+      await db.delete('transactions', tx.id);
+    }
+  }
+
+  const existingSubs = await db.getAll('subscriptions');
+  for (const sub of existingSubs) {
+    if (['sub-1', 'sub-2', 'sub-3', 'sub-4'].includes(sub.id)) {
+      await db.delete('subscriptions', sub.id);
+    }
+  }
+
+  const existingWallets = await db.getAll('wallets');
+  for (const w of existingWallets) {
+    if (w.id === 'w-2' || w.id === 'w-3') {
+      await db.delete('wallets', w.id);
+    } else if (w.id === 'w-1' && (w.name === 'Chase Checking' || w.balance === 12974.64)) {
+      await db.put('wallets', {
+        id: 'w-1',
+        name: 'Main Wallet',
+        type: 'checking',
+        balance: 0,
+        color: '#0a7ea4',
+        institution: 'Bank / Cash'
+      });
+    }
+  }
+
+  const existingStreak = await db.get('streaks', 'main-streak');
+  if (existingStreak && existingStreak.bestStreak === 14 && existingStreak.currentStreak === 5) {
+    await db.put('streaks', {
+      id: 'main-streak',
+      currentStreak: 0,
+      bestStreak: 0,
+      lastActiveDate: '',
+      history: []
+    });
+  }
+
   const walletsCount = await db.count('wallets');
   if (walletsCount === 0) {
     const defaultWallets: Wallet[] = [
       {
         id: 'w-1',
-        name: 'Chase Checking',
+        name: 'Main Wallet',
         type: 'checking',
-        balance: 12974.64,
+        balance: 0,
         color: '#0a7ea4',
-        last4: '4521',
-        institution: 'Chase Bank'
-      },
-      {
-        id: 'w-2',
-        name: 'Amex Gold',
-        type: 'credit',
-        balance: 5250.00,
-        color: '#eab308',
-        last4: '8834',
-        institution: 'American Express'
-      },
-      {
-        id: 'w-3',
-        name: 'Cash Wallet',
-        type: 'cash',
-        balance: 1000.00,
-        color: '#10b981',
-        institution: 'Cash'
+        institution: 'Bank / Cash'
       }
     ];
     for (const w of defaultWallets) {
@@ -229,155 +253,16 @@ export async function seedDatabase() {
     }
   }
 
-  const subscriptionsCount = await db.count('subscriptions');
-  if (subscriptionsCount === 0) {
-    // Generate dates relative to current date
-    const today = new Date();
-    const tomorrow = new Date(today);
-    tomorrow.setDate(today.getDate() + 1);
-    
-    const in5Days = new Date(today);
-    in5Days.setDate(today.getDate() + 5);
-
-    const in12Days = new Date(today);
-    in12Days.setDate(today.getDate() + 12);
-
-    const defaultSubs: Subscription[] = [
-      {
-        id: 'sub-1',
-        name: 'Netflix',
-        amount: 320,
-        currency: 'EGP',
-        billingCycle: 'monthly',
-        nextBillingDate: tomorrow.toISOString().split('T')[0],
-        categoryId: 'cat-5',
-        walletId: 'w-1',
-        iconName: 'Television',
-        brandColor: '#E50914',
-        active: true,
-        notes: 'Premium 4K plan'
-      },
-      {
-        id: 'sub-2',
-        name: 'Spotify',
-        amount: 89.99,
-        currency: 'EGP',
-        billingCycle: 'monthly',
-        nextBillingDate: in5Days.toISOString().split('T')[0],
-        categoryId: 'cat-5',
-        walletId: 'w-1',
-        iconName: 'Headphones',
-        brandColor: '#1DB954',
-        active: true,
-        notes: 'Individual Premium'
-      },
-      {
-        id: 'sub-3',
-        name: 'iCloud+ 200GB',
-        amount: 99.99,
-        currency: 'EGP',
-        billingCycle: 'monthly',
-        nextBillingDate: in12Days.toISOString().split('T')[0],
-        categoryId: 'cat-4',
-        walletId: 'w-1',
-        iconName: 'Cloud',
-        brandColor: '#007AFF',
-        active: true,
-        notes: 'Family storage'
-      },
-      {
-        id: 'sub-4',
-        name: 'ChatGPT Plus',
-        amount: 1000,
-        currency: 'EGP',
-        billingCycle: 'monthly',
-        nextBillingDate: in5Days.toISOString().split('T')[0],
-        categoryId: 'cat-4',
-        walletId: 'w-2',
-        iconName: 'Sparkle',
-        brandColor: '#10A37F',
-        active: true,
-        notes: 'AI Pro'
-      }
-    ];
-    for (const sub of defaultSubs) {
-      await db.put('subscriptions', sub);
-    }
-  }
-
   // Initialize Streaks
   const streaksCount = await db.count('streaks');
   if (streaksCount === 0) {
-    const todayStr = new Date().toISOString().split('T')[0];
     const initialStreak: HabitStreak = {
       id: 'main-streak',
-      currentStreak: 5,
-      bestStreak: 14,
-      lastActiveDate: todayStr,
-      history: [todayStr]
+      currentStreak: 0,
+      bestStreak: 0,
+      lastActiveDate: '',
+      history: []
     };
     await db.put('streaks', initialStreak);
-  }
-
-  // Seed sample recent transactions matching Say app if empty
-  const txCount = await db.count('transactions');
-  if (txCount === 0) {
-    const today = new Date();
-    const d = (offset: number) => {
-      const dt = new Date(today);
-      dt.setDate(today.getDate() - offset);
-      return dt.toISOString();
-    };
-
-    const sampleTxs: Transaction[] = [
-      {
-        id: 'tx-1',
-        walletId: 'w-1',
-        categoryId: 'cat-1',
-        amount: 298.68,
-        merchant: 'COPA ACAI LEVEN SQUARE',
-        date: d(0),
-        note: 'Acai bowl & smoothie',
-        type: 'expense',
-        source: 'voice'
-      },
-      {
-        id: 'tx-2',
-        walletId: 'w-1',
-        categoryId: 'cat-7',
-        amount: 25000.00,
-        merchant: 'COMPANY PAYROLL',
-        date: d(2),
-        note: 'Monthly salary deposit',
-        type: 'income',
-        source: 'manual'
-      },
-      {
-        id: 'tx-3',
-        walletId: 'w-2',
-        categoryId: 'cat-3',
-        amount: 836.30,
-        merchant: 'RETAIL IN RES',
-        date: d(3),
-        note: 'Clothing & gifts',
-        type: 'expense',
-        source: 'sms'
-      },
-      {
-        id: 'tx-4',
-        walletId: 'w-1',
-        categoryId: 'cat-2',
-        amount: 145.00,
-        merchant: 'UBER RIDE',
-        date: d(4),
-        note: 'Downtown trip',
-        type: 'expense',
-        source: 'voice'
-      }
-    ];
-
-    for (const tx of sampleTxs) {
-      await db.put('transactions', tx);
-    }
   }
 }
