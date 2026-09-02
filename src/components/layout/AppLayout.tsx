@@ -27,12 +27,12 @@ export function AppLayout({ children, activeTab, onTabChange, onAddTransaction, 
       <header className="flex items-center justify-between px-5 py-4 bg-neutral-950/80 backdrop-blur-xl sticky top-0 z-30 border-b border-neutral-800/60 max-w-lg mx-auto w-full">
         {/* Brand */}
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-[#0a7ea4] flex items-center justify-center text-white font-bold text-sm shadow-md shadow-[#0a7ea4]/30">
-            S
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#0a7ea4] to-[#2dd4bf] flex items-center justify-center text-neutral-950 font-black text-sm shadow-md shadow-[#0a7ea4]/30">
+            E
           </div>
           <div>
-            <h1 className="text-base font-extrabold tracking-tight text-white leading-tight">Say</h1>
-            <p className="text-[10px] text-neutral-400 font-medium">Hands-free budget</p>
+            <h1 className="text-base font-extrabold tracking-tight text-white leading-tight">EchoSpend</h1>
+            <p className="text-[10px] text-neutral-400 font-medium">Voice & Smart Budget</p>
           </div>
         </div>
 

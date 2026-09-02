@@ -16,9 +16,9 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,png,jpg,svg,ts,tsx}']
       },
       manifest: {
-        name: 'Say - Hands free budget',
-        short_name: 'Say',
-        description: 'Effortless Expense Tracking with Your Voice and Smart Insights',
+        name: 'EchoSpend - Voice Budget & Expense',
+        short_name: 'EchoSpend',
+        description: 'Effortless Voice-First Expense Tracking & Smart Budget Insights',
         theme_color: '#0a0a0a',
         background_color: '#0a0a0a',
         display: 'standalone',

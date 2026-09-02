@@ -5,7 +5,7 @@ import { Modal } from '../ui/Modal';
 import { Plus, CreditCard, Trash, Check } from '@phosphor-icons/react';
 
 const CARD_COLORS = [
-  { name: 'Teal (Say)', color: '#0a7ea4' },
+  { name: 'Teal (EchoSpend)', color: '#0a7ea4' },
   { name: 'Midnight', color: '#1e293b' },
   { name: 'Gold / Amex', color: '#d97706' },
   { name: 'Emerald', color: '#059669' },
