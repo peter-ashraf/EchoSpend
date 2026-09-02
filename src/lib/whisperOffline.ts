@@ -93,7 +93,7 @@ export async function transcribeBlob(opts: {
     const arrayBuffer = await opts.blob.arrayBuffer();
     const audioCtx = new AudioContext({ sampleRate: 16000 });
     const decoded = await audioCtx.decodeAudioData(arrayBuffer);
-    audioCtx.close();
+    await audioCtx.close();
 
     // Convert to mono Float32Array at 16kHz (Whisper requirement)
     const channelData = decoded.getChannelData(0);
@@ -101,14 +101,17 @@ export async function transcribeBlob(opts: {
     audioData.set(channelData);
 
     const w = worker;
-    w.onmessage = (event: MessageEvent) => {
+    const handleMessage = (event: MessageEvent) => {
       const msg = event.data;
       if (msg.type === 'result') {
+        w.removeEventListener('message', handleMessage);
         opts.onResult(msg.text);
       } else if (msg.type === 'error') {
+        w.removeEventListener('message', handleMessage);
         opts.onError(msg.message);
       }
     };
+    w.addEventListener('message', handleMessage);
 
     w.postMessage({ type: 'transcribe', audioData, language: opts.language }, [audioData.buffer]);
   } catch (err: any) {
@@ -125,11 +128,13 @@ export function startRecording(opts: {
   onError: (msg: string) => void;
 }): { stop: () => void } {
   let mediaRecorder: MediaRecorder | null = null;
+  let mediaStream: MediaStream | null = null;
   const chunks: Blob[] = [];
 
   navigator.mediaDevices
     .getUserMedia({ audio: true, video: false })
     .then(stream => {
+      mediaStream = stream;
       // Prefer webm/opus for best browser support
       const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
         ? 'audio/webm;codecs=opus'
@@ -151,7 +156,9 @@ export function startRecording(opts: {
   return {
     stop: () => {
       if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-        mediaRecorder.stop();
+        try { mediaRecorder.stop(); } catch (_) {}
+      } else if (mediaStream) {
+        mediaStream.getTracks().forEach(t => t.stop());
       }
     },
   };

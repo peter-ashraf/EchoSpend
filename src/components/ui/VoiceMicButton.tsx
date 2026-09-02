@@ -61,23 +61,36 @@ export function VoiceMicButton({
   useEffect(() => {
     if (isWhisperTranscribing) {
       setIsProcessing(true);
-    } else if (!isListening) {
+    } else {
       setIsProcessing(false);
     }
-  }, [isWhisperTranscribing, isListening]);
+  }, [isWhisperTranscribing]);
 
-  // ── Cleanup a Web Speech API session ────────────────────────
-  const cleanupRecognition = useCallback(() => {
-    if (timeoutRef.current) { clearTimeout(timeoutRef.current); timeoutRef.current = null; }
+  // ── Cleanup a Web Speech API session safely ────────────────
+  const stopAndCleanupRecognition = useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
     const rec = recognitionRef.current;
-    recognitionRef.current = null;
-    if (rec) { try { rec.abort(); } catch (_) { /* ignore */ } }
+    if (rec) {
+      rec.onstart = null;
+      rec.onresult = null;
+      rec.onerror = null;
+      rec.onend = null;
+      try {
+        rec.stop();
+      } catch (_) {
+        try { rec.abort(); } catch (_) { /* ignore */ }
+      }
+      recognitionRef.current = null;
+    }
     setIsListening(false);
   }, []);
 
   // ── Handle captured transcript ───────────────────────────────
   const handleCapturedText = useCallback((text: string) => {
-    cleanupRecognition();
+    stopAndCleanupRecognition();
     if (!text || text.trim().length === 0) {
       setErrorMessage('No voice detected. Please try again.');
       setTimeout(() => setErrorMessage(null), 3000);
@@ -85,11 +98,11 @@ export function VoiceMicButton({
     }
     setIsProcessing(true);
     if (onParsingStart) onParsingStart();
+    onTranscript(text.trim());
     setTimeout(() => {
       setIsProcessing(false);
-      onTranscript(text.trim());
     }, 450);
-  }, [cleanupRecognition, onParsingStart, onTranscript]);
+  }, [stopAndCleanupRecognition, onParsingStart, onTranscript]);
 
   // ── Offline recording (MediaRecorder → Whisper) ──────────────
   const startOfflineRecording = useCallback(() => {
@@ -144,7 +157,7 @@ export function VoiceMicButton({
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) { onRequestKeyboard?.(false); return; }
 
-    cleanupRecognition();
+    stopAndCleanupRecognition();
     const currentSessionId = ++sessionIdRef.current;
     let didGetResult = false;
 
@@ -163,11 +176,22 @@ export function VoiceMicButton({
         if (sessionIdRef.current !== currentSessionId) return;
         if (event.results?.[0]?.[0]) {
           didGetResult = true;
-          handleCapturedText(event.results[0][0].transcript);
+          const transcript = event.results[0][0].transcript;
+          recognition.onstart = null;
+          recognition.onresult = null;
+          recognition.onerror = null;
+          recognition.onend = null;
+          try { recognition.stop(); } catch (_) {}
+          recognitionRef.current = null;
+          handleCapturedText(transcript);
         }
       };
       recognition.onerror = (event: any) => {
         if (sessionIdRef.current !== currentSessionId) return;
+        if (event.error === 'aborted') {
+          setIsListening(false);
+          return;
+        }
         if (event.error === 'not-allowed') {
           setErrorMessage('Microphone access denied');
           setTimeout(() => { setErrorMessage(null); onRequestKeyboard?.(false); }, 1500);
@@ -189,30 +213,31 @@ export function VoiceMicButton({
         if (sessionIdRef.current !== currentSessionId) return;
         if (timeoutRef.current) { clearTimeout(timeoutRef.current); timeoutRef.current = null; }
         recognitionRef.current = null;
-        if (!didGetResult) setIsListening(false);
+        setIsListening(false);
       };
 
       recognitionRef.current = recognition;
       recognition.start();
       timeoutRef.current = setTimeout(() => {
         if (sessionIdRef.current !== currentSessionId) return;
-        if (!didGetResult) { try { recognition.stop(); } catch (_) { /* ignore */ } }
+        if (!didGetResult && recognitionRef.current === recognition) {
+          try { recognition.stop(); } catch (_) { /* ignore */ }
+        }
       }, 10000);
     } catch (e) {
       setIsListening(false);
+      stopAndCleanupRecognition();
       onRequestKeyboard?.(false);
     }
-  }, [voiceLang, cleanupRecognition, handleCapturedText, onRequestKeyboard, onRequestOfflineConsent, offlineVoiceStatus, startOfflineRecording]);
+  }, [voiceLang, stopAndCleanupRecognition, handleCapturedText, onRequestKeyboard, onRequestOfflineConsent, offlineVoiceStatus, startOfflineRecording]);
 
   const stopListening = useCallback(() => {
     if (isOfflineRecording) {
       stopOfflineRecording();
-    } else if (recognitionRef.current) {
-      try { recognitionRef.current.stop(); } catch (_) { cleanupRecognition(); }
     } else {
-      cleanupRecognition();
+      stopAndCleanupRecognition();
     }
-  }, [isOfflineRecording, stopOfflineRecording, cleanupRecognition]);
+  }, [isOfflineRecording, stopOfflineRecording, stopAndCleanupRecognition]);
 
   const toggleListening = () => {
     if (isListening) stopListening();
