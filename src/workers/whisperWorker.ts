@@ -41,7 +41,7 @@ async function loadModel() {
 
       transcriber = await pipeline(
         'automatic-speech-recognition',
-        'Xenova/whisper-tiny',
+        'Xenova/whisper-base',
         {
           progress_callback: (progress: any) => {
             if (progress.status === 'downloading' || progress.status === 'progress') {
@@ -87,7 +87,7 @@ async function transcribeAudio(audioData: Float32Array, language: string) {
     const output = await (transcriber as any)(audioData, {
       language: lang,
       task: 'transcribe',
-      chunk_length_s: 30,
+      return_timestamps: false,
     });
 
     const text: string = Array.isArray(output)

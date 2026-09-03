@@ -44,6 +44,7 @@ export function VoiceMicButton({
   const sessionIdRef = useRef<number>(0);
   const recognitionRef = useRef<any>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const capturedTranscriptRef = useRef<string>('');
 
   // ── Online / Offline detection ──────────────────────────────
   useEffect(() => {
@@ -90,7 +91,6 @@ export function VoiceMicButton({
 
   // ── Handle captured transcript ───────────────────────────────
   const handleCapturedText = useCallback((text: string) => {
-    stopAndCleanupRecognition();
     if (!text || text.trim().length === 0) {
       setErrorMessage('No voice detected. Please try again.');
       setTimeout(() => setErrorMessage(null), 3000);
@@ -102,7 +102,7 @@ export function VoiceMicButton({
     setTimeout(() => {
       setIsProcessing(false);
     }, 450);
-  }, [stopAndCleanupRecognition, onParsingStart, onTranscript]);
+  }, [onParsingStart, onTranscript]);
 
   // ── Offline recording (MediaRecorder → Whisper) ──────────────
   const startOfflineRecording = useCallback(() => {
@@ -159,7 +159,7 @@ export function VoiceMicButton({
 
     stopAndCleanupRecognition();
     const currentSessionId = ++sessionIdRef.current;
-    let didGetResult = false;
+    capturedTranscriptRef.current = '';
 
     try {
       const recognition = new SpeechRecognition();
@@ -172,55 +172,56 @@ export function VoiceMicButton({
         if (sessionIdRef.current !== currentSessionId) return;
         setIsListening(true);
       };
+
       recognition.onresult = (event: any) => {
         if (sessionIdRef.current !== currentSessionId) return;
-        if (event.results?.[0]?.[0]) {
-          didGetResult = true;
-          const transcript = event.results[0][0].transcript;
-          recognition.onstart = null;
-          recognition.onresult = null;
-          recognition.onerror = null;
-          recognition.onend = null;
-          try { recognition.stop(); } catch (_) {}
-          recognitionRef.current = null;
-          handleCapturedText(transcript);
+        if (event.results?.[0]?.[0]?.transcript) {
+          capturedTranscriptRef.current = event.results[0][0].transcript;
         }
       };
+
       recognition.onerror = (event: any) => {
         if (sessionIdRef.current !== currentSessionId) return;
-        if (event.error === 'aborted') {
-          setIsListening(false);
-          return;
+        if (event.error !== 'aborted') {
+          if (event.error === 'not-allowed') {
+            setErrorMessage('Microphone access denied');
+            setTimeout(() => { setErrorMessage(null); onRequestKeyboard?.(false); }, 1500);
+          } else if (event.error === 'no-speech') {
+            setErrorMessage('No speech heard — try again');
+            setTimeout(() => setErrorMessage(null), 3000);
+          } else if (event.error === 'network') {
+            setErrorMessage('Network error — use keyboard ⌨');
+            setTimeout(() => { setErrorMessage(null); onRequestKeyboard?.(true); }, 2000);
+          } else {
+            setErrorMessage('Voice failed — tap to retry');
+            setTimeout(() => setErrorMessage(null), 3500);
+          }
         }
-        if (event.error === 'not-allowed') {
-          setErrorMessage('Microphone access denied');
-          setTimeout(() => { setErrorMessage(null); onRequestKeyboard?.(false); }, 1500);
-        } else if (event.error === 'no-speech') {
-          setErrorMessage('No speech heard — try again');
-          setTimeout(() => setErrorMessage(null), 3000);
-        } else if (event.error === 'network') {
-          setErrorMessage('Network error — use keyboard ⌨');
-          setTimeout(() => { setErrorMessage(null); onRequestKeyboard?.(true); }, 2000);
-        } else {
-          setErrorMessage('Voice failed — tap to retry');
-          setTimeout(() => setErrorMessage(null), 3500);
-        }
-        if (timeoutRef.current) { clearTimeout(timeoutRef.current); timeoutRef.current = null; }
-        recognitionRef.current = null;
-        setIsListening(false);
-      };
-      recognition.onend = () => {
-        if (sessionIdRef.current !== currentSessionId) return;
         if (timeoutRef.current) { clearTimeout(timeoutRef.current); timeoutRef.current = null; }
         recognitionRef.current = null;
         setIsListening(false);
       };
 
+      recognition.onend = () => {
+        if (sessionIdRef.current !== currentSessionId) return;
+        if (timeoutRef.current) { clearTimeout(timeoutRef.current); timeoutRef.current = null; }
+        recognitionRef.current = null;
+        setIsListening(false);
+
+        // Deliver captured text if available
+        const text = capturedTranscriptRef.current;
+        capturedTranscriptRef.current = '';
+        if (text && text.trim().length > 0) {
+          handleCapturedText(text.trim());
+        }
+      };
+
       recognitionRef.current = recognition;
       recognition.start();
+
       timeoutRef.current = setTimeout(() => {
         if (sessionIdRef.current !== currentSessionId) return;
-        if (!didGetResult && recognitionRef.current === recognition) {
+        if (recognitionRef.current === recognition) {
           try { recognition.stop(); } catch (_) { /* ignore */ }
         }
       }, 10000);
