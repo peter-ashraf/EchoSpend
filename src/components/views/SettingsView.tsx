@@ -1,6 +1,6 @@
 import { useStore } from '../../store/useStore';
 import { getTranslation } from '../../lib/i18n';
-import { Waveform, Moon, Sun, CaretRight, Translate, UserCircle, Trash, Warning, CurrencyDollar, Desktop, WifiSlash, CloudArrowDown, Fingerprint, Check, Lock, X, ArrowsClockwise, RocketLaunch, Sparkle } from '@phosphor-icons/react';
+import { Waveform, Moon, Sun, CaretRight, Translate, UserCircle, Trash, Warning, CurrencyDollar, Desktop, WifiSlash, CloudArrowDown, Fingerprint, Check, Lock, X, ArrowsClockwise, RocketLaunch, Sparkle, EyeSlash } from '@phosphor-icons/react';
 import { useState, useEffect } from 'react';
 import { CategoryIcon } from '../ui/CategoryIcon';
 import { ActionSheet } from '../ui/ActionSheet';
@@ -355,11 +355,63 @@ export function SettingsView({ onStartWhisperDownload, isWhisperDownloading }: S
         </div>
       </div>
 
-      {/* Section 4: Security */}
+      {/* Section 4: Security & Privacy */}
       <div className="space-y-3">
-        <span className="text-xs font-bold uppercase tracking-wider text-neutral-400 px-1">Security</span>
-        <div className="bg-neutral-900/60 border border-neutral-800/80 rounded-3xl p-5 space-y-3">
+        <span className="text-xs font-bold uppercase tracking-wider text-neutral-400 px-1">Security & Privacy</span>
+        <div className="bg-neutral-900/60 border border-neutral-800/80 rounded-3xl p-5 space-y-4">
+          
+          {/* 1. Thndr-Style Privacy Mode */}
           <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400">
+                <EyeSlash size={20} />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-white">Thndr-Style Privacy Mode</p>
+                <p className="text-xs text-neutral-400">
+                  Conceal financial numbers into asterisks (••••••••)
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => updateSettings({ hideBalance: !settings.hideBalance })}
+              className={`relative w-12 h-6 rounded-full transition-colors duration-300 ${
+                settings.hideBalance ? 'bg-amber-500' : 'bg-neutral-700'
+              }`}
+            >
+              <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-300 ${
+                settings.hideBalance ? 'translate-x-6' : 'translate-x-0.5'
+              }`} />
+            </button>
+          </div>
+
+          {/* 2. AES-256 Backup Encryption */}
+          <div className="flex items-center justify-between pt-3 border-t border-neutral-800/60">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400">
+                <Lock size={20} />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-white">256-Bit AES Backup Encryption</p>
+                <p className="text-xs text-neutral-400">
+                  Encrypt JSON backups using Web Crypto AES-GCM
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => updateSettings({ encryptBackups: !settings.encryptBackups })}
+              className={`relative w-12 h-6 rounded-full transition-colors duration-300 ${
+                settings.encryptBackups ? 'bg-emerald-500' : 'bg-neutral-700'
+              }`}
+            >
+              <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-300 ${
+                settings.encryptBackups ? 'translate-x-6' : 'translate-x-0.5'
+              }`} />
+            </button>
+          </div>
+
+          {/* 3. Biometric App Lock */}
+          <div className="flex items-center justify-between pt-3 border-t border-neutral-800/60">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-xl bg-[#0a7ea4]/10 text-[#0a7ea4]">
                 <Fingerprint size={20} />

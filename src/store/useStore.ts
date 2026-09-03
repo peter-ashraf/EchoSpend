@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { getDB, seedDatabase } from '../lib/db';
 import type { Wallet, Transaction, Settings, Category as DbCategory, Subscription, HabitStreak } from '../lib/db';
+import { encryptData, decryptData, type EncryptedPayload } from '../lib/crypto';
 
 export type Category = DbCategory;
 export type { Subscription, HabitStreak };
@@ -18,6 +19,7 @@ interface AppState {
   initData: () => Promise<void>;
   setSelectedMonth: (year: number, month: number) => void;
   updateSettings: (newSettings: Partial<Settings>) => Promise<void>;
+  toggleHideBalance: () => Promise<void>;
   
   // Wallets
   addWallet: (wallet: Omit<Wallet, 'id'>) => Promise<void>;
@@ -41,9 +43,9 @@ interface AppState {
   // Streaks
   recordHabitActivity: () => Promise<void>;
   
-  // Backup
-  exportData: () => Promise<string>;
-  importData: (jsonData: string) => Promise<boolean>;
+  // Backup & Encryption
+  exportData: (password?: string) => Promise<string>;
+  importData: (jsonData: string, password?: string) => Promise<boolean>;
 
   // Offline Voice
   setOfflineVoiceStatus: (status: 'not-asked' | 'declined' | 'ready') => Promise<void>;
@@ -264,7 +266,12 @@ export const useStore = create<AppState>((set, get) => {
       set({ streak });
     },
 
-    exportData: async () => {
+    toggleHideBalance: async () => {
+      const current = get().settings?.hideBalance ?? false;
+      await get().updateSettings({ hideBalance: !current });
+    },
+
+    exportData: async (password?: string) => {
       const db = await getDB();
       const settings = await db.get('settings', 'app-settings');
       const wallets = await db.getAll('wallets');
@@ -272,13 +279,30 @@ export const useStore = create<AppState>((set, get) => {
       const categories = await db.getAll('categories');
       const subscriptions = await db.getAll('subscriptions');
       const streaks = await db.getAll('streaks');
-      return JSON.stringify({ settings, wallets, transactions, categories, subscriptions, streaks });
+      
+      const payload = { settings, wallets, transactions, categories, subscriptions, streaks };
+      if (password || settings?.encryptBackups) {
+        const encrypted = await encryptData(payload, password);
+        return JSON.stringify(encrypted, null, 2);
+      }
+      return JSON.stringify(payload, null, 2);
     },
 
-    importData: async (jsonData: string) => {
+    importData: async (jsonData: string, password?: string) => {
       try {
-        const data = JSON.parse(jsonData);
-        if (!data.wallets || !data.transactions || !data.categories) return false;
+        let data = JSON.parse(jsonData);
+
+        // Handle AES-256 encrypted payload
+        if (data.isEncrypted) {
+          try {
+            data = await decryptData(data, password);
+          } catch (decryptErr) {
+            console.error('Decryption failed:', decryptErr);
+            return false;
+          }
+        }
+
+        if (!data || !data.wallets || !data.transactions || !data.categories) return false;
         
         const db = await getDB();
         

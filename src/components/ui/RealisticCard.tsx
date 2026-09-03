@@ -377,6 +377,9 @@ export function BankHeader({ bank, isDebit, tierTitle }: { bank?: string; isDebi
 }
 
 // ── MAIN PHOTOREALISTIC CARD COMPONENT ──────────────────────────────
+import { useStore } from '../../store/useStore';
+import { formatAmount } from '../../lib/formatters';
+
 export function RealisticCard({
   wallet,
   spentThisMonth = 0,
@@ -385,7 +388,8 @@ export function RealisticCard({
   className = '',
   onClick
 }: RealisticCardProps) {
-  const isCredit = wallet.type === 'credit';
+  const { settings } = useStore();
+  const hideBalance = settings?.hideBalance ?? false;
   const isDebit = !isCredit;
   const bank = wallet.bank || 'cib';
   const accountTier = wallet.accountTier || 'prime';
@@ -533,14 +537,14 @@ export function RealisticCard({
             <div className="px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-right shadow-lg hidden sm:block">
               <p className="text-[8px] uppercase font-bold text-neutral-400 tracking-wider">SPENT</p>
               <p className="text-[11px] font-mono font-bold text-white/90">
-                {currencySymbol} {spentThisMonth.toLocaleString(undefined, { minimumFractionDigits: 0 })}
+                {formatAmount(spentThisMonth, currencySymbol, hideBalance)}
               </p>
             </div>
           )}
           <div className="px-3 py-1 rounded-full bg-black/70 backdrop-blur-md border border-white/20 text-right shadow-lg">
             <p className="text-[8px] uppercase font-bold text-neutral-300 tracking-wider">BALANCE</p>
             <p className="text-xs font-mono font-extrabold text-white">
-              {currencySymbol} {(wallet.balance ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              {formatAmount(wallet.balance ?? 0, currencySymbol, hideBalance)}
             </p>
           </div>
         </div>

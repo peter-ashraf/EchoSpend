@@ -5,6 +5,7 @@ import { Modal } from '../ui/Modal';
 import { ConfirmModal } from '../ui/ConfirmModal';
 import { RealisticCard } from '../ui/RealisticCard';
 import { Plus, CreditCard, Trash, Check, Sparkle } from '@phosphor-icons/react';
+import { formatAmount } from '../../lib/formatters';
 
 const CARD_COLORS = [
   { name: 'Teal (EchoSpend)', color: '#0a7ea4' },
@@ -18,7 +19,8 @@ const CARD_COLORS = [
 ];
 
 export function CardsView() {
-  const { wallets, transactions, addWallet, updateWallet, deleteWallet, settings } = useStore();
+  const { wallets, transactions, addWallet, updateWallet, deleteWallet, settings, toggleHideBalance } = useStore();
+  const hideBalance = settings?.hideBalance ?? false;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingWallet, setEditingWallet] = useState<Wallet | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -163,11 +165,11 @@ export function CardsView() {
       </div>
 
       {/* Net Balance Banner */}
-      <div className="p-5 rounded-3xl bg-neutral-900/60 border border-neutral-800/80 flex items-center justify-between">
+      <div className="p-5 rounded-3xl bg-neutral-900/60 border border-neutral-800/80 flex items-center justify-between cursor-pointer" onClick={toggleHideBalance} title="Click to hide/show balance">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-neutral-400">Total Net Balance</p>
           <p className="text-2xl font-extrabold font-mono text-white mt-1">
-            {currencySymbol} {totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            {formatAmount(totalBalance, currencySymbol, hideBalance)}
           </p>
         </div>
         <div className="p-3 rounded-2xl bg-[#0a7ea4]/10 text-[#0a7ea4] border border-[#0a7ea4]/20">

@@ -15,6 +15,10 @@ export interface Settings {
   biometricLock: boolean;
   /** Stored WebAuthn credential id (base64url) */
   biometricCredentialId?: string;
+  /** Privacy mode — masks all financial numbers with asterisks/dots */
+  hideBalance?: boolean;
+  /** Whether JSON backups are AES-GCM encrypted */
+  encryptBackups?: boolean;
 }
 
 export interface Wallet {

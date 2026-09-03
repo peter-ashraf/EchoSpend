@@ -2,12 +2,14 @@ import { useMemo } from 'react';
 import { useStore } from '../../store/useStore';
 import { ResponsiveContainer, BarChart, Bar, XAxis, Tooltip, Cell } from 'recharts';
 import { Sparkle } from '@phosphor-icons/react';
+import { formatAmount } from '../../lib/formatters';
 
 const WEEK_BAR_COLORS = ['#F97316', '#3B82F6', '#A855F7', '#0a7ea4', '#10B981', '#F59E0B', '#EF4444'];
 
 export function AnalyticsView() {
-  const { transactions, categories, settings } = useStore();
+  const { transactions, categories, settings, toggleHideBalance } = useStore();
   const currencySymbol = settings?.currency || 'EGP';
+  const hideBalance = settings?.hideBalance ?? false;
 
   // Weekly data (Monday to Sunday)
   const weeklyData = useMemo(() => {
@@ -101,11 +103,11 @@ export function AnalyticsView() {
 
       {/* Weekly Spending Bar Chart Card (Say style) */}
       <div className="p-6 rounded-3xl bg-neutral-900/60 border border-neutral-800/80 backdrop-blur-xl">
-        <div className="flex items-baseline justify-between mb-4">
+        <div className="flex items-baseline justify-between mb-4 cursor-pointer" onClick={toggleHideBalance} title="Click to hide/show balance">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider text-neutral-400">This Week's Spending</p>
             <p className="text-2xl font-extrabold font-mono text-white mt-0.5">
-              {currencySymbol} {thisWeekTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              {formatAmount(thisWeekTotal, currencySymbol, hideBalance)}
             </p>
           </div>
           <span className="text-xs px-2.5 py-1 rounded-full bg-[#0a7ea4]/10 text-[#0a7ea4] font-bold border border-[#0a7ea4]/20 flex items-center gap-1">
@@ -221,7 +223,7 @@ export function AnalyticsView() {
                   </div>
                 </div>
                 <p className="text-sm font-mono font-bold text-white">
-                  {currencySymbol} {m.total.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  {formatAmount(m.total, currencySymbol, hideBalance)}
                 </p>
               </div>
             ))}

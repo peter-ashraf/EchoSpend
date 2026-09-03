@@ -3,6 +3,7 @@ import { useStore } from '../../store/useStore';
 import type { Transaction } from '../../lib/db';
 import { EditTransactionModal } from '../modals/EditTransactionModal';
 import { CaretLeft, CaretRight, Sparkle, Fire, CreditCard, ArrowRight, Microphone, ChatTeardropText, Check } from '@phosphor-icons/react';
+import { formatAmount } from '../../lib/formatters';
 
 interface DashboardViewProps {
   onNavigateToCards?: () => void;
@@ -16,12 +17,13 @@ const MONTH_NAMES = [
 ];
 
 export function DashboardView({ onNavigateToCards }: DashboardViewProps) {
-  const { settings, wallets, transactions, categories, streak, selectedMonth, setSelectedMonth } = useStore();
+  const { settings, wallets, transactions, categories, streak, selectedMonth, setSelectedMonth, toggleHideBalance } = useStore();
   const [filterSource, setFilterSource] = useState<'all' | 'voice' | 'sms'>('all');
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
 
   const currencySymbol = settings?.currency || 'EGP';
   const monthlyBudget = settings?.monthlyBudget || 0;
+  const hideBalance = settings?.hideBalance ?? false;
 
   function toLocalDateStr(d: Date): string {
     const year = d.getFullYear();
@@ -130,13 +132,12 @@ export function DashboardView({ onNavigateToCards }: DashboardViewProps) {
         <div className="absolute top-0 right-0 w-48 h-48 bg-[#0a7ea4]/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
 
         {/* Twin Spent / Income Grid */}
-        <div className="grid grid-cols-2 gap-4 relative z-10">
+        <div className="grid grid-cols-2 gap-4 relative z-10 cursor-pointer" onClick={toggleHideBalance} title="Click to hide/show balance">
           <div>
             <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">SPENT</span>
             <div className="flex items-baseline gap-1 mt-1">
-              <span className="text-xs font-bold text-[#0a7ea4]">{currencySymbol}</span>
               <p className="text-xl sm:text-2xl font-extrabold font-mono text-white tracking-tight">
-                {totalSpent.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                {formatAmount(totalSpent, currencySymbol, hideBalance)}
               </p>
             </div>
           </div>
@@ -144,9 +145,8 @@ export function DashboardView({ onNavigateToCards }: DashboardViewProps) {
           <div className="border-l border-neutral-800/80 pl-4">
             <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">INCOME</span>
             <div className="flex items-baseline gap-1 mt-1">
-              <span className="text-xs font-bold text-emerald-400">{currencySymbol}</span>
               <p className="text-xl sm:text-2xl font-extrabold font-mono text-emerald-400 tracking-tight">
-                {totalIncome.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                {formatAmount(totalIncome, currencySymbol, hideBalance)}
               </p>
             </div>
           </div>
@@ -249,7 +249,7 @@ export function DashboardView({ onNavigateToCards }: DashboardViewProps) {
               {wallets.length === 0 ? 'STATUS' : 'BALANCE'}
             </span>
             <p className="text-sm font-mono font-extrabold text-white">
-              {wallets.length === 0 ? 'Tap to add' : `${currencySymbol} ${totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
+              {wallets.length === 0 ? 'Tap to add' : formatAmount(totalBalance, currencySymbol, hideBalance)}
             </p>
           </div>
           <ArrowRight size={16} className="text-neutral-500 group-hover:text-[#0a7ea4] transition-colors" />
@@ -352,7 +352,7 @@ export function DashboardView({ onNavigateToCards }: DashboardViewProps) {
 
                   <div className="text-right">
                     <p className={`text-sm font-mono font-extrabold ${isIncome ? 'text-emerald-400' : 'text-neutral-100'}`}>
-                      {isIncome ? '+' : '-'} {currencySymbol} {tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      {isIncome ? '+' : '-'} {formatAmount(tx.amount, currencySymbol, hideBalance)}
                     </p>
                     <p className="text-[10px] text-neutral-500">
                       {new Date(tx.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

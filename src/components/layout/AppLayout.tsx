@@ -1,5 +1,5 @@
 import { useStore } from '../../store/useStore';
-import { House, CalendarBlank, CreditCard, ChartBar, Plus, ChatTeardropText, Gear } from '@phosphor-icons/react';
+import { House, CalendarBlank, CreditCard, ChartBar, Plus, ChatTeardropText, Gear, Eye, EyeSlash } from '@phosphor-icons/react';
 import { useEffect } from 'react';
 
 export type NavTab = 'dashboard' | 'subscriptions' | 'cards' | 'analytics' | 'settings';
@@ -13,7 +13,7 @@ interface AppLayoutProps {
 }
 
 export function AppLayout({ children, activeTab, onTabChange, onAddTransaction, onOpenSmsImport }: AppLayoutProps) {
-  const { settings } = useStore();
+  const { settings, toggleHideBalance } = useStore();
   const lang = settings?.language || 'en';
 
   useEffect(() => {
@@ -40,6 +40,19 @@ export function AppLayout({ children, activeTab, onTabChange, onAddTransaction, 
 
         {/* Action Buttons */}
         <div className="flex items-center gap-2">
+          {/* Thndr-Style Privacy Balance Toggle */}
+          <button
+            onClick={toggleHideBalance}
+            title={settings?.hideBalance ? 'Show Balances' : 'Hide Balances (Privacy Mode)'}
+            className={`w-8 h-8 flex items-center justify-center rounded-full transition-all active:scale-95 ${
+              settings?.hideBalance
+                ? 'bg-amber-500/20 border border-amber-500/40 text-amber-300 shadow-sm shadow-amber-500/20'
+                : 'bg-neutral-900 border border-neutral-800 text-neutral-400 hover:text-white'
+            }`}
+          >
+            {settings?.hideBalance ? <EyeSlash size={16} weight="bold" /> : <Eye size={16} />}
+          </button>
+
           {onOpenSmsImport && (
             <button
               onClick={onOpenSmsImport}

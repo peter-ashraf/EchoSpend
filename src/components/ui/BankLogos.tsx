@@ -1,64 +1,64 @@
 /**
- * BankLogos.tsx — Uses official downloaded PNG logo images for real bank cards.
+ * BankLogos.tsx — High-resolution Bank Logo Components with Transparent Backgrounds & Enlarged Sizing.
  */
 
-export function CibLogo({ className = 'h-7 object-contain' }: { variant?: string; className?: string }) {
+export function CibLogo({ className = '' }: { variant?: string; className?: string }) {
   return (
     <div className="flex items-center gap-2 select-none">
-      <img src="./logos/cib.png" alt="CIB Logo" className={className} />
+      <img src="./logos/cib.png" alt="CIB Logo" className={`h-10 md:h-12 object-contain filter drop-shadow-md ${className}`} />
     </div>
   );
 }
 
-export function NbeLogo({ className = 'h-8 object-contain' }: { className?: string }) {
+export function NbeLogo({ className = '' }: { className?: string }) {
   return (
     <div className="flex items-center gap-2 select-none">
-      <img src="./logos/nbe.png" alt="NBE Logo" className={className} />
+      <img src="./logos/nbe.png" alt="NBE Logo" className={`h-10 md:h-12 object-contain filter drop-shadow-md ${className}`} />
     </div>
   );
 }
 
-export function BanqueMisrLogo({ className = 'h-8 object-contain' }: { className?: string }) {
+export function BanqueMisrLogo({ className = '' }: { className?: string }) {
   return (
     <div className="flex items-center gap-2 select-none">
-      <img src="./logos/banque-misr.png" alt="Banque Misr Logo" className={className} />
+      <img src="./logos/banque-misr.png" alt="Banque Misr Logo" className={`h-10 md:h-12 object-contain filter drop-shadow-md ${className}`} />
     </div>
   );
 }
 
-export function QnbLogo({ className = 'h-7 object-contain' }: { className?: string }) {
+export function QnbLogo({ className = '' }: { className?: string }) {
   return (
     <div className="flex items-center gap-2 select-none">
-      <img src="./logos/qnb.png" alt="QNB Logo" className={className} />
+      <img src="./logos/qnb.png" alt="QNB Logo" className={`h-10 md:h-12 object-contain filter drop-shadow-md ${className}`} />
     </div>
   );
 }
 
-export function HsbcLogo({ className = 'h-6 object-contain brightness-0 invert' }: { className?: string }) {
+export function HsbcLogo({ className = '' }: { className?: string }) {
   return (
     <div className="flex items-center gap-2 select-none">
-      <img src="./logos/hsbc.png" alt="HSBC Logo" className={className} />
+      <img src="./logos/hsbc.png" alt="HSBC Logo" className={`h-8 md:h-10 object-contain filter drop-shadow-md brightness-0 invert ${className}`} />
     </div>
   );
 }
 
-export function AlexbankLogo({ className = 'h-7 object-contain' }: { className?: string }) {
+export function AlexbankLogo({ className = '' }: { className?: string }) {
   return (
     <div className="flex items-center gap-2 select-none">
-      <img src="./logos/alexbank.png" alt="AlexBank Logo" className={className} />
+      <img src="./logos/alexbank.png" alt="AlexBank Logo" className={`h-10 md:h-12 object-contain filter drop-shadow-md ${className}`} />
     </div>
   );
 }
 
 export function AaibLogo({ className = '' }: { className?: string }) {
   return (
-    <div className={`flex items-center gap-2 select-none ${className}`}>
-      <div className="w-7 h-7 rounded-lg bg-[#0f2b5c] border border-amber-400/80 flex items-center justify-center shadow-sm">
-        <span className="text-amber-400 font-black text-xs tracking-tighter">AAIB</span>
+    <div className={`flex items-center gap-2.5 select-none ${className}`}>
+      <div className="w-10 h-10 rounded-xl bg-[#0f2b5c] border border-amber-400/80 flex items-center justify-center shadow-md shrink-0">
+        <span className="text-amber-400 font-black text-sm tracking-tighter">AAIB</span>
       </div>
       <div className="leading-tight">
-        <p className="text-[11px] font-extrabold text-white tracking-wide">AAIB Egypt</p>
-        <p className="text-[9px] text-blue-200 font-semibold">البنك العربي الأفريقي</p>
+        <p className="text-xs font-extrabold text-white tracking-wide">AAIB Egypt</p>
+        <p className="text-[10px] text-blue-200 font-semibold">البنك العربي الأفريقي</p>
       </div>
     </div>
   );
@@ -66,13 +66,13 @@ export function AaibLogo({ className = '' }: { className?: string }) {
 
 export function EnbdLogo({ className = '' }: { className?: string }) {
   return (
-    <div className={`flex items-center gap-2 select-none ${className}`}>
-      <div className="w-7 h-7 rounded-lg bg-[#002b66] border border-cyan-400/60 flex items-center justify-center shadow-sm">
-        <div className="w-4 h-4 rounded-full border-2 border-cyan-400 border-t-transparent rotate-45" />
+    <div className={`flex items-center gap-2.5 select-none ${className}`}>
+      <div className="w-10 h-10 rounded-xl bg-[#002b66] border border-cyan-400/60 flex items-center justify-center shadow-md shrink-0">
+        <div className="w-5 h-5 rounded-full border-2 border-cyan-400 border-t-transparent rotate-45" />
       </div>
       <div className="leading-tight">
-        <p className="text-[11px] font-extrabold text-white tracking-wide">Emirates NBD</p>
-        <p className="text-[9px] text-cyan-200 font-semibold">الإمارات دبي الوطني</p>
+        <p className="text-xs font-extrabold text-white tracking-wide">Emirates NBD</p>
+        <p className="text-[10px] text-cyan-200 font-semibold">الإمارات دبي الوطني</p>
       </div>
     </div>
   );

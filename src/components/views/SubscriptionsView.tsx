@@ -3,13 +3,15 @@ import { useStore } from '../../store/useStore';
 import type { Subscription } from '../../lib/db';
 import { SubscriptionModal } from '../modals/SubscriptionModal';
 import { Plus, CalendarBlank } from '@phosphor-icons/react';
+import { formatAmount } from '../../lib/formatters';
 
 export function SubscriptionsView() {
-  const { subscriptions, settings } = useStore();
+  const { subscriptions, settings, toggleHideBalance } = useStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedSub, setSelectedSub] = useState<Subscription | null>(null);
 
   const currencySymbol = settings?.currency || 'EGP';
+  const hideBalance = settings?.hideBalance ?? false;
 
   // Calculate stats
   const activeSubs = useMemo(() => subscriptions.filter(s => s.active), [subscriptions]);
@@ -88,10 +90,9 @@ export function SubscriptionsView() {
         <div className="absolute top-0 right-0 w-48 h-48 bg-[#0a7ea4]/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
         
         <p className="text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1">Monthly spending</p>
-        <div className="flex items-baseline gap-2 mb-4">
-          <span className="text-xs font-bold text-[#0a7ea4]">{currencySymbol}</span>
+        <div className="flex items-baseline gap-2 mb-4 cursor-pointer" onClick={toggleHideBalance} title="Click to hide/show balance">
           <h3 className="text-3xl sm:text-4xl font-extrabold font-mono text-white tracking-tight">
-            {monthlyTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {formatAmount(monthlyTotal, currencySymbol, hideBalance)}
           </h3>
         </div>
 
@@ -104,7 +105,7 @@ export function SubscriptionsView() {
           <div className="p-2.5 rounded-2xl metric-pill border border-neutral-800/50">
             <p className="text-[11px] text-neutral-400 font-medium">Per year</p>
             <p className="text-xs font-bold text-[#0a7ea4] font-mono mt-0.5 truncate">
-              {currencySymbol} {Math.round(yearlyTotal).toLocaleString()}
+              {formatAmount(Math.round(yearlyTotal), currencySymbol, hideBalance)}
             </p>
           </div>
           <div className="p-2.5 rounded-2xl metric-pill border border-neutral-800/50">
@@ -201,7 +202,7 @@ export function SubscriptionsView() {
 
                 <div className="text-right">
                   <p className="text-sm font-mono font-bold text-white">
-                    {currencySymbol} {sub.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    {formatAmount(sub.amount, currencySymbol, hideBalance)}
                   </p>
                   <p className="text-[11px] text-neutral-400 capitalize">/{sub.billingCycle === 'monthly' ? 'mo' : 'yr'}</p>
                 </div>
