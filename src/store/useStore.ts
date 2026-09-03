@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { getDB, seedDatabase } from '../lib/db';
 import type { Wallet, Transaction, Settings, Category as DbCategory, Subscription, HabitStreak } from '../lib/db';
-import { encryptData, decryptData, type EncryptedPayload } from '../lib/crypto';
+import { encryptData, decryptData } from '../lib/crypto';
 
 export type Category = DbCategory;
 export type { Subscription, HabitStreak };

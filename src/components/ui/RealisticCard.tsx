@@ -1,7 +1,9 @@
 import type { Wallet } from '../../lib/db';
 import { CibLogo, NbeLogo, BanqueMisrLogo, QnbLogo, HsbcLogo, AlexbankLogo, AaibLogo, EnbdLogo } from './BankLogos';
+import { useStore } from '../../store/useStore';
+import { formatAmount } from '../../lib/formatters';
 
-interface RealisticCardProps {
+export interface RealisticCardProps {
   wallet: Partial<Wallet>;
   spentThisMonth?: number;
   currencySymbol?: string;
@@ -377,9 +379,6 @@ export function BankHeader({ bank, isDebit, tierTitle }: { bank?: string; isDebi
 }
 
 // ── MAIN PHOTOREALISTIC CARD COMPONENT ──────────────────────────────
-import { useStore } from '../../store/useStore';
-import { formatAmount } from '../../lib/formatters';
-
 export function RealisticCard({
   wallet,
   spentThisMonth = 0,
@@ -390,6 +389,7 @@ export function RealisticCard({
 }: RealisticCardProps) {
   const { settings } = useStore();
   const hideBalance = settings?.hideBalance ?? false;
+  const isCredit = wallet.type === 'credit';
   const isDebit = !isCredit;
   const bank = wallet.bank || 'cib';
   const accountTier = wallet.accountTier || 'prime';
