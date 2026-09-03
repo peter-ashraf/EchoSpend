@@ -216,8 +216,8 @@ function App() {
   if (isLoading || !settings) {
     return (
       <div className="min-h-screen bg-neutral-950 flex flex-col items-center justify-center space-y-4">
-        <div className="w-14 h-14 rounded-3xl bg-gradient-to-br from-[#0a7ea4] to-[#2dd4bf] flex items-center justify-center text-neutral-950 font-black text-2xl shadow-xl shadow-[#0a7ea4]/30 animate-pulse">
-          E
+        <div className="w-14 h-14 rounded-3xl overflow-hidden shadow-xl shadow-[#0a7ea4]/30 animate-pulse border border-neutral-800">
+          <img src="./apple-touch-icon.png" alt="EchoSpend" className="w-full h-full object-cover" />
         </div>
         <div className="w-8 h-8 border-3 border-[#0a7ea4]/30 border-t-[#0a7ea4] rounded-full animate-spin" />
       </div>

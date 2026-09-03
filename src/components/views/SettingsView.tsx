@@ -116,9 +116,9 @@ export function SettingsView({ onStartWhisperDownload, isWhisperDownloading }: S
       </div>
 
       {/* User Profile Card */}
-      <div className="p-5 rounded-3xl bg-gradient-to-br from-neutral-900 to-neutral-900/90 border border-neutral-800/80 flex items-center justify-between">
+      <div className="p-5 rounded-3xl theme-surface border border-neutral-800/80 flex items-center justify-between">
         <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-2xl bg-[#0a7ea4]/20 border border-[#0a7ea4]/30 flex items-center justify-center text-[#0a7ea4] font-bold text-lg">
+          <div className="w-12 h-12 rounded-2xl bg-[#0a7ea4]/15 border border-[#0a7ea4]/25 flex items-center justify-center text-[#0a7ea4] font-bold text-lg">
             <UserCircle size={32} weight="duotone" />
           </div>
           <div>
@@ -129,7 +129,7 @@ export function SettingsView({ onStartWhisperDownload, isWhisperDownloading }: S
             </p>
           </div>
         </div>
-        <span className="text-xs px-2.5 py-1 rounded-full bg-neutral-800 text-neutral-300 font-semibold">
+        <span className="text-xs px-2.5 py-1 rounded-full metric-pill text-neutral-300 font-semibold border border-neutral-700/60">
           Offline PWA
         </span>
       </div>
@@ -411,9 +411,11 @@ export function SettingsView({ onStartWhisperDownload, isWhisperDownloading }: S
         <div className="bg-neutral-900/60 border border-neutral-800/80 rounded-3xl p-5 space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3.5">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#0a7ea4] to-[#2dd4bf] flex items-center justify-center text-neutral-950 font-black text-xl shadow-md shadow-[#0a7ea4]/20 flex-shrink-0">
-                E
-              </div>
+              <img
+                src="./apple-touch-icon.png"
+                alt="EchoSpend"
+                className="w-12 h-12 rounded-2xl object-cover shadow-md shadow-[#0a7ea4]/20 border border-neutral-800/60 flex-shrink-0"
+              />
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="text-sm font-bold text-white">EchoSpend</h3>

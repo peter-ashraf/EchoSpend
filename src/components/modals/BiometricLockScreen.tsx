@@ -65,9 +65,9 @@ export function BiometricLockScreen({ onUnlocked }: BiometricLockScreenProps) {
             <motion.div
               animate={{ boxShadow: ['0 0 0 0 rgba(10,126,164,0)', '0 0 0 16px rgba(10,126,164,0.15)', '0 0 0 0 rgba(10,126,164,0)'] }}
               transition={{ repeat: Infinity, duration: 2.5 }}
-              className="w-16 h-16 rounded-3xl bg-gradient-to-br from-[#0a7ea4] to-[#2dd4bf] flex items-center justify-center text-neutral-950 font-black text-2xl shadow-lg shadow-[#0a7ea4]/30"
+              className="w-16 h-16 rounded-3xl overflow-hidden shadow-lg shadow-[#0a7ea4]/30 border border-neutral-800"
             >
-              E
+              <img src="./apple-touch-icon.png" alt="EchoSpend" className="w-full h-full object-cover" />
             </motion.div>
             <div className="text-center">
               <h1 className="text-white font-extrabold text-lg tracking-tight">EchoSpend</h1>
