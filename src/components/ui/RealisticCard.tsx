@@ -52,10 +52,8 @@ export function ContactlessWave({ size = 20, color = 'white' }: { size?: number;
 export function CibBonusBadge() {
   return (
     <div className="flex items-center gap-1.5 select-none">
-      {/* Gift Box Icon */}
       <div className="w-5 h-5 relative flex items-center justify-center">
         <div className="w-4 h-3.5 bg-white rounded-sm relative shadow-sm">
-          {/* Orange ribbon */}
           <div className="w-1 h-full bg-[#f97316] mx-auto" />
           <div className="w-full h-1 bg-[#f97316] absolute inset-y-0 my-auto" />
         </div>
@@ -92,85 +90,110 @@ export function NetworkLogo({ network = 'mastercard' }: { network?: 'mastercard'
   );
 }
 
-// ── 1. CIB Platinum Credit Card Vector Background ───────────────────
+// ====================================================================
+// 1. CIB VECTOR BACKGROUNDS
+// ====================================================================
 function CibPlatinumVectorArt() {
   return (
     <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 400 252" preserveAspectRatio="none" fill="none">
       <rect width="400" height="252" fill="#0b0c0e" />
-      
-      {/* Golden concentric celestial orbits */}
       <g stroke="#b8943f" opacity="0.35" strokeWidth="1.2">
         <ellipse cx="370" cy="126" rx="90" ry="115" />
         <ellipse cx="370" cy="126" rx="140" ry="160" strokeDasharray="4 4" />
         <ellipse cx="370" cy="126" rx="190" ry="210" />
         <ellipse cx="370" cy="126" rx="240" ry="260" strokeDasharray="8 6" />
-        <ellipse cx="370" cy="126" rx="290" ry="310" opacity="0.2" />
       </g>
-
-      {/* Radiant orbital nodes / planets */}
       <circle cx="280" cy="90" r="3" fill="#b8943f" opacity="0.6" />
       <circle cx="230" cy="150" r="2.5" fill="#b8943f" opacity="0.5" />
       <circle cx="180" cy="110" r="3.5" fill="#b8943f" opacity="0.4" />
-      <circle cx="140" cy="180" r="2" fill="#b8943f" opacity="0.5" />
-      <circle cx="320" cy="170" r="4" fill="#b8943f" opacity="0.7" />
-
-      {/* Stylized celestial globe watermark on right */}
-      <g stroke="#a68434" opacity="0.3" strokeWidth="1.5">
-        <circle cx="360" cy="126" r="65" />
-        <ellipse cx="360" cy="126" rx="30" ry="65" />
-        <line x1="295" y1="126" x2="425" y2="126" />
-        <line x1="305" y1="95" x2="415" y2="95" />
-        <line x1="305" y1="157" x2="415" y2="157" />
-      </g>
-
-      {/* Subtle bottom-right gold ambient glow */}
-      <circle cx="360" cy="130" r="100" fill="url(#goldGlow)" opacity="0.12" />
-      <defs>
-        <radialGradient id="goldGlow" cx="0.5" cy="0.5" r="0.5">
-          <stop offset="0%" stopColor="#d4af37" />
-          <stop offset="100%" stopColor="#000000" stopOpacity="0" />
-        </radialGradient>
-      </defs>
     </svg>
   );
 }
 
-// ── 2. CIB Prime Debit Card Vector Background ───────────────────────
+function CibGoldVectorArt() {
+  return (
+    <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 400 252" preserveAspectRatio="none" fill="none">
+      <defs>
+        <linearGradient id="cibGoldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#b88a1d" />
+          <stop offset="50%" stopColor="#e6c555" />
+          <stop offset="100%" stopColor="#8c670d" />
+        </linearGradient>
+      </defs>
+      <rect width="400" height="252" fill="url(#cibGoldGrad)" />
+      <g stroke="#5e4407" opacity="0.4" strokeWidth="1.2">
+        <ellipse cx="370" cy="126" rx="90" ry="115" />
+        <ellipse cx="370" cy="126" rx="140" ry="160" strokeDasharray="4 4" />
+      </g>
+      <path d="M 0 0 L 140 0 L 50 252 L 0 252 Z" fill="#ffffff" opacity="0.12" />
+    </svg>
+  );
+}
+
+function CibTitaniumVectorArt() {
+  return (
+    <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 400 252" preserveAspectRatio="none" fill="none">
+      <defs>
+        <linearGradient id="cibTitaniumGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#242b35" />
+          <stop offset="50%" stopColor="#3e4756" />
+          <stop offset="100%" stopColor="#161a22" />
+        </linearGradient>
+      </defs>
+      <rect width="400" height="252" fill="url(#cibTitaniumGrad)" />
+      <g stroke="#94a3b8" opacity="0.35" strokeWidth="1.2">
+        <ellipse cx="370" cy="126" rx="100" ry="120" />
+        <ellipse cx="370" cy="126" rx="160" ry="180" strokeDasharray="4 4" />
+      </g>
+      <path d="M 0 0 L 150 0 L 60 252 L 0 252 Z" fill="#ffffff" opacity="0.06" />
+    </svg>
+  );
+}
+
+function CibWorldVectorArt() {
+  return (
+    <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 400 252" preserveAspectRatio="none" fill="none">
+      <rect width="400" height="252" fill="#07080a" />
+      <g stroke="#d4af37" opacity="0.3" strokeWidth="1">
+        <rect x="250" y="26" width="100" height="100" transform="rotate(45 300 76)" fill="none" />
+        <circle cx="300" cy="76" r="80" stroke="#f3e5ab" opacity="0.25" />
+      </g>
+    </svg>
+  );
+}
+
+function CibClassicCreditVectorArt() {
+  return (
+    <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 400 252" preserveAspectRatio="none" fill="none">
+      <defs>
+        <linearGradient id="cibClassicGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#061a38" />
+          <stop offset="60%" stopColor="#0c2b5c" />
+          <stop offset="100%" stopColor="#041026" />
+        </linearGradient>
+      </defs>
+      <rect width="400" height="252" fill="url(#cibClassicGrad)" />
+      <g stroke="#94a3b8" opacity="0.3" strokeWidth="1.2">
+        <ellipse cx="370" cy="126" rx="100" ry="120" />
+      </g>
+    </svg>
+  );
+}
+
 function CibPrimeVectorArt() {
   return (
     <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 400 252" preserveAspectRatio="none" fill="none">
-      <rect width="400" height="252" fill="#2c969b" />
-      
-      {/* Signature CIB Segmented Mosaic Globe */}
+      <rect width="400" height="252" fill="#1e8a90" />
       <g transform="translate(195, 126)" opacity="0.85">
-        {/* Top-Left Quadrant: Blue geometric diamond pattern */}
         <path d="M -10 -10 L -60 -10 A 60 60 0 0 1 -10 -60 Z" fill="#0284c7" />
-        <path d="M -18 -18 L -48 -18 A 48 48 0 0 1 -18 -48 Z" fill="#38bdf8" opacity="0.8" />
-        <path d="M -26 -26 L -36 -26 A 36 36 0 0 1 -26 -36 Z" fill="#0369a1" />
-
-        {/* Top-Right Quadrant: Lime polka-dots */}
         <path d="M 10 -10 L 60 -10 A 60 60 0 0 0 10 -60 Z" fill="#84cc16" opacity="0.9" />
-        <circle cx="25" cy="-25" r="3" fill="#ffffff" opacity="0.7" />
-        <circle cx="40" cy="-20" r="2.5" fill="#ffffff" opacity="0.7" />
-        <circle cx="20" cy="-40" r="2.5" fill="#ffffff" opacity="0.7" />
-        <circle cx="35" cy="-35" r="3" fill="#ffffff" opacity="0.7" />
-
-        {/* Bottom-Left Quadrant: Chevron waves */}
         <path d="M -10 10 L -60 10 A 60 60 0 0 0 -10 60 Z" fill="#0369a1" />
-        <path d="M -15 20 L -30 30 L -15 40" stroke="#38bdf8" strokeWidth="2.5" fill="none" opacity="0.8" />
-        <path d="M -25 20 L -40 30 L -25 40" stroke="#84cc16" strokeWidth="2" fill="none" opacity="0.8" />
-
-        {/* Bottom-Right Quadrant: Cyan/Lime stripes */}
         <path d="M 10 10 L 60 10 A 60 60 0 0 1 10 60 Z" fill="#06b6d4" />
-        <line x1="20" y1="12" x2="20" y2="48" stroke="#84cc16" strokeWidth="3" />
-        <line x1="32" y1="12" x2="32" y2="42" stroke="#ffffff" strokeWidth="2.5" opacity="0.8" />
-        <line x1="44" y1="12" x2="44" y2="30" stroke="#0284c7" strokeWidth="3" />
       </g>
     </svg>
   );
 }
 
-// ── 3. CIB Plus Debit Card Vector Background ────────────────────────
 function CibPlusVectorArt() {
   return (
     <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 400 252" preserveAspectRatio="none" fill="none">
@@ -182,124 +205,145 @@ function CibPlusVectorArt() {
         </linearGradient>
       </defs>
       <rect width="400" height="252" fill="url(#cibPlusGrad)" />
-      
-      {/* Plus Segmented Globe in Royal Blue & Silver/Cyan */}
       <g transform="translate(200, 126)" opacity="0.75">
         <circle cx="0" cy="0" r="62" stroke="#60a5fa" strokeWidth="1.5" strokeDasharray="3 3" />
-        {/* Mosaic segments */}
         <path d="M -8 -8 L -54 -8 A 54 54 0 0 1 -8 -54 Z" fill="#3b82f6" />
         <path d="M 8 -8 L 54 -8 A 54 54 0 0 0 8 -54 Z" fill="#93c5fd" opacity="0.85" />
-        <path d="M -8 8 L -54 8 A 54 54 0 0 0 -8 54 Z" fill="#1d4ed8" />
-        <path d="M 8 8 L 54 8 A 54 54 0 0 1 8 54 Z" fill="#60a5fa" />
       </g>
-
-      {/* Ambient specular highlight */}
-      <path d="M 0 0 L 160 0 L 60 252 L 0 252 Z" fill="white" opacity="0.04" />
     </svg>
   );
 }
 
-// ── 4. CIB Wealth Card Vector Background ────────────────────────────
 function CibWealthVectorArt() {
   return (
     <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 400 252" preserveAspectRatio="none" fill="none">
       <defs>
         <linearGradient id="wealthGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#161a20" />
+          <stop offset="0%" stopColor="#14171c" />
           <stop offset="60%" stopColor="#222832" />
           <stop offset="100%" stopColor="#0d0f12" />
         </linearGradient>
       </defs>
       <rect width="400" height="252" fill="url(#wealthGrad)" />
-      
-      {/* Champagne gold subtle concentric globe watermark */}
-      <g stroke="#d4af37" opacity="0.25" strokeWidth="1.2">
-        <circle cx="210" cy="126" r="65" />
-        <ellipse cx="210" cy="126" rx="32" ry="65" />
-        <line x1="145" y1="126" x2="275" y2="126" />
-        <ellipse cx="210" cy="126" rx="120" ry="140" strokeDasharray="6 6" />
-      </g>
-
-      {/* Wealth Gold segmented accents */}
       <g transform="translate(210, 126)" opacity="0.4">
         <path d="M -6 -6 L -40 -6 A 40 40 0 0 1 -6 -40 Z" fill="#d4af37" />
         <path d="M 6 -6 L 40 -6 A 40 40 0 0 0 6 -40 Z" fill="#f3e5ab" />
-        <path d="M -6 6 L -40 6 A 40 40 0 0 0 -6 40 Z" fill="#aa820a" />
-        <path d="M 6 6 L 40 6 A 40 40 0 0 1 6 40 Z" fill="#d4af37" />
       </g>
     </svg>
   );
 }
 
-// ── 5. NBE (National Bank of Egypt - البنك الأهلي المصري) ────────────
+function CibPrivateVectorArt() {
+  return (
+    <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 400 252" preserveAspectRatio="none" fill="none">
+      <rect width="400" height="252" fill="#08090b" />
+      <g stroke="#e2e8f0" opacity="0.15" strokeWidth="1">
+        <rect x="230" y="26" width="100" height="100" transform="rotate(45 280 76)" fill="none" />
+      </g>
+    </svg>
+  );
+}
+
+// ====================================================================
+// 2. NBE VECTOR BACKGROUNDS (National Bank of Egypt)
+// ====================================================================
 function NbeVectorArt({ tier = 'platinum' }: { tier?: string }) {
-  const isGold = tier === 'gold';
+  const t = tier.toLowerCase();
+  const isGold = t === 'gold';
+  const isTitanium = t === 'titanium' || t === 'plus';
+  const isPlatinum = t === 'platinum' || t === 'wealth';
+  const isWorld = t === 'world' || t === 'world-elite' || t === 'world_elite' || t === 'private';
+
+  const stop1 = isGold ? '#b88a1d' : isWorld ? '#06120b' : isPlatinum ? '#011e11' : isTitanium ? '#022b19' : '#033a22';
+  const stop2 = isGold ? '#034728' : isWorld ? '#0d2116' : isPlatinum ? '#043620' : isTitanium ? '#0a472c' : '#044e2e';
+  const stop3 = isGold ? '#8c670d' : isWorld ? '#020704' : isPlatinum ? '#010f08' : isTitanium ? '#01170c' : '#022113';
+
   return (
     <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 400 252" preserveAspectRatio="none" fill="none">
       <defs>
-        <linearGradient id="nbeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor={isGold ? '#1a3324' : '#033a22'} />
-          <stop offset="50%" stopColor={isGold ? '#0b4d30' : '#044e2e'} />
-          <stop offset="100%" stopColor="#022113" />
+        <linearGradient id="nbeBg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor={stop1} />
+          <stop offset="50%" stopColor={stop2} />
+          <stop offset="100%" stopColor={stop3} />
         </linearGradient>
       </defs>
-      <rect width="400" height="252" fill="url(#nbeGrad)" />
-      
-      {/* Islamic arabesque / geometric star watermark */}
-      <g stroke="#d4af37" opacity="0.22" strokeWidth="1.2">
+      <rect width="400" height="252" fill="url(#nbeBg)" />
+
+      {/* Islamic Octagon Star & Arabesque Geometry */}
+      <g stroke="#d4af37" opacity={isWorld || isPlatinum ? '0.35' : '0.25'} strokeWidth="1.2">
         <rect x="160" y="86" width="80" height="80" transform="rotate(45 200 126)" />
         <rect x="160" y="86" width="80" height="80" />
         <circle cx="200" cy="126" r="55" />
         <circle cx="200" cy="126" r="75" strokeDasharray="4 4" />
-        <circle cx="200" cy="126" r="110" strokeDasharray="8 6" opacity="0.15" />
       </g>
 
-      {/* Decorative side ribbons */}
       <path d="M 330 0 L 400 0 L 400 252 L 350 252 Z" fill="#d4af37" opacity="0.08" />
     </svg>
   );
 }
 
-// ── 6. Banque Misr (بنك مصر) ────────────────────────────────────────
-function BanqueMisrVectorArt() {
+// ====================================================================
+// 3. BANQUE MISR VECTOR BACKGROUNDS
+// ====================================================================
+function BanqueMisrVectorArt({ tier = 'platinum' }: { tier?: string }) {
+  const t = tier.toLowerCase();
+  const isGold = t === 'gold';
+  const isTitanium = t === 'titanium' || t === 'plus';
+  const isPlatinum = t === 'platinum' || t === 'wealth';
+  const isWorld = t === 'world' || t === 'world-elite' || t === 'world_elite' || t === 'private';
+
+  const stop1 = isGold ? '#b88a1d' : isWorld ? '#1a0408' : isPlatinum ? '#420912' : isTitanium ? '#540c17' : '#6d1320';
+  const stop2 = isGold ? '#6d1320' : isWorld ? '#380911' : isPlatinum ? '#540d17' : isTitanium ? '#751423' : '#871a29';
+  const stop3 = isGold ? '#8c670d' : isWorld ? '#0d0204' : isPlatinum ? '#240409' : isTitanium ? '#2d1b20' : '#3b0810';
+
   return (
     <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 400 252" preserveAspectRatio="none" fill="none">
       <defs>
-        <linearGradient id="bmGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#6d1320" />
-          <stop offset="60%" stopColor="#871a29" />
-          <stop offset="100%" stopColor="#3b0810" />
+        <linearGradient id="bmBg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor={stop1} />
+          <stop offset="60%" stopColor={stop2} />
+          <stop offset="100%" stopColor={stop3} />
         </linearGradient>
       </defs>
-      <rect width="400" height="252" fill="url(#bmGrad)" />
-      
-      {/* Geometric Islamic arches watermark */}
-      <g stroke="#f59e0b" opacity="0.2" strokeWidth="1.4">
+      <rect width="400" height="252" fill="url(#bmBg)" />
+
+      {/* Geometric Arches & Pyramid Watermark */}
+      <g stroke="#f59e0b" opacity="0.22" strokeWidth="1.4">
         <circle cx="220" cy="126" r="60" />
         <path d="M 170 186 C 170 140 270 140 270 186" />
-        <path d="M 180 186 C 180 148 260 148 260 186" />
         <ellipse cx="220" cy="126" rx="90" ry="120" strokeDasharray="6 4" />
       </g>
     </svg>
   );
 }
 
-// ── 7. QNB Alahli ───────────────────────────────────────────────────
-function QnbVectorArt() {
+// ====================================================================
+// 4. QNB ALAHLI VECTOR BACKGROUNDS
+// ====================================================================
+function QnbVectorArt({ tier = 'platinum' }: { tier?: string }) {
+  const t = tier.toLowerCase();
+  const isGold = t === 'gold';
+  const isTitanium = t === 'titanium' || t === 'plus';
+  const isPlatinum = t === 'platinum' || t === 'wealth';
+  const isWorld = t === 'world' || t === 'world-elite' || t === 'world_elite' || t === 'private';
+
+  const stop1 = isGold ? '#b88a1d' : isWorld ? '#0f0206' : isPlatinum ? '#24050d' : isTitanium ? '#360916' : '#4a0e20';
+  const stop2 = isGold ? '#4a0e20' : isWorld ? '#24050d' : isPlatinum ? '#3d0a17' : isTitanium ? '#500e23' : '#63142c';
+  const stop3 = isGold ? '#8c670d' : isWorld ? '#050002' : isPlatinum ? '#170207' : isTitanium ? '#2b1820' : '#1a040b';
+
   return (
     <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 400 252" preserveAspectRatio="none" fill="none">
       <defs>
-        <linearGradient id="qnbGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#4a0e20" />
-          <stop offset="60%" stopColor="#63142c" />
-          <stop offset="100%" stopColor="#1a040b" />
+        <linearGradient id="qnbBg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor={stop1} />
+          <stop offset="60%" stopColor={stop2} />
+          <stop offset="100%" stopColor={stop3} />
         </linearGradient>
       </defs>
-      <rect width="400" height="252" fill="url(#qnbGrad)" />
-      
-      {/* Dynamic speed curve */}
-      <path d="M 150 0 C 240 80 220 180 340 252 L 400 252 L 400 0 Z" fill="#ffffff" opacity="0.05" />
-      <g stroke="#ffffff" opacity="0.15" strokeWidth="1.5">
+      <rect width="400" height="252" fill="url(#qnbBg)" />
+
+      <path d="M 150 0 C 240 80 220 180 340 252 L 400 252 L 400 0 Z" fill="#d4af37" opacity="0.1" />
+      <g stroke="#ffffff" opacity="0.18" strokeWidth="1.5">
         <circle cx="220" cy="126" r="50" />
         <circle cx="220" cy="126" r="75" strokeDasharray="5 5" />
       </g>
@@ -307,21 +351,33 @@ function QnbVectorArt() {
   );
 }
 
-// ── 8. HSBC Egypt ───────────────────────────────────────────────────
-function HsbcVectorArt() {
+// ====================================================================
+// 5. HSBC EGYPT VECTOR BACKGROUNDS
+// ====================================================================
+function HsbcVectorArt({ tier = 'platinum' }: { tier?: string }) {
+  const t = tier.toLowerCase();
+  const isGold = t === 'gold';
+  const isAdvance = t === 'plus' || t === 'advance' || t === 'titanium';
+  const isPlatinum = t === 'platinum';
+  const isPremier = t === 'wealth' || t === 'premier' || t === 'world' || t === 'world-elite' || t === 'world_elite';
+  const isPrivate = t === 'private';
+
+  const stop1 = isGold ? '#b88a1d' : isPrivate ? '#0c0a09' : isPremier ? '#1c1917' : isPlatinum ? '#262626' : isAdvance ? '#b91c1c' : '#2d2d2d';
+  const stop2 = isGold ? '#2d2d2d' : isPrivate ? '#1a1a1a' : isPremier ? '#44403c' : isPlatinum ? '#333333' : isAdvance ? '#881337' : '#1f1f1f';
+  const stop3 = isGold ? '#8c670d' : isPrivate ? '#000000' : isPremier ? '#0c0a09' : isPlatinum ? '#1a1a1a' : isAdvance ? '#450a0a' : '#111111';
+
   return (
     <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 400 252" preserveAspectRatio="none" fill="none">
       <defs>
-        <linearGradient id="hsbcGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#1f1f1f" />
-          <stop offset="50%" stopColor="#2c2c2c" />
-          <stop offset="100%" stopColor="#111111" />
+        <linearGradient id="hsbcBg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor={stop1} />
+          <stop offset="50%" stopColor={stop2} />
+          <stop offset="100%" stopColor={stop3} />
         </linearGradient>
       </defs>
-      <rect width="400" height="252" fill="url(#hsbcGrad)" />
-      
-      {/* HSBC Faceted Hexagon Geometry in background watermark */}
-      <g transform="translate(230, 126)" opacity="0.12">
+      <rect width="400" height="252" fill="url(#hsbcBg)" />
+
+      <g transform="translate(230, 126)" opacity={isAdvance ? "0.2" : "0.12"}>
         <rect x="-40" y="-40" width="80" height="80" transform="rotate(45)" fill="#dc2626" />
         <polygon points="-30,0 0,-30 30,0 0,30" fill="#ffffff" />
       </g>
@@ -330,7 +386,98 @@ function HsbcVectorArt() {
   );
 }
 
-// ── 9. Generic Custom Brushed Metal ─────────────────────────────────
+// ====================================================================
+// 6. ALEXBANK VECTOR BACKGROUNDS
+// ====================================================================
+function AlexbankVectorArt({ tier = 'platinum' }: { tier?: string }) {
+  const t = tier.toLowerCase();
+  const isGold = t === 'gold';
+  const isTitanium = t === 'titanium' || t === 'plus';
+  const isPlatinum = t === 'platinum';
+  const isMagnifica = t === 'wealth' || t === 'magnifica' || t === 'world' || t === 'world-elite' || t === 'world_elite' || t === 'private';
+
+  const stop1 = isGold ? '#b88a1d' : isMagnifica ? '#00241f' : isPlatinum ? '#002d27' : isTitanium ? '#00362f' : '#00473e';
+  const stop2 = isGold ? '#00473e' : isMagnifica ? '#00362f' : isPlatinum ? '#004037' : isTitanium ? '#004e45' : '#006357';
+  const stop3 = isGold ? '#8c670d' : isMagnifica ? '#001714' : isPlatinum ? '#001a16' : isTitanium ? '#00201c' : '#002b25';
+
+  return (
+    <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 400 252" preserveAspectRatio="none" fill="none">
+      <defs>
+        <linearGradient id="alexBg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor={stop1} />
+          <stop offset="60%" stopColor={stop2} />
+          <stop offset="100%" stopColor={stop3} />
+        </linearGradient>
+      </defs>
+      <rect width="400" height="252" fill="url(#alexBg)" />
+
+      <rect x="220" y="26" width="120" height="120" rx="20" stroke="#f97316" strokeWidth="2" fill="none" opacity="0.25" />
+      <circle cx="280" cy="86" r="25" fill="#f97316" opacity="0.2" />
+    </svg>
+  );
+}
+
+// ====================================================================
+// 7. AAIB VECTOR BACKGROUNDS
+// ====================================================================
+function AaibVectorArt({ tier = 'platinum' }: { tier?: string }) {
+  const t = tier.toLowerCase();
+  const isGold = t === 'gold';
+  const isTitanium = t === 'titanium' || t === 'plus';
+  const isPlatinum = t === 'platinum';
+  const isWorld = t === 'wealth' || t === 'world' || t === 'world-elite' || t === 'world_elite' || t === 'private';
+
+  const stop1 = isGold ? '#b88a1d' : isWorld ? '#040d1f' : isPlatinum ? '#061633' : isTitanium ? '#071630' : '#0b2248';
+  const stop2 = isGold ? '#0b2248' : isWorld ? '#0a1c3b' : isPlatinum ? '#0b2659' : isTitanium ? '#0f2854' : '#153975';
+  const stop3 = isGold ? '#8c670d' : isWorld ? '#02060e' : isPlatinum ? '#030c1f' : isTitanium ? '#040d1f' : '#061329';
+
+  return (
+    <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 400 252" preserveAspectRatio="none" fill="none">
+      <defs>
+        <linearGradient id="aaibBg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor={stop1} />
+          <stop offset="60%" stopColor={stop2} />
+          <stop offset="100%" stopColor={stop3} />
+        </linearGradient>
+      </defs>
+      <rect width="400" height="252" fill="url(#aaibBg)" />
+      <rect x="10" y="10" width="380" height="232" rx="14" stroke="#d4af37" strokeWidth="1" opacity="0.3" fill="none" />
+      <circle cx="320" cy="70" r="45" fill="#f59e0b" opacity="0.14" />
+    </svg>
+  );
+}
+
+// ====================================================================
+// 8. EMIRATES NBD VECTOR BACKGROUNDS
+// ====================================================================
+function EnbdVectorArt({ tier = 'platinum' }: { tier?: string }) {
+  const t = tier.toLowerCase();
+  const isGold = t === 'gold';
+  const isTitanium = t === 'titanium' || t === 'plus';
+  const isPlatinum = t === 'platinum';
+  const isWorld = t === 'wealth' || t === 'world' || t === 'world-elite' || t === 'world_elite' || t === 'private';
+
+  const stop1 = isGold ? '#b88a1d' : isWorld ? '#000f29' : isPlatinum ? '#001438' : isTitanium ? '#00183d' : '#002456';
+  const stop2 = isGold ? '#002456' : isWorld ? '#001b47' : isPlatinum ? '#001e52' : isTitanium ? '#002766' : '#003882';
+  const stop3 = isGold ? '#8c670d' : isWorld ? '#000817' : isPlatinum ? '#000b1f' : isTitanium ? '#000d22' : '#001433';
+
+  return (
+    <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 400 252" preserveAspectRatio="none" fill="none">
+      <defs>
+        <linearGradient id="enbdBg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor={stop1} />
+          <stop offset="60%" stopColor={stop2} />
+          <stop offset="100%" stopColor={stop3} />
+        </linearGradient>
+      </defs>
+      <rect width="400" height="252" fill="url(#enbdBg)" />
+      <path d="M 120 0 C 220 70 200 170 360 252 L 400 252 L 400 0 Z" fill="#06b6d4" opacity="0.14" />
+      <circle cx="280" cy="110" r="70" stroke="#06b6d4" strokeWidth="2" strokeDasharray="6 6" fill="none" opacity="0.25" />
+    </svg>
+  );
+}
+
+// ── Generic Custom Brushed Metal ─────────────────────────────────
 function GenericVectorArt({ color = '#0a7ea4' }: { color?: string }) {
   return (
     <div
@@ -397,46 +544,33 @@ export function RealisticCard({
   const network = wallet.network || 'mastercard';
 
   const tierTitle = isCredit ? creditTier.toUpperCase() : accountTier.toUpperCase();
+  const activeTier = isCredit ? creditTier : accountTier;
 
   // Render authentic vector background based on exact bank and tier
   const renderVectorBackground = () => {
     if (bank === 'cib') {
       if (isCredit) {
         if (creditTier === 'platinum') return <CibPlatinumVectorArt />;
-        if (creditTier === 'gold') {
-          return (
-            <div className="absolute inset-0 pointer-events-none" style={{ background: 'linear-gradient(135deg, #c59b27 0%, #e8c868 40%, #8c6b12 100%)' }}>
-              <CibPlatinumVectorArt />
-            </div>
-          );
-        }
-        if (creditTier === 'titanium') {
-          return (
-            <div className="absolute inset-0 pointer-events-none" style={{ background: 'linear-gradient(135deg, #3b4252 0%, #4c566a 50%, #242831 100%)' }}>
-              <CibPlatinumVectorArt />
-            </div>
-          );
-        }
-        return <CibPlatinumVectorArt />;
+        if (creditTier === 'gold') return <CibGoldVectorArt />;
+        if (creditTier === 'titanium') return <CibTitaniumVectorArt />;
+        if (creditTier === 'world' || (creditTier as string) === 'world-elite' || (creditTier as string) === 'world_elite') return <CibWorldVectorArt />;
+        return <CibClassicCreditVectorArt />;
       } else {
         if (accountTier === 'prime') return <CibPrimeVectorArt />;
         if (accountTier === 'plus') return <CibPlusVectorArt />;
         if (accountTier === 'wealth') return <CibWealthVectorArt />;
-        if (accountTier === 'private') {
-          return (
-            <div className="absolute inset-0 pointer-events-none" style={{ background: 'linear-gradient(135deg, #111 0%, #1a1a1a 50%, #050505 100%)' }}>
-              <CibWealthVectorArt />
-            </div>
-          );
-        }
+        if (accountTier === 'private') return <CibPrivateVectorArt />;
         return <CibPrimeVectorArt />;
       }
     }
 
-    if (bank === 'nbe') return <NbeVectorArt tier={creditTier} />;
-    if (bank === 'banque-misr') return <BanqueMisrVectorArt />;
-    if (bank === 'qnb') return <QnbVectorArt />;
-    if (bank === 'hsbc') return <HsbcVectorArt />;
+    if (bank === 'nbe') return <NbeVectorArt tier={activeTier} />;
+    if (bank === 'banque-misr') return <BanqueMisrVectorArt tier={activeTier} />;
+    if (bank === 'qnb') return <QnbVectorArt tier={activeTier} />;
+    if (bank === 'hsbc') return <HsbcVectorArt tier={activeTier} />;
+    if (bank === 'alexbank') return <AlexbankVectorArt tier={activeTier} />;
+    if (bank === 'aaib') return <AaibVectorArt tier={activeTier} />;
+    if (bank === 'enbd') return <EnbdVectorArt tier={activeTier} />;
 
     return <GenericVectorArt color={wallet.color} />;
   };
@@ -448,7 +582,7 @@ export function RealisticCard({
         onClick ? 'cursor-pointer hover:-translate-y-1 hover:shadow-cyan-500/10 active:scale-[0.99]' : ''
       } ${className}`}
     >
-      {/* ── 100% PURE VECTOR ART BACKGROUND ─────────────────────── */}
+      {/* ── AUTHENTIC VECTOR ART BACKGROUND ─────────────────────── */}
       {renderVectorBackground()}
 
       {/* Surface ambient specular gloss */}
@@ -508,7 +642,7 @@ export function RealisticCard({
             </span>
             <span
               className="text-xs font-mono font-extrabold text-white tracking-widest"
-              style={{ textShadow: '0 1px 1px rgba(0,0,0,0.8)' }}
+              style={{ textShadow: '0 1.5px 2px rgba(0,0,0,0.9)' }}
             >
               {wallet.expiryDate || '12/28'}
             </span>

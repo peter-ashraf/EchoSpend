@@ -1,11 +1,11 @@
 /**
- * BankLogos.tsx — High-resolution Bank Logo Components with Transparent Backgrounds & Large Sizing.
+ * BankLogos.tsx — Real Official Bank Logos with Transparent Backgrounds & Large Sizing.
  */
 
 export function CibLogo({ className = '' }: { variant?: string; className?: string }) {
   return (
     <div className="flex items-center gap-2 select-none">
-      <img src="./logos/cib.svg" alt="CIB Logo" className={`h-8 md:h-10 max-w-[170px] object-contain filter drop-shadow-md ${className}`} />
+      <img src="./logos/cib.png" alt="CIB Logo" className={`h-8 sm:h-9 md:h-10 max-h-10 w-auto object-contain filter drop-shadow-md ${className}`} />
     </div>
   );
 }
@@ -13,7 +13,7 @@ export function CibLogo({ className = '' }: { variant?: string; className?: stri
 export function NbeLogo({ className = '' }: { className?: string }) {
   return (
     <div className="flex items-center gap-2 select-none">
-      <img src="./logos/nbe.svg" alt="NBE Logo" className={`h-9 md:h-11 max-w-[200px] object-contain filter drop-shadow-md ${className}`} />
+      <img src="./logos/nbe.png" alt="NBE Logo" className={`h-8 sm:h-9 md:h-10 max-h-10 w-auto object-contain filter drop-shadow-md ${className}`} />
     </div>
   );
 }
@@ -21,7 +21,7 @@ export function NbeLogo({ className = '' }: { className?: string }) {
 export function BanqueMisrLogo({ className = '' }: { className?: string }) {
   return (
     <div className="flex items-center gap-2 select-none">
-      <img src="./logos/banque-misr.svg" alt="Banque Misr Logo" className={`h-9 md:h-11 max-w-[180px] object-contain filter drop-shadow-md ${className}`} />
+      <img src="./logos/banque-misr.png" alt="Banque Misr Logo" className={`h-9 sm:h-10 md:h-11 max-h-11 w-auto object-contain filter drop-shadow-md ${className}`} />
     </div>
   );
 }
@@ -29,7 +29,7 @@ export function BanqueMisrLogo({ className = '' }: { className?: string }) {
 export function QnbLogo({ className = '' }: { className?: string }) {
   return (
     <div className="flex items-center gap-2 select-none">
-      <img src="./logos/qnb.svg" alt="QNB Logo" className={`h-8 md:h-10 max-w-[180px] object-contain filter drop-shadow-md ${className}`} />
+      <img src="./logos/qnb.png" alt="QNB Logo" className={`h-8 sm:h-9 md:h-10 max-h-10 w-auto object-contain filter drop-shadow-md ${className}`} />
     </div>
   );
 }
@@ -37,7 +37,7 @@ export function QnbLogo({ className = '' }: { className?: string }) {
 export function HsbcLogo({ className = '' }: { className?: string }) {
   return (
     <div className="flex items-center gap-2 select-none">
-      <img src="./logos/hsbc.png" alt="HSBC Logo" className={`h-7 md:h-9 object-contain filter drop-shadow-md brightness-0 invert ${className}`} />
+      <img src="./logos/hsbc.png" alt="HSBC Logo" className={`h-7 sm:h-8 md:h-9 max-h-9 w-auto object-contain filter drop-shadow-md brightness-0 invert ${className}`} />
     </div>
   );
 }
@@ -45,7 +45,7 @@ export function HsbcLogo({ className = '' }: { className?: string }) {
 export function AlexbankLogo({ className = '' }: { className?: string }) {
   return (
     <div className="flex items-center gap-2 select-none">
-      <img src="./logos/alexbank.svg" alt="AlexBank Logo" className={`h-8 md:h-10 max-w-[180px] object-contain filter drop-shadow-md ${className}`} />
+      <img src="./logos/alexbank.png" alt="AlexBank Logo" className={`h-8 sm:h-9 md:h-10 max-h-10 w-auto object-contain filter drop-shadow-md ${className}`} />
     </div>
   );
 }
