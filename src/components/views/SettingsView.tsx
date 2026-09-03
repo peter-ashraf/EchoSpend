@@ -9,7 +9,7 @@ import { CategoryForm } from '../forms/CategoryForm';
 import type { Category } from '../../store/useStore';
 import { Plus } from '@phosphor-icons/react';
 import { isBiometricSupported, registerBiometric, clearBiometricCredential } from '../../lib/biometricAuth';
-import { APP_VERSION, checkForAppUpdate, reloadAndApplyUpdate } from '../../lib/pwaUpdate';
+import { APP_VERSION, BUILD_TIME, GIT_HASH, checkForAppUpdate, reloadAndApplyUpdate } from '../../lib/pwaUpdate';
 import { UpdatePromptModal } from '../modals/UpdatePromptModal';
 
 interface SettingsViewProps {
@@ -438,7 +438,18 @@ export function SettingsView({ onStartWhisperDownload, isWhisperDownloading }: S
           <div className="pt-3 border-t border-neutral-800/60 space-y-2.5">
             <div className="flex items-center justify-between text-xs">
               <span className="text-neutral-400">Current Release</span>
-              <span className="font-mono text-white font-semibold">v{APP_VERSION}</span>
+              <span className="font-mono text-white font-semibold">v{APP_VERSION} ({GIT_HASH})</span>
+            </div>
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-neutral-400">Build Timestamp</span>
+              <span className="font-mono text-neutral-300 text-[11px]">
+                {new Date(BUILD_TIME).toLocaleString(undefined, {
+                  month: 'short',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+              </span>
             </div>
             <div className="flex items-center justify-between text-xs">
               <span className="text-neutral-400">Build Target</span>

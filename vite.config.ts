@@ -1,13 +1,48 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import { execSync } from 'node:child_process'
+import { writeFileSync } from 'node:fs'
+
+const getGitInfo = () => {
+  let hash = 'dev';
+  let count = '0';
+  try {
+    hash = execSync('git rev-parse --short HEAD').toString().trim();
+    count = execSync('git rev-list --count HEAD').toString().trim();
+  } catch {}
+  return { hash, count };
+};
+
+const gitInfo = getGitInfo();
+const buildTime = new Date().toISOString();
+const appVersion = `1.3.${gitInfo.count}`;
+
+// Write public/version.json before building so it is bundled and served statically
+try {
+  writeFileSync(
+    './public/version.json',
+    JSON.stringify(
+      {
+        version: appVersion,
+        commit: gitInfo.hash,
+        revision: gitInfo.count,
+        buildTime: buildTime
+      },
+      null,
+      2
+    )
+  );
+} catch {}
 
 // https://vitejs.dev/config/
 export default defineConfig({
   base: './',
   define: {
-    __APP_VERSION__: JSON.stringify('1.2.0'),
-    __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+    __APP_VERSION__: JSON.stringify(appVersion),
+    __BUILD_TIME__: JSON.stringify(buildTime),
+    __GIT_HASH__: JSON.stringify(gitInfo.hash),
+    __GIT_COUNT__: JSON.stringify(gitInfo.count),
   },
   plugins: [
     react(),
@@ -50,5 +85,5 @@ export default defineConfig({
         ]
       }
     })
-  ],
+  ]
 })

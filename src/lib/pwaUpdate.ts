@@ -3,8 +3,10 @@
  * Supports manual check for updates in Settings and prompts PWA reload.
  */
 
-export const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '1.2.0';
+export const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '1.3.0';
 export const BUILD_TIME = typeof __BUILD_TIME__ !== 'undefined' ? __BUILD_TIME__ : new Date().toISOString();
+export const GIT_HASH = typeof __GIT_HASH__ !== 'undefined' ? __GIT_HASH__ : 'dev';
+export const GIT_COUNT = typeof __GIT_COUNT__ !== 'undefined' ? __GIT_COUNT__ : '0';
 
 export interface CheckUpdateResult {
   hasUpdate: boolean;
@@ -55,38 +57,36 @@ export async function checkForAppUpdate(): Promise<CheckUpdateResult> {
   }
 
   try {
+    // 1. Direct server check against version.json with fresh timestamp
+    try {
+      const vRes = await fetch(`./version.json?t=${Date.now()}`, { cache: 'no-store' });
+      if (vRes.ok) {
+        const serverInfo = await vRes.json();
+        if (serverInfo?.version && serverInfo.version !== APP_VERSION) {
+          if (registrationInstance) {
+            registrationInstance.update().catch(() => {});
+          }
+          return {
+            hasUpdate: true,
+            statusText: `New release v${serverInfo.version} found!`
+          };
+        }
+      }
+    } catch {}
+
     let reg: ServiceWorkerRegistration | undefined | null = registrationInstance;
-    if (!reg) {
+    if (!reg && 'serviceWorker' in navigator) {
       reg = await navigator.serviceWorker.getRegistration();
     }
 
-    if (!reg) {
-      // In dev or unregistered mode
-      return { hasUpdate: false, statusText: 'App is up to date' };
-    }
-
-    // Check if there is already a waiting worker
-    if (reg.waiting) {
-      return { hasUpdate: true, statusText: 'Update ready to install' };
-    }
-
-    // Trigger check against network for sw.js changes
-    await reg.update();
-
-    if (reg.waiting || reg.installing) {
-      return { hasUpdate: true, statusText: 'New version found!' };
-    }
-
-    // Also fetch index.html with cache-buster to verify deployment
-    const res = await fetch(`./?t=${Date.now()}`, { cache: 'no-store' });
-    if (res.ok) {
-      const etag = res.headers.get('ETag') || res.headers.get('Last-Modified');
-      const lastEtag = sessionStorage.getItem('app_etag');
-      if (etag && lastEtag && etag !== lastEtag) {
-        sessionStorage.setItem('app_etag', etag);
-        return { hasUpdate: true, statusText: 'New build available!' };
+    if (reg) {
+      if (reg.waiting) {
+        return { hasUpdate: true, statusText: 'Update ready to install' };
       }
-      if (etag) sessionStorage.setItem('app_etag', etag);
+      await reg.update();
+      if (reg.waiting || reg.installing) {
+        return { hasUpdate: true, statusText: 'New version downloading...' };
+      }
     }
 
     return { hasUpdate: false, statusText: 'You are on the latest version' };
