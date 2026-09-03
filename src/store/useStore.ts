@@ -224,7 +224,8 @@ export const useStore = create<AppState>((set, get) => {
 
     recordHabitActivity: async () => {
       const db = await getDB();
-      const todayStr = new Date().toISOString().split('T')[0];
+      const d = new Date();
+      const todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       let streak = await db.get('streaks', 'main-streak');
       
       if (!streak) {
@@ -239,11 +240,16 @@ export const useStore = create<AppState>((set, get) => {
         if (!streak.history.includes(todayStr)) {
           streak.history.push(todayStr);
           // Check consecutive day
-          const lastDate = new Date(streak.lastActiveDate);
+          const lastDate = streak.lastActiveDate ? new Date(streak.lastActiveDate) : null;
           const today = new Date(todayStr);
-          const diffDays = Math.round((today.getTime() - lastDate.getTime()) / (1000 * 3600 * 24));
+          const diffDays = lastDate ? Math.round((today.getTime() - lastDate.getTime()) / (1000 * 3600 * 24)) : 999;
           
-          if (diffDays === 1) {
+          if (streak.currentStreak === 0 || !lastDate) {
+            streak.currentStreak = 1;
+            if (streak.currentStreak > streak.bestStreak) {
+              streak.bestStreak = 1;
+            }
+          } else if (diffDays === 1) {
             streak.currentStreak += 1;
             if (streak.currentStreak > streak.bestStreak) {
               streak.bestStreak = streak.currentStreak;

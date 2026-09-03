@@ -21,7 +21,14 @@ export function DashboardView({ onNavigateToCards }: DashboardViewProps) {
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
 
   const currencySymbol = settings?.currency || 'EGP';
-  const monthlyBudget = settings?.monthlyBudget || 25000;
+  const monthlyBudget = settings?.monthlyBudget || 0;
+
+  function toLocalDateStr(d: Date): string {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
 
   // Month navigation
   const handlePrevMonth = () => {
@@ -69,8 +76,8 @@ export function DashboardView({ onNavigateToCards }: DashboardViewProps) {
   }, [wallets]);
 
   // Budget calculations
-  const budgetPercentage = Math.min(Math.round((totalSpent / monthlyBudget) * 100), 100);
-  const isBudgetWarning = budgetPercentage >= 85;
+  const budgetPercentage = monthlyBudget > 0 ? Math.min(Math.round((totalSpent / monthlyBudget) * 100), 100) : 0;
+  const isBudgetWarning = monthlyBudget > 0 && budgetPercentage >= 85;
 
   // Streak history check for 7 days
   const weekDays = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
@@ -149,10 +156,12 @@ export function DashboardView({ onNavigateToCards }: DashboardViewProps) {
         <div className="space-y-2 pt-2 border-t border-neutral-800/80 relative z-10">
           <div className="flex items-center justify-between text-xs">
             <span className="text-neutral-400 font-medium">
-              {currencySymbol} {Math.round(totalSpent).toLocaleString()} / {currencySymbol} {Math.round(monthlyBudget).toLocaleString()} budget
+              {monthlyBudget > 0
+                ? `${currencySymbol} ${Math.round(totalSpent).toLocaleString()} / ${currencySymbol} ${Math.round(monthlyBudget).toLocaleString()} budget`
+                : `${currencySymbol} ${Math.round(totalSpent).toLocaleString()} spent • No budget limit`}
             </span>
             <span className={`font-mono font-bold ${isBudgetWarning ? 'text-amber-400' : 'text-[#0a7ea4]'}`}>
-              {budgetPercentage}%
+              {monthlyBudget > 0 ? `${budgetPercentage}%` : ''}
             </span>
           </div>
 
@@ -163,7 +172,7 @@ export function DashboardView({ onNavigateToCards }: DashboardViewProps) {
                   ? 'bg-gradient-to-r from-amber-500 to-red-500'
                   : 'bg-gradient-to-r from-[#0a7ea4] to-[#2dd4bf]'
               }`}
-              style={{ width: `${budgetPercentage}%` }}
+              style={{ width: `${monthlyBudget > 0 ? budgetPercentage : 0}%` }}
             />
           </div>
         </div>
@@ -195,8 +204,8 @@ export function DashboardView({ onNavigateToCards }: DashboardViewProps) {
           {weekDays.map((day, idx) => {
             const dayDate = new Date(weekStart);
             dayDate.setDate(dayDate.getDate() + idx);
-            const dateStr = dayDate.toISOString().split('T')[0];
-            const isCompleted = streak?.history?.includes(dateStr) || false;
+            const dateStr = toLocalDateStr(dayDate);
+            const isCompleted = (streak?.currentStreak ?? 0) > 0 && (streak?.history?.includes(dateStr) || false);
             const isToday = idx === currentDayIndex;
 
             return (

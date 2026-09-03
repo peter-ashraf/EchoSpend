@@ -143,7 +143,7 @@ export async function seedDatabase() {
       currency: 'EGP',
       language: 'en',
       voiceLanguage: 'ar-EG',
-      monthlyBudget: 25000,
+      monthlyBudget: 0,
       onboarded: false,
       offlineVoiceStatus: 'not-asked',
       biometricLock: false,
@@ -161,8 +161,8 @@ export async function seedDatabase() {
         currentSettings.voiceLanguage = 'ar-EG';
         updated = true;
       }
-      if (!currentSettings.monthlyBudget) {
-        currentSettings.monthlyBudget = 25000;
+      if (currentSettings.monthlyBudget === 25000 || currentSettings.monthlyBudget === undefined) {
+        currentSettings.monthlyBudget = 0;
         updated = true;
       }
       if (!currentSettings.offlineVoiceStatus) {
@@ -200,7 +200,7 @@ export async function seedDatabase() {
   }
 
   const existingStreak = await db.get('streaks', 'main-streak');
-  if (existingStreak && (existingStreak.bestStreak === 14 || existingStreak.currentStreak === 5)) {
+  if (existingStreak && (existingStreak.bestStreak === 14 || existingStreak.currentStreak === 5 || existingStreak.currentStreak === 0)) {
     await db.put('streaks', {
       id: 'main-streak',
       currentStreak: 0,

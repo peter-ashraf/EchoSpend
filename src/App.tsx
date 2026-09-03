@@ -376,17 +376,19 @@ function App() {
         </AnimatePresence>
       </AppLayout>
 
-      {/* ── Floating Voice Button ───────────────────────────────── */}
-      <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-40">
-        <VoiceMicButton
-          onTranscript={handleVoiceTranscript}
-          onRequestKeyboard={openKeyboardModal}
-          onRequestOfflineConsent={() => setShowOfflineConsent(true)}
-          onOfflineAudioReady={handleOfflineMicPress}
-          offlineVoiceStatus={settings.offlineVoiceStatus}
-          isWhisperTranscribing={whisperStatus === 'transcribing'}
-        />
-      </div>
+      {/* ── Floating Voice Button (Only on Home / Dashboard) ─────── */}
+      {activeTab === 'dashboard' && (
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-40">
+          <VoiceMicButton
+            onTranscript={handleVoiceTranscript}
+            onRequestKeyboard={openKeyboardModal}
+            onRequestOfflineConsent={() => setShowOfflineConsent(true)}
+            onOfflineAudioReady={handleOfflineMicPress}
+            offlineVoiceStatus={settings.offlineVoiceStatus}
+            isWhisperTranscribing={whisperStatus === 'transcribing'}
+          />
+        </div>
+      )}
 
       {/* ── Manual Transaction Modal ────────────────────────────── */}
       <Modal isOpen={isManualTxOpen} onClose={() => setIsManualTxOpen(false)} title="Add Transaction">

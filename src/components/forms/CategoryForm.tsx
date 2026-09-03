@@ -3,7 +3,7 @@ import { useStore } from '../../store/useStore';
 import type { Category } from '../../store/useStore';
 import { getTranslation } from '../../lib/i18n';
 import { Check, Trash } from '@phosphor-icons/react';
-import { CategoryIcon, availableIcons } from '../ui/CategoryIcon';
+import { CategoryIcon, availableIcons, popularEmojis } from '../ui/CategoryIcon';
 import { ConfirmModal } from '../ui/ConfirmModal';
 
 interface CategoryFormProps {
@@ -115,22 +115,73 @@ export function CategoryForm({ onSuccess, initialData }: CategoryFormProps) {
 
         {/* Icon Selection */}
         <div className="space-y-3">
-          <label className="text-sm font-medium text-brand-gray">Icon</label>
-          <div className="grid grid-cols-6 gap-2">
-            {availableIcons.map(icon => (
-              <button
-                key={icon}
-                type="button"
-                onClick={() => setIconName(icon)}
-                className={`aspect-square rounded-xl flex items-center justify-center transition-all ${
-                  iconName === icon
-                    ? 'bg-brand-teal/20 text-brand-teal border border-brand-teal'
-                    : 'bg-brand-darker border border-brand-light/10 text-brand-gray hover:bg-brand-light/5'
-                }`}
-              >
-                <CategoryIcon name={icon} size={20} />
-              </button>
-            ))}
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium text-brand-gray">Icon or Emoji</label>
+            <div
+              className="w-8 h-8 rounded-xl flex items-center justify-center text-sm shadow-sm"
+              style={{ backgroundColor: `${color}25`, color: color }}
+            >
+              <CategoryIcon name={iconName} size={18} />
+            </div>
+          </div>
+
+          {/* Custom Emoji / Text Input */}
+          <div className="flex items-center gap-2 bg-brand-darker border border-brand-light/20 rounded-xl px-3 py-2 focus-within:border-brand-teal transition-colors">
+            <span className="text-xs text-brand-gray">Custom Emoji / Initial:</span>
+            <input
+              type="text"
+              maxLength={4}
+              value={iconName.length <= 4 && !availableIcons.includes(iconName) ? iconName : ''}
+              onChange={(e) => {
+                if (e.target.value.trim()) {
+                  setIconName(e.target.value.trim());
+                }
+              }}
+              placeholder="e.g. 🍕 or Gym"
+              className="bg-transparent text-sm text-neutral-200 outline-none flex-1 font-medium"
+            />
+          </div>
+
+          {/* Quick Popular Emojis */}
+          <div className="space-y-1">
+            <span className="text-[11px] text-brand-gray font-medium">Popular Emojis:</span>
+            <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+              {popularEmojis.map(emoji => (
+                <button
+                  key={emoji}
+                  type="button"
+                  onClick={() => setIconName(emoji)}
+                  className={`w-8 h-8 rounded-lg shrink-0 flex items-center justify-center text-base transition-all ${
+                    iconName === emoji
+                      ? 'bg-brand-teal/20 border border-brand-teal scale-105'
+                      : 'bg-brand-darker border border-brand-light/10 hover:bg-brand-light/10'
+                  }`}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Standard Vector Icons Grid */}
+          <div className="space-y-1">
+            <span className="text-[11px] text-brand-gray font-medium">Standard Icons:</span>
+            <div className="grid grid-cols-7 gap-1.5 max-h-48 overflow-y-auto pr-1 no-scrollbar">
+              {availableIcons.map(icon => (
+                <button
+                  key={icon}
+                  type="button"
+                  onClick={() => setIconName(icon)}
+                  className={`aspect-square rounded-xl flex items-center justify-center transition-all ${
+                    iconName === icon
+                      ? 'bg-brand-teal/20 text-brand-teal border border-brand-teal scale-105'
+                      : 'bg-brand-darker border border-brand-light/10 text-brand-gray hover:bg-brand-light/10'
+                  }`}
+                >
+                  <CategoryIcon name={icon} size={18} />
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 

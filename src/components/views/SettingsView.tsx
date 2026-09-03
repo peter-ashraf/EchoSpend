@@ -60,10 +60,8 @@ export function SettingsView({ onStartWhisperDownload, isWhisperDownloading }: S
   const handleSaveBudget = async (e: React.FormEvent) => {
     e.preventDefault();
     const val = parseFloat(newBudget);
-    if (!isNaN(val) && val > 0) {
-      await updateSettings({ monthlyBudget: val });
-      setIsBudgetModalOpen(false);
-    }
+    await updateSettings({ monthlyBudget: !isNaN(val) && val >= 0 ? val : 0 });
+    setIsBudgetModalOpen(false);
   };
 
   const handleResetAllData = async () => {
@@ -142,11 +140,12 @@ export function SettingsView({ onStartWhisperDownload, isWhisperDownloading }: S
           
           {/* Monthly Budget Setting */}
           <button 
+            type="button"
             onClick={() => {
-              setNewBudget(settings.monthlyBudget?.toString() || '25000');
+              setNewBudget(settings.monthlyBudget && settings.monthlyBudget > 0 ? settings.monthlyBudget.toString() : '');
               setIsBudgetModalOpen(true);
             }}
-            className="pb-4 flex justify-between items-center w-full active:scale-[0.99] transition-all text-left"
+            className="pb-4 flex justify-between items-center w-full active:scale-[0.99] transition-all text-left cursor-pointer"
           >
             <div className="flex items-center gap-3 text-white font-semibold text-sm">
               <div className="p-2 rounded-xl bg-[#0a7ea4]/10 text-[#0a7ea4]">
@@ -159,7 +158,9 @@ export function SettingsView({ onStartWhisperDownload, isWhisperDownloading }: S
             </div>
             <div className="flex items-center gap-2">
               <span className="text-white font-mono font-bold text-sm">
-                {currencySymbol} {(settings.monthlyBudget || 25000).toLocaleString()}
+                {settings.monthlyBudget && settings.monthlyBudget > 0 
+                  ? `${currencySymbol} ${settings.monthlyBudget.toLocaleString()}` 
+                  : 'Not Set'}
               </span>
               <CaretRight size={16} className="text-neutral-500" />
             </div>
@@ -184,17 +185,21 @@ export function SettingsView({ onStartWhisperDownload, isWhisperDownloading }: S
               {categories.map(c => (
                 <button 
                   key={c.id} 
+                  type="button"
                   onClick={() => {
+                    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+                      navigator.vibrate(12);
+                    }
                     setEditingCategory(c);
                     setIsCategoryModalOpen(true);
                   }}
-                  className="p-2.5 rounded-2xl bg-neutral-950/60 border border-neutral-800/80 flex flex-col items-center gap-1.5 active:scale-95 transition-all hover:border-[#0a7ea4]/40"
+                  className="p-2.5 rounded-2xl bg-neutral-950/60 border border-neutral-800/80 flex flex-col items-center gap-1.5 active:scale-90 active:ring-2 active:ring-[#0a7ea4] active:bg-[#0a7ea4]/10 transition-all cursor-pointer hover:border-[#0a7ea4]/40 hover:scale-[1.02] shadow-sm select-none"
                 >
                   <div
-                    className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-sm"
+                    className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm transition-transform"
                     style={{ backgroundColor: `${c.color}25`, color: c.color }}
                   >
-                    <CategoryIcon name={c.iconName} size={18} />
+                    <CategoryIcon name={c.iconName} size={20} />
                   </div>
                   <span className="text-[10px] text-neutral-300 font-semibold truncate w-full text-center">{c.name}</span>
                 </button>
