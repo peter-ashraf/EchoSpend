@@ -57,8 +57,32 @@ export function VoiceConfirmModal({ isOpen, onClose, data, onConfirm }: VoiceCon
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Confirm Voice Entry">
-      <form onSubmit={handleSave} className="space-y-4">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Confirm Voice Entry"
+      footer={
+        <>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 py-3 px-4 rounded-xl border border-neutral-800 text-neutral-300 hover:bg-neutral-900 transition-colors text-sm font-semibold"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={!amount || parseFloat(amount) <= 0}
+            className="flex-1 py-3 px-4 rounded-xl bg-[#0a7ea4] hover:bg-[#086F8A] disabled:opacity-50 text-white transition-all text-sm font-bold flex items-center justify-center gap-2 shadow-lg shadow-[#0a7ea4]/20 active:scale-95"
+          >
+            <Check size={18} weight="bold" />
+            Confirm & Save
+          </button>
+        </>
+      }
+    >
+      <div className="space-y-4 p-4">
         
         {/* Transcript Speech bubble */}
         <div className="p-3 rounded-2xl bg-[#0a7ea4]/10 border border-[#0a7ea4]/30 flex items-start gap-2.5">
@@ -143,26 +167,7 @@ export function VoiceConfirmModal({ isOpen, onClose, data, onConfirm }: VoiceCon
             </select>
           </div>
         </div>
-
-        {/* Action Buttons */}
-        <div className="flex gap-3 pt-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex-1 py-3 px-4 rounded-xl border border-neutral-800 text-neutral-300 hover:bg-neutral-900 transition-colors text-sm font-semibold"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={!amount || parseFloat(amount) <= 0}
-            className="flex-1 py-3 px-4 rounded-xl bg-[#0a7ea4] hover:bg-[#086F8A] disabled:opacity-50 text-white transition-all text-sm font-bold flex items-center justify-center gap-2 shadow-lg shadow-[#0a7ea4]/20 active:scale-95"
-          >
-            <Check size={18} weight="bold" />
-            Confirm & Save
-          </button>
-        </div>
-      </form>
+      </div>
     </Modal>
   );
 }

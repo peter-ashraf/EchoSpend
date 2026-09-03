@@ -7,9 +7,10 @@ interface ModalProps {
   onClose: () => void;
   title: string;
   children: React.ReactNode;
+  footer?: React.ReactNode;
 }
 
-export function Modal({ isOpen, onClose, title, children }: ModalProps) {
+export function Modal({ isOpen, onClose, title, children, footer }: ModalProps) {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -39,7 +40,8 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               className="bg-neutral-900 border border-neutral-800 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden pointer-events-auto flex flex-col max-h-[90vh]"
             >
-              <div className="flex items-center justify-between p-4 border-b border-neutral-800 shrink-0">
+              {/* FIXED HEADER */}
+              <div className="flex items-center justify-between p-4 border-b border-neutral-800 shrink-0 bg-neutral-900 z-10">
                 <h2 className="text-lg font-semibold text-neutral-100">{title}</h2>
                 <button
                   onClick={onClose}
@@ -48,9 +50,18 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
                   <X size={20} />
                 </button>
               </div>
-              <div className="p-4 overflow-y-auto flex-1 custom-modal-scrollbar">
+
+              {/* SCROLLABLE MIDDLE CONTENT */}
+              <div className="flex-1 overflow-y-auto min-h-0 custom-modal-scrollbar flex flex-col">
                 {children}
               </div>
+
+              {/* FIXED FOOTER */}
+              {footer && (
+                <div className="p-4 border-t border-neutral-800 shrink-0 bg-neutral-900 z-10 flex gap-3">
+                  {footer}
+                </div>
+              )}
             </motion.div>
           </div>
         </>

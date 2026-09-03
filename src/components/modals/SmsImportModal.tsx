@@ -95,8 +95,32 @@ export function SmsImportModal({ isOpen, onClose, onSuccess }: SmsImportModalPro
   const matchedCategory = categories.find(c => c.id === parsed?.categoryId);
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Auto-Import Bank SMS">
-      <div className="space-y-4">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Auto-Import Bank SMS"
+      footer={
+        <>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 py-3 px-4 rounded-xl border border-neutral-800 text-neutral-300 hover:bg-neutral-900 transition-colors text-sm font-semibold"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            disabled={!parsed || parsed.amount <= 0}
+            onClick={handleImport}
+            className="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-[#0a7ea4] to-[#2dd4bf] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed text-neutral-950 transition-all text-sm font-bold flex items-center justify-center gap-2 shadow-lg shadow-[#0a7ea4]/20 active:scale-95"
+          >
+            <Check size={18} weight="bold" />
+            Log Expense
+          </button>
+        </>
+      }
+    >
+      <div className="space-y-4 p-4">
         <div>
           <div className="flex items-center justify-between mb-2">
             <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400">
@@ -207,25 +231,6 @@ export function SmsImportModal({ isOpen, onClose, onSuccess }: SmsImportModalPro
             </div>
           </div>
         )}
-
-        <div className="flex gap-3 pt-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex-1 py-3 px-4 rounded-xl border border-neutral-800 text-neutral-300 hover:bg-neutral-900 transition-colors text-sm font-semibold"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            disabled={!parsed || parsed.amount <= 0}
-            onClick={handleImport}
-            className="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-[#0a7ea4] to-[#2dd4bf] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed text-neutral-950 transition-all text-sm font-bold flex items-center justify-center gap-2 shadow-lg shadow-[#0a7ea4]/20 active:scale-95"
-          >
-            <Check size={18} weight="bold" />
-            Log Expense
-          </button>
-        </div>
       </div>
     </Modal>
   );

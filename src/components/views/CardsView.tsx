@@ -230,8 +230,41 @@ export function CardsView() {
       </div>
 
       {/* Add / Edit Wallet Modal with Live Card Preview */}
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingWallet ? 'Edit Bank Card' : 'Add Bank Card'}>
-        <form onSubmit={handleSave} className="space-y-4">
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title={editingWallet ? 'Edit Bank Card' : 'Add Bank Card'}
+        footer={
+          <>
+            {editingWallet && (
+              <button
+                type="button"
+                onClick={handleDelete}
+                className="p-3 rounded-xl border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-colors shrink-0"
+                title="Delete Card"
+              >
+                <Trash size={18} />
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(false)}
+              className="flex-1 py-3 px-4 rounded-xl border border-neutral-800 text-neutral-300 hover:bg-neutral-900 transition-colors text-sm font-semibold"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleSave}
+              className="flex-1 py-3 px-4 rounded-xl bg-[#0a7ea4] hover:bg-[#086F8A] text-white transition-all text-sm font-bold flex items-center justify-center gap-2 shadow-lg shadow-[#0a7ea4]/20 active:scale-95"
+            >
+              <Check size={18} weight="bold" />
+              {editingWallet ? 'Update Card' : 'Save Card'}
+            </button>
+          </>
+        }
+      >
+        <div className="space-y-4 p-4">
           
           {/* Live Realistic Card Preview */}
           <div className="space-y-1.5">
@@ -442,7 +475,7 @@ export function CardsView() {
               <input
                 type="text"
                 inputMode="numeric"
-                pattern="[0-9]*"
+                pattern="^(0[1-9]|1[0-2])\/[0-9]{2}$"
                 maxLength={5}
                 value={expiryDate}
                 onChange={(e) => {
@@ -492,35 +525,7 @@ export function CardsView() {
               ))}
             </div>
           </div>
-
-          {/* Action Buttons */}
-          <div className="flex gap-3 pt-3 border-t border-neutral-800">
-            {editingWallet && (
-              <button
-                type="button"
-                onClick={handleDelete}
-                className="p-3 rounded-xl border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-colors"
-                title="Delete Card"
-              >
-                <Trash size={18} />
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={() => setIsModalOpen(false)}
-              className="flex-1 py-3 px-4 rounded-xl border border-neutral-800 text-neutral-300 hover:bg-neutral-900 transition-colors text-sm font-semibold"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="flex-1 py-3 px-4 rounded-xl bg-[#0a7ea4] hover:bg-[#086F8A] text-white transition-all text-sm font-bold flex items-center justify-center gap-2 shadow-lg shadow-[#0a7ea4]/20 active:scale-95"
-            >
-              <Check size={18} weight="bold" />
-              {editingWallet ? 'Update Card' : 'Save Card'}
-            </button>
-          </div>
-        </form>
+        </div>
       </Modal>
 
       <ConfirmModal

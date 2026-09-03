@@ -111,161 +111,169 @@ export function SubscriptionModal({ isOpen, onClose, subscription }: Subscriptio
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={subscription ? 'Edit Subscription' : 'Add Subscription'}>
-      <form onSubmit={handleSave} className="space-y-4">
-        
-        {/* Quick Presets */}
-        {!subscription && (
-          <div>
-            <p className="text-xs text-neutral-400 mb-2 font-medium">Quick Pick Service:</p>
-            <div className="flex flex-wrap gap-2">
-              {PRESET_SERVICES.map((p, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => handleApplyPreset(p)}
-                  className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full bg-neutral-900 border border-neutral-800 text-neutral-300 hover:border-[#0a7ea4] transition-all active:scale-95"
-                >
-                  <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: p.color }} />
-                  {p.name}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1">
-            Service / Subscription Name
-          </label>
-          <input
-            type="text"
-            required
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Netflix, Spotify, Gym"
-            className="w-full px-4 py-2.5 bg-neutral-900 border border-neutral-800 rounded-xl text-white text-sm focus:outline-none focus:border-[#0a7ea4]"
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1">
-              Amount ({settings?.currency || 'EGP'})
-            </label>
-            <input
-              type="number"
-              step="any"
-              inputMode="decimal"
-              pattern="[0-9]*[.,]?[0-9]*"
-              required
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="0.00"
-              className="w-full px-4 py-2.5 bg-neutral-900 border border-neutral-800 rounded-xl text-white font-mono text-sm focus:outline-none focus:border-[#0a7ea4]"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1">
-              Billing Cycle
-            </label>
-            <select
-              value={billingCycle}
-              onChange={(e) => setBillingCycle(e.target.value as any)}
-              className="w-full px-4 py-2.5 bg-neutral-900 border border-neutral-800 rounded-xl text-white text-sm focus:outline-none focus:border-[#0a7ea4]"
-            >
-              <option value="monthly">Monthly</option>
-              <option value="yearly">Yearly</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1">
-              Next Renewal Date
-            </label>
-            <input
-              type="date"
-              required
-              value={nextBillingDate}
-              onChange={(e) => setNextBillingDate(e.target.value)}
-              className="w-full px-4 py-2.5 bg-neutral-900 border border-neutral-800 rounded-xl text-white text-sm focus:outline-none focus:border-[#0a7ea4]"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1">
-              Payment Account
-            </label>
-            <select
-              value={walletId}
-              onChange={(e) => setWalletId(e.target.value)}
-              className="w-full px-4 py-2.5 bg-neutral-900 border border-neutral-800 rounded-xl text-white text-sm focus:outline-none focus:border-[#0a7ea4]"
-            >
-              {wallets.map(w => (
-                <option key={w.id} value={w.id}>{w.name}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1">
-            Category
-          </label>
-          <select
-            value={categoryId}
-            onChange={(e) => setCategoryId(e.target.value)}
-            className="w-full px-4 py-2.5 bg-neutral-900 border border-neutral-800 rounded-xl text-white text-sm focus:outline-none focus:border-[#0a7ea4]"
-          >
-            {categories.map(c => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
-        </div>
-
-        <div className="flex items-center justify-between p-3 bg-neutral-900/60 rounded-xl border border-neutral-800">
-          <div>
-            <p className="text-sm font-semibold text-white">Active Subscription</p>
-            <p className="text-xs text-neutral-400">Include in monthly spending total</p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setActive(!active)}
-            className={`w-12 h-6 rounded-full transition-colors relative ${active ? 'bg-[#0a7ea4]' : 'bg-neutral-800'}`}
-          >
-            <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform ${active ? 'left-6' : 'left-0.5'}`} />
-          </button>
-        </div>
-
-        <div className="flex gap-3 pt-2">
-          {subscription && (
+    <>
+      <Modal
+        isOpen={isOpen}
+        onClose={onClose}
+        title={subscription ? 'Edit Subscription' : 'Add Subscription'}
+        footer={
+          <>
+            {subscription && (
+              <button
+                type="button"
+                onClick={handleDelete}
+                className="p-3 rounded-xl border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-colors shrink-0"
+              >
+                <Trash size={18} />
+              </button>
+            )}
             <button
               type="button"
-              onClick={handleDelete}
-              className="p-3 rounded-xl border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-colors"
+              onClick={onClose}
+              className="flex-1 py-3 px-4 rounded-xl border border-neutral-800 text-neutral-300 hover:bg-neutral-900 transition-colors text-sm font-semibold"
             >
-              <Trash size={18} />
+              Cancel
             </button>
+            <button
+              type="button"
+              onClick={handleSave}
+              className="flex-1 py-3 px-4 rounded-xl bg-[#0a7ea4] hover:bg-[#086F8A] text-white transition-all text-sm font-bold flex items-center justify-center gap-2 shadow-lg shadow-[#0a7ea4]/20 active:scale-95"
+            >
+              <Check size={18} weight="bold" />
+              {subscription ? 'Update' : 'Save'}
+            </button>
+          </>
+        }
+      >
+        <div className="space-y-4 p-4">
+          
+          {/* Quick Presets */}
+          {!subscription && (
+            <div>
+              <p className="text-xs text-neutral-400 mb-2 font-medium">Quick Pick Service:</p>
+              <div className="flex flex-wrap gap-2">
+                {PRESET_SERVICES.map((p, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => handleApplyPreset(p)}
+                    className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full bg-neutral-900 border border-neutral-800 text-neutral-300 hover:border-[#0a7ea4] transition-all active:scale-95"
+                  >
+                    <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: p.color }} />
+                    {p.name}
+                  </button>
+                ))}
+              </div>
+            </div>
           )}
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex-1 py-3 px-4 rounded-xl border border-neutral-800 text-neutral-300 hover:bg-neutral-900 transition-colors text-sm font-semibold"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            className="flex-1 py-3 px-4 rounded-xl bg-[#0a7ea4] hover:bg-[#086F8A] text-white transition-all text-sm font-bold flex items-center justify-center gap-2 shadow-lg shadow-[#0a7ea4]/20 active:scale-95"
-          >
-            <Check size={18} weight="bold" />
-            {subscription ? 'Update' : 'Save'}
-          </button>
+
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1">
+              Service / Subscription Name
+            </label>
+            <input
+              type="text"
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Netflix, Spotify, Gym"
+              className="w-full px-4 py-2.5 bg-neutral-900 border border-neutral-800 rounded-xl text-white text-sm focus:outline-none focus:border-[#0a7ea4]"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1">
+                Amount ({settings?.currency || 'EGP'})
+              </label>
+              <input
+                type="number"
+                step="any"
+                inputMode="decimal"
+                pattern="[0-9]*[.,]?[0-9]*"
+                required
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="0.00"
+                className="w-full px-4 py-2.5 bg-neutral-900 border border-neutral-800 rounded-xl text-white font-mono text-sm focus:outline-none focus:border-[#0a7ea4]"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1">
+                Billing Cycle
+              </label>
+              <select
+                value={billingCycle}
+                onChange={(e) => setBillingCycle(e.target.value as any)}
+                className="w-full px-4 py-2.5 bg-neutral-900 border border-neutral-800 rounded-xl text-white text-sm focus:outline-none focus:border-[#0a7ea4]"
+              >
+                <option value="monthly">Monthly</option>
+                <option value="yearly">Yearly</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1">
+                Next Renewal Date
+              </label>
+              <input
+                type="date"
+                required
+                value={nextBillingDate}
+                onChange={(e) => setNextBillingDate(e.target.value)}
+                className="w-full px-4 py-2.5 bg-neutral-900 border border-neutral-800 rounded-xl text-white text-sm focus:outline-none focus:border-[#0a7ea4]"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1">
+                Payment Account
+              </label>
+              <select
+                value={walletId}
+                onChange={(e) => setWalletId(e.target.value)}
+                className="w-full px-4 py-2.5 bg-neutral-900 border border-neutral-800 rounded-xl text-white text-sm focus:outline-none focus:border-[#0a7ea4]"
+              >
+                {wallets.map(w => (
+                  <option key={w.id} value={w.id}>{w.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1">
+              Category
+            </label>
+            <select
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value)}
+              className="w-full px-4 py-2.5 bg-neutral-900 border border-neutral-800 rounded-xl text-white text-sm focus:outline-none focus:border-[#0a7ea4]"
+            >
+              {categories.map(c => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center justify-between p-3 bg-neutral-900/60 rounded-xl border border-neutral-800">
+            <div>
+              <p className="text-sm font-semibold text-white">Active Subscription</p>
+              <p className="text-xs text-neutral-400">Include in monthly spending total</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setActive(!active)}
+              className={`w-12 h-6 rounded-full transition-colors relative ${active ? 'bg-[#0a7ea4]' : 'bg-neutral-800'}`}
+            >
+              <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform ${active ? 'left-6' : 'left-0.5'}`} />
+            </button>
+          </div>
         </div>
-      </form>
+      </Modal>
 
       <ConfirmModal
         isOpen={showDeleteConfirm}
@@ -280,6 +288,6 @@ export function SubscriptionModal({ isOpen, onClose, subscription }: Subscriptio
         message={`Are you sure you want to delete "${subscription?.name}"? This action cannot be undone.`}
         confirmText="Delete"
       />
-    </Modal>
+    </>
   );
 }

@@ -1,4 +1,5 @@
 import type { Wallet } from '../../lib/db';
+import { CibLogo, NbeLogo, BanqueMisrLogo, QnbLogo, HsbcLogo, AlexbankLogo, AaibLogo, EnbdLogo } from './BankLogos';
 
 interface RealisticCardProps {
   wallet: Partial<Wallet>;
@@ -42,25 +43,6 @@ export function ContactlessWave({ size = 20, color = 'white' }: { size?: number;
       <path d="M10.5 5.5C12.3 7.3 13.2 9.5 13.2 12C13.2 14.5 12.3 16.7 10.5 18.5" stroke={color} strokeWidth="2.2" strokeLinecap="round" />
       <path d="M14 3C16.5 5.5 17.8 8.5 17.8 12C17.8 15.5 16.5 18.5 14 21" stroke={color} strokeWidth="2.2" strokeLinecap="round" />
     </svg>
-  );
-}
-
-// ── CIB Authentic Logo ──────────────────────────────────────────────
-export function CibLogo({ variant = 'white' }: { variant?: 'white' | 'gold' }) {
-  const textColor = variant === 'gold' ? '#d4af37' : '#ffffff';
-  return (
-    <div className="flex items-center select-none">
-      <div className="flex items-center font-sans tracking-tight font-black text-xl" style={{ color: textColor }}>
-        <span className="relative inline-flex items-center justify-center mr-0.5">
-          <span className="text-2xl font-black leading-none">C</span>
-          {/* CIB Orange Core Globe */}
-          <span className="w-2.5 h-2.5 rounded-full bg-[#f97316] absolute inset-0 m-auto flex items-center justify-center shadow-sm">
-            <span className="w-1.5 h-1.5 border border-white/90 rounded-full" />
-          </span>
-        </span>
-        <span className="text-xl font-black tracking-tighter">IB</span>
-      </div>
-    </div>
   );
 }
 
@@ -377,55 +359,13 @@ export function BankHeader({ bank, isDebit, tierTitle }: { bank?: string; isDebi
     );
   }
 
-  if (bank === 'nbe') {
-    return (
-      <div className="flex items-center gap-2 select-none">
-        <div className="w-7 h-7 rounded-lg bg-[#044328] border border-[#d4af37] flex items-center justify-center text-[#d4af37] font-serif font-black text-xs shadow-sm">
-          NBE
-        </div>
-        <div className="leading-tight">
-          <p className="text-[11px] font-bold text-white tracking-wide">National Bank of Egypt</p>
-          <p className="text-[9px] text-amber-200/90 font-semibold tracking-wider">البنك الأهلي المصري</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (bank === 'banque-misr') {
-    return (
-      <div className="flex items-center gap-2 select-none">
-        <div className="w-7 h-7 rounded-lg bg-[#6d1320] border border-amber-300 flex items-center justify-center text-amber-300 font-bold text-xs shadow-sm">
-          BM
-        </div>
-        <div className="leading-tight">
-          <p className="text-[11px] font-bold text-white tracking-wide">Banque Misr</p>
-          <p className="text-[9px] text-red-200/90 font-semibold tracking-wider">بنك مصر</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (bank === 'qnb') {
-    return (
-      <div className="flex items-center gap-2 select-none">
-        <div className="w-7 h-7 rounded-lg bg-[#4a0e20] border border-amber-300/80 flex items-center justify-center text-white font-extrabold text-xs shadow-sm">
-          QNB
-        </div>
-        <span className="text-xs font-black text-white tracking-wider">QNB ALAHLI</span>
-      </div>
-    );
-  }
-
-  if (bank === 'hsbc') {
-    return (
-      <div className="flex items-center gap-2 select-none">
-        <div className="w-5 h-5 bg-red-600 rotate-45 flex items-center justify-center">
-          <div className="w-2 h-2 bg-white" />
-        </div>
-        <span className="text-xs font-black tracking-widest text-white">HSBC</span>
-      </div>
-    );
-  }
+  if (bank === 'nbe') return <NbeLogo />;
+  if (bank === 'banque-misr') return <BanqueMisrLogo />;
+  if (bank === 'qnb') return <QnbLogo />;
+  if (bank === 'hsbc') return <HsbcLogo />;
+  if (bank === 'alexbank') return <AlexbankLogo />;
+  if (bank === 'aaib') return <AaibLogo />;
+  if (bank === 'enbd') return <EnbdLogo />;
 
   return (
     <div className="select-none">
