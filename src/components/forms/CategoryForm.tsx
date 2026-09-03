@@ -4,6 +4,7 @@ import type { Category } from '../../store/useStore';
 import { getTranslation } from '../../lib/i18n';
 import { Check, Trash } from '@phosphor-icons/react';
 import { CategoryIcon, availableIcons } from '../ui/CategoryIcon';
+import { ConfirmModal } from '../ui/ConfirmModal';
 
 interface CategoryFormProps {
   onSuccess: () => void;
@@ -17,6 +18,7 @@ export function CategoryForm({ onSuccess, initialData }: CategoryFormProps) {
   const [iconName, setIconName] = useState(initialData?.iconName || availableIcons[0]);
   const [color, setColor] = useState(initialData?.color || '#59bca4');
   const [budgetLimit, setBudgetLimit] = useState(initialData?.budgetLimit ? initialData.budgetLimit.toString() : '');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   if (!settings) return null;
   const lang = settings.language;
@@ -49,12 +51,8 @@ export function CategoryForm({ onSuccess, initialData }: CategoryFormProps) {
     onSuccess();
   };
 
-  const handleDelete = async () => {
-    if (!initialData) return;
-    if (confirm('Are you sure you want to delete this category? Transactions using this category will be preserved but might show as unknown.')) {
-      await deleteCategory(initialData.id);
-      onSuccess();
-    }
+  const handleDelete = () => {
+    setShowDeleteConfirm(true);
   };
 
   return (
@@ -177,6 +175,20 @@ export function CategoryForm({ onSuccess, initialData }: CategoryFormProps) {
           Save
         </button>
       </div>
+
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={async () => {
+          if (initialData) {
+            await deleteCategory(initialData.id);
+            onSuccess();
+          }
+        }}
+        title="Delete Category"
+        message={`Are you sure you want to delete "${initialData?.name}"? Transactions using this category will be preserved.`}
+        confirmText="Delete"
+      />
     </form>
   );
 }

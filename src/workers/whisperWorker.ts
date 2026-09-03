@@ -3,60 +3,82 @@
 
 import { pipeline, env } from '@xenova/transformers';
 
-// Allow the model to be cached in the browser's Cache API (not WASM — use JS backend)
+// Configure environment for offline browser caching
 env.allowLocalModels = false;
 env.useBrowserCache = true;
 
 type WorkerMessage =
   | { type: 'load' }
+  | { type: 'ping' }
   | { type: 'transcribe'; audioData: Float32Array; language: string };
 
 type WorkerResponse =
   | { type: 'loading'; progress: number; status: string }
   | { type: 'ready' }
+  | { type: 'pong'; isReady: boolean }
   | { type: 'result'; text: string }
   | { type: 'error'; message: string };
 
 let transcriber: Awaited<ReturnType<typeof pipeline>> | null = null;
+let loadPromise: Promise<void> | null = null;
 
 function send(msg: WorkerResponse) {
   self.postMessage(msg);
 }
 
 async function loadModel() {
-  try {
-    send({ type: 'loading', progress: 0, status: 'Initializing model...' });
-
-    transcriber = await pipeline(
-      'automatic-speech-recognition',
-      'Xenova/whisper-tiny',
-      {
-        progress_callback: (progress: any) => {
-          if (progress.status === 'downloading' || progress.status === 'progress') {
-            const pct = progress.progress ?? 0;
-            send({
-              type: 'loading',
-              progress: Math.round(pct),
-              status: `Downloading model... ${Math.round(pct)}%`,
-            });
-          } else if (progress.status === 'loading') {
-            send({ type: 'loading', progress: 95, status: 'Loading into memory...' });
-          } else if (progress.status === 'done') {
-            send({ type: 'loading', progress: 100, status: 'Model ready!' });
-          }
-        },
-      }
-    );
-
+  if (transcriber) {
     send({ type: 'ready' });
-  } catch (err: any) {
-    send({ type: 'error', message: err?.message || 'Failed to load Whisper model' });
+    return;
   }
+  if (loadPromise) {
+    return loadPromise;
+  }
+
+  loadPromise = (async () => {
+    try {
+      send({ type: 'loading', progress: 0, status: 'Initializing model...' });
+
+      transcriber = await pipeline(
+        'automatic-speech-recognition',
+        'Xenova/whisper-tiny',
+        {
+          progress_callback: (progress: any) => {
+            if (progress.status === 'downloading' || progress.status === 'progress') {
+              const pct = progress.progress ?? 0;
+              send({
+                type: 'loading',
+                progress: Math.round(pct),
+                status: `Downloading model... ${Math.round(pct)}%`,
+              });
+            } else if (progress.status === 'loading') {
+              send({ type: 'loading', progress: 95, status: 'Loading into memory...' });
+            } else if (progress.status === 'done') {
+              send({ type: 'loading', progress: 100, status: 'Model ready!' });
+            }
+          },
+        }
+      );
+
+      send({ type: 'ready' });
+    } catch (err: any) {
+      transcriber = null;
+      send({ type: 'error', message: err?.message || 'Failed to load Whisper model' });
+    } finally {
+      loadPromise = null;
+    }
+  })();
+
+  return loadPromise;
 }
 
 async function transcribeAudio(audioData: Float32Array, language: string) {
   if (!transcriber) {
-    send({ type: 'error', message: 'Model not loaded yet' });
+    await loadModel();
+  }
+
+  if (!transcriber) {
+    send({ type: 'error', message: 'Whisper model could not be initialized' });
     return;
   }
 
@@ -82,6 +104,8 @@ self.onmessage = async (event: MessageEvent<WorkerMessage>) => {
   const msg = event.data;
   if (msg.type === 'load') {
     await loadModel();
+  } else if (msg.type === 'ping') {
+    send({ type: 'pong', isReady: !!transcriber });
   } else if (msg.type === 'transcribe') {
     await transcribeAudio(msg.audioData, msg.language);
   }

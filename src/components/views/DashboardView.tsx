@@ -112,7 +112,7 @@ export function DashboardView({ onNavigateToCards }: DashboardViewProps) {
       </div>
 
       {/* 2. Say Main Spent vs Income Hero Card */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0a7ea4]/25 via-neutral-900 to-neutral-900/90 border border-[#0a7ea4]/30 p-6 backdrop-blur-xl space-y-5">
+      <div className="relative overflow-hidden rounded-3xl hero-card p-6 backdrop-blur-xl space-y-5">
         <div className="absolute top-0 right-0 w-48 h-48 bg-[#0a7ea4]/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
 
         {/* Twin Spent / Income Grid */}

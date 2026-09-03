@@ -19,31 +19,30 @@
   --app-bg: #0a0a0a;
   --app-surface: #171717;       /* neutral-900 */
   --app-surface-2: #262626;     /* neutral-800 */
-  --app-border: rgba(255,255,255,0.08);
+  --app-border: rgba(255, 255, 255, 0.08);
   --app-text: #f5f5f5;
   --app-text-muted: #a3a3a3;    /* neutral-400 */
-  --app-header-bg: rgba(10,10,10,0.85);
-  --app-nav-bg: rgba(10,10,10,0.92);
-  --app-card-bg: rgba(23,23,23,0.7);
+  --app-header-bg: rgba(10, 10, 10, 0.85);
+  --app-nav-bg: rgba(10, 10, 10, 0.92);
+  --app-card-bg: rgba(23, 23, 23, 0.7);
 }
 
 [data-theme="light"] {
-  --app-bg: #f5f5f5;
+  --app-bg: #f8fafc;            /* slate-50 */
   --app-surface: #ffffff;
-  --app-surface-2: #e5e5e5;
-  --app-border: rgba(0,0,0,0.1);
-  --app-text: #0a0a0a;
-  --app-text-muted: #525252;    /* neutral-600 */
-  --app-header-bg: rgba(245,245,245,0.90);
-  --app-nav-bg: rgba(245,245,245,0.95);
-  --app-card-bg: rgba(255,255,255,0.9);
+  --app-surface-2: #f1f5f9;      /* slate-100 */
+  --app-border: #e2e8f0;         /* slate-200 */
+  --app-text: #0f172a;           /* slate-900 */
+  --app-text-muted: #475569;     /* slate-600 */
+  --app-header-bg: rgba(248, 250, 252, 0.92);
+  --app-nav-bg: rgba(255, 255, 255, 0.95);
+  --app-card-bg: #ffffff;
 }
 
 /* ─── Global Base ─────────────────────────────────────────── */
 @layer base {
   html {
-    /* Smooth color transitions when switching themes */
-    transition: background-color 0.3s ease, color 0.3s ease;
+    transition: background-color 0.25s ease, color 0.25s ease;
   }
 
   body {
@@ -54,15 +53,49 @@
     min-height: 100vh;
   }
 
-  /* Scoped theme overrides for the root app container */
   #root {
     background-color: var(--app-bg);
     color: var(--app-text);
     min-height: 100vh;
-    transition: background-color 0.3s ease, color 0.3s ease;
+    transition: background-color 0.25s ease, color 0.25s ease;
   }
 
-  /* Light mode: main page backgrounds */
+  /* ─── Hero Cards (Dashboard & Subscriptions) ─────────────── */
+  .hero-card {
+    background: linear-gradient(135deg, rgba(10, 126, 164, 0.25) 0%, #171717 50%, rgba(23, 23, 23, 0.92) 100%) !important;
+    border: 1px solid rgba(10, 126, 164, 0.3) !important;
+  }
+
+  [data-theme="light"] .hero-card {
+    background: linear-gradient(135deg, rgba(10, 126, 164, 0.08) 0%, #ffffff 50%, #f8fafc 100%) !important;
+    border: 1px solid rgba(10, 126, 164, 0.25) !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02) !important;
+  }
+
+  /* Metric pills inside Hero Cards */
+  .metric-pill {
+    background-color: rgba(10, 10, 10, 0.4);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  [data-theme="light"] .metric-pill {
+    background-color: #f1f5f9 !important;
+    border-color: #e2e8f0 !important;
+  }
+
+  /* Physical Cards in CardsView: always maintain pure white typography */
+  .credit-card,
+  .credit-card * {
+    color: #ffffff !important;
+  }
+  .credit-card p {
+    color: rgba(255, 255, 255, 0.85) !important;
+  }
+  .credit-card h3 {
+    color: #ffffff !important;
+  }
+
+  /* ─── Light Mode Overrides ───────────────────────────────── */
   [data-theme="light"] .theme-bg {
     background-color: var(--app-bg) !important;
   }
@@ -78,27 +111,85 @@
     color: var(--app-text-muted) !important;
   }
 
-  /* Light mode: Tailwind dark neutral overrides for key layers */
-  [data-theme="light"] .bg-neutral-950 { background-color: var(--app-bg) !important; }
-  [data-theme="light"] .bg-neutral-900 { background-color: var(--app-surface) !important; }
-  [data-theme="light"] .bg-neutral-900\/60 { background-color: rgba(255,255,255,0.8) !important; }
-  [data-theme="light"] .bg-neutral-900\/90 { background-color: rgba(255,255,255,0.95) !important; }
-  [data-theme="light"] .bg-neutral-950\/80 { background-color: rgba(245,245,245,0.88) !important; }
-  [data-theme="light"] .bg-neutral-950\/90 { background-color: rgba(245,245,245,0.95) !important; }
-  [data-theme="light"] .bg-neutral-950\/60 { background-color: rgba(245,245,245,0.7) !important; }
-  [data-theme="light"] .bg-neutral-800 { background-color: var(--app-surface-2) !important; }
-  [data-theme="light"] .bg-neutral-800\/40 { background-color: rgba(229,229,229,0.5) !important; }
-  [data-theme="light"] .border-neutral-800 { border-color: var(--app-border) !important; }
-  [data-theme="light"] .border-neutral-800\/60 { border-color: rgba(0,0,0,0.08) !important; }
-  [data-theme="light"] .border-neutral-800\/80 { border-color: rgba(0,0,0,0.1) !important; }
-  [data-theme="light"] .text-white { color: #0a0a0a !important; }
-  [data-theme="light"] .text-neutral-50 { color: #0a0a0a !important; }
-  [data-theme="light"] .text-neutral-300 { color: #404040 !important; }
-  [data-theme="light"] .text-neutral-400 { color: #525252 !important; }
-  [data-theme="light"] .text-neutral-500 { color: #737373 !important; }
-  [data-theme="light"] .divide-neutral-800\/80 > * + * { border-color: rgba(0,0,0,0.08) !important; }
+  /* Form controls in light mode: deep dark readable text on light slate */
+  [data-theme="light"] input,
+  [data-theme="light"] textarea,
+  [data-theme="light"] select,
+  [data-theme="light"] .theme-input {
+    background-color: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+    color: #0f172a !important;
+  }
+  [data-theme="light"] input::placeholder,
+  [data-theme="light"] textarea::placeholder {
+    color: #94a3b8 !important;
+  }
+  [data-theme="light"] input:focus,
+  [data-theme="light"] textarea:focus,
+  [data-theme="light"] select:focus {
+    background-color: #ffffff !important;
+    border-color: #0a7ea4 !important;
+    color: #0f172a !important;
+  }
 
-  /* Keep teal accent colours unchanged in light mode */
+  /* Surface and layout backgrounds in light mode */
+  [data-theme="light"] .bg-neutral-950 { background-color: #f1f5f9 !important; }
+  [data-theme="light"] .bg-neutral-900 { background-color: #ffffff !important; }
+  [data-theme="light"] .bg-neutral-900\/60 { background-color: rgba(255, 255, 255, 0.88) !important; }
+  [data-theme="light"] .bg-neutral-900\/80 { background-color: rgba(255, 255, 255, 0.92) !important; }
+  [data-theme="light"] .bg-neutral-900\/90 { background-color: rgba(255, 255, 255, 0.97) !important; }
+  [data-theme="light"] .bg-neutral-950\/40 { background-color: #f1f5f9 !important; }
+  [data-theme="light"] .bg-neutral-950\/60 { background-color: rgba(241, 245, 249, 0.85) !important; }
+  [data-theme="light"] .bg-neutral-950\/70 { background-color: rgba(241, 245, 249, 0.85) !important; }
+  [data-theme="light"] .bg-neutral-950\/80 { background-color: rgba(241, 245, 249, 0.9) !important; }
+  [data-theme="light"] .bg-neutral-950\/90 { background-color: rgba(241, 245, 249, 0.95) !important; }
+  [data-theme="light"] .bg-neutral-800 { background-color: #e2e8f0 !important; }
+  [data-theme="light"] .bg-neutral-800\/40 { background-color: rgba(226, 232, 240, 0.6) !important; }
+  [data-theme="light"] .bg-neutral-800\/60 { background-color: rgba(226, 232, 240, 0.8) !important; }
+  [data-theme="light"] .bg-neutral-800\/80 { background-color: #cbd5e1 !important; }
+
+  /* Borders in light mode */
+  [data-theme="light"] .border-neutral-800 { border-color: #e2e8f0 !important; }
+  [data-theme="light"] .border-neutral-800\/50 { border-color: #e2e8f0 !important; }
+  [data-theme="light"] .border-neutral-800\/60 { border-color: rgba(203, 213, 225, 0.6) !important; }
+  [data-theme="light"] .border-neutral-800\/80 { border-color: rgba(203, 213, 225, 0.8) !important; }
+  [data-theme="light"] .border-neutral-700 { border-color: #cbd5e1 !important; }
+  [data-theme="light"] .divide-neutral-800\/80 > * + * { border-color: #e2e8f0 !important; }
+
+  /* High contrast text hierarchy in light mode */
+  [data-theme="light"] .text-white { color: #0f172a !important; }
+  [data-theme="light"] .text-neutral-50 { color: #0f172a !important; }
+  [data-theme="light"] .text-neutral-100 { color: #0f172a !important; }
+  [data-theme="light"] .text-neutral-200 { color: #1e293b !important; }
+  [data-theme="light"] .text-neutral-300 { color: #334155 !important; }
+  [data-theme="light"] .text-neutral-400 { color: #475569 !important; }
+  [data-theme="light"] .text-neutral-500 { color: #64748b !important; }
+
+  /* Ensure button text remains crisp white on filled action buttons in light mode */
+  [data-theme="light"] .bg-\[\#0a7ea4\],
+  [data-theme="light"] .bg-\[\#0a7ea4\] *,
+  [data-theme="light"] .bg-red-600,
+  [data-theme="light"] .bg-red-600 *,
+  [data-theme="light"] .bg-red-500,
+  [data-theme="light"] .bg-red-500 * {
+    color: #ffffff !important;
+  }
+  [data-theme="light"] .bg-gradient-to-r.from-\[\#0a7ea4\].to-\[\#2dd4bf\],
+  [data-theme="light"] .bg-gradient-to-r.from-\[\#0a7ea4\].to-\[\#2dd4bf\] * {
+    color: #042f2e !important;
+  }
+
+  /* Legacy brand class overrides in light mode */
+  [data-theme="light"] .bg-brand-dark { background-color: #ffffff !important; }
+  [data-theme="light"] .bg-brand-darker { background-color: #f8fafc !important; border-color: #cbd5e1 !important; color: #0f172a !important; }
+  [data-theme="light"] .text-brand-gray { color: #475569 !important; }
+  [data-theme="light"] .border-brand-light\/10,
+  [data-theme="light"] .border-brand-light\/20,
+  [data-theme="light"] .border-brand-light\/30 { border-color: #cbd5e1 !important; }
+  [data-theme="light"] .bg-brand-light\/5,
+  [data-theme="light"] .bg-brand-light\/10 { background-color: #f1f5f9 !important; color: #0f172a !important; }
+
+  /* Keep teal accent colours vibrant */
   [data-theme="light"] .text-\[\#0a7ea4\] { color: #0a7ea4 !important; }
 }
 
@@ -124,4 +215,3 @@
 .pt-safe-top {
   padding-top: calc(1rem + env(safe-area-inset-top, 0px));
 }
-

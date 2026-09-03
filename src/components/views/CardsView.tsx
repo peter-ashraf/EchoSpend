@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { useStore } from '../../store/useStore';
 import type { Wallet } from '../../lib/db';
 import { Modal } from '../ui/Modal';
+import { ConfirmModal } from '../ui/ConfirmModal';
 import { Plus, CreditCard, Trash, Check } from '@phosphor-icons/react';
 
 const CARD_COLORS = [
@@ -18,6 +19,7 @@ export function CardsView() {
   const { wallets, transactions, addWallet, updateWallet, deleteWallet, settings } = useStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingWallet, setEditingWallet] = useState<Wallet | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Form State
   const [name, setName] = useState('');
@@ -99,11 +101,8 @@ export function CardsView() {
     setIsModalOpen(false);
   };
 
-  const handleDelete = async () => {
-    if (editingWallet && confirm(`Delete ${editingWallet.name}?`)) {
-      await deleteWallet(editingWallet.id);
-      setIsModalOpen(false);
-    }
+  const handleDelete = () => {
+    setShowDeleteConfirm(true);
   };
 
   return (
@@ -146,7 +145,7 @@ export function CardsView() {
             <div
               key={wallet.id}
               onClick={() => handleOpenEdit(wallet)}
-              className="relative overflow-hidden rounded-3xl p-6 cursor-pointer transform transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl active:scale-[0.99] border border-white/10"
+              className="relative overflow-hidden rounded-3xl p-6 cursor-pointer transform transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl active:scale-[0.99] border border-white/10 credit-card"
               style={{
                 background: `linear-gradient(135deg, ${wallet.color}ee, ${wallet.color}99 60%, #000000dd)`
               }}
@@ -324,6 +323,20 @@ export function CardsView() {
           </div>
         </form>
       </Modal>
+
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={async () => {
+          if (editingWallet) {
+            await deleteWallet(editingWallet.id);
+            setIsModalOpen(false);
+          }
+        }}
+        title="Delete Wallet / Card"
+        message={`Are you sure you want to delete "${editingWallet?.name}"? All associated account history will be affected.`}
+        confirmText="Delete"
+      />
     </div>
   );
 }

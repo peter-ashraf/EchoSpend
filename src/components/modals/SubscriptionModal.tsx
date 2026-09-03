@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Modal } from '../ui/Modal';
+import { ConfirmModal } from '../ui/ConfirmModal';
 import { useStore } from '../../store/useStore';
 import type { Subscription } from '../../lib/db';
 import { Trash, Check } from '@phosphor-icons/react';
@@ -32,6 +33,7 @@ export function SubscriptionModal({ isOpen, onClose, subscription }: Subscriptio
   const [brandColor, setBrandColor] = useState('#0a7ea4');
   const [notes, setNotes] = useState('');
   const [active, setActive] = useState(true);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     if (subscription) {
@@ -104,11 +106,8 @@ export function SubscriptionModal({ isOpen, onClose, subscription }: Subscriptio
     onClose();
   };
 
-  const handleDelete = async () => {
-    if (subscription && confirm('Delete this subscription?')) {
-      await deleteSubscription(subscription.id);
-      onClose();
-    }
+  const handleDelete = () => {
+    setShowDeleteConfirm(true);
   };
 
   return (
@@ -265,6 +264,20 @@ export function SubscriptionModal({ isOpen, onClose, subscription }: Subscriptio
           </button>
         </div>
       </form>
+
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={async () => {
+          if (subscription) {
+            await deleteSubscription(subscription.id);
+            onClose();
+          }
+        }}
+        title="Delete Subscription"
+        message={`Are you sure you want to delete "${subscription?.name}"? This action cannot be undone.`}
+        confirmText="Delete"
+      />
     </Modal>
   );
 }

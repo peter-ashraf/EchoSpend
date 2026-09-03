@@ -1,6 +1,6 @@
 import { useStore } from '../../store/useStore';
 import { getTranslation } from '../../lib/i18n';
-import { Waveform, Moon, Sun, CaretRight, Translate, UserCircle, Trash, Warning, CurrencyDollar, Desktop, WifiSlash, CloudArrowDown, Fingerprint, Check, Lock, X } from '@phosphor-icons/react';
+import { Waveform, Moon, Sun, CaretRight, Translate, UserCircle, Trash, Warning, CurrencyDollar, Desktop, WifiSlash, CloudArrowDown, Fingerprint, Check, Lock, X, ArrowsClockwise, RocketLaunch, Sparkle } from '@phosphor-icons/react';
 import { useState, useEffect } from 'react';
 import { CategoryIcon } from '../ui/CategoryIcon';
 import { ActionSheet } from '../ui/ActionSheet';
@@ -9,6 +9,8 @@ import { CategoryForm } from '../forms/CategoryForm';
 import type { Category } from '../../store/useStore';
 import { Plus } from '@phosphor-icons/react';
 import { isBiometricSupported, registerBiometric, clearBiometricCredential } from '../../lib/biometricAuth';
+import { APP_VERSION, checkForAppUpdate, reloadAndApplyUpdate } from '../../lib/pwaUpdate';
+import { UpdatePromptModal } from '../modals/UpdatePromptModal';
 
 interface SettingsViewProps {
   onStartWhisperDownload?: () => void;
@@ -31,6 +33,24 @@ export function SettingsView({ onStartWhisperDownload, isWhisperDownloading }: S
   const [biometricLoading, setBiometricLoading] = useState(false);
   const [biometricError, setBiometricError] = useState<string | null>(null);
   const [isRemoveWhisperModalOpen, setIsRemoveWhisperModalOpen] = useState(false);
+
+  // PWA App Version & Update State
+  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
+  const [hasNewUpdate, setHasNewUpdate] = useState(false);
+  const [checkResultText, setCheckResultText] = useState<string | null>(null);
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+
+  const handleManualCheckUpdate = async () => {
+    setIsCheckingUpdate(true);
+    setCheckResultText('Querying server for latest build...');
+    const result = await checkForAppUpdate();
+    setIsCheckingUpdate(false);
+    setCheckResultText(result.statusText);
+    setHasNewUpdate(result.hasUpdate);
+    if (result.hasUpdate) {
+      setIsUpdateModalOpen(true);
+    }
+  };
 
   if (!settings) return null;
   const lang = settings.language;
@@ -384,7 +404,89 @@ export function SettingsView({ onStartWhisperDownload, isWhisperDownloading }: S
         </div>
       </div>
 
-      {/* Section 5: Data Management */}
+      {/* Section 5: App & Build Information */}
+      <div className="space-y-3">
+        <span className="text-xs font-bold uppercase tracking-wider text-neutral-400 px-1">App & Version Info</span>
+
+        <div className="bg-neutral-900/60 border border-neutral-800/80 rounded-3xl p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3.5">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#0a7ea4] to-[#2dd4bf] flex items-center justify-center text-neutral-950 font-black text-xl shadow-md shadow-[#0a7ea4]/20 flex-shrink-0">
+                E
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-bold text-white">EchoSpend</h3>
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-[#0a7ea4]/15 text-[#0a7ea4] border border-[#0a7ea4]/30">
+                    v{APP_VERSION}
+                  </span>
+                </div>
+                <p className="text-[11px] text-neutral-400 mt-0.5">
+                  Voice-First Expense Tracking & Smart Budget
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-3 border-t border-neutral-800/60 space-y-2.5">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-neutral-400">Current Release</span>
+              <span className="font-mono text-white font-semibold">v{APP_VERSION}</span>
+            </div>
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-neutral-400">Build Target</span>
+              <span className="text-neutral-300 font-medium">Production PWA • Standalone</span>
+            </div>
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-neutral-400">Instance Status</span>
+              <span className="text-emerald-400 font-medium flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                Active & Offline-Ready
+              </span>
+            </div>
+
+            {checkResultText && (
+              <div className={`flex items-center gap-2 p-3 rounded-2xl text-xs font-medium ${
+                hasNewUpdate
+                  ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400'
+                  : 'bg-neutral-800/60 border border-neutral-800 text-neutral-300'
+              }`}>
+                {hasNewUpdate ? (
+                  <Sparkle size={16} weight="fill" className="text-emerald-400 flex-shrink-0" />
+                ) : (
+                  <Check size={16} weight="bold" className="text-[#0a7ea4] flex-shrink-0" />
+                )}
+                <span className="leading-snug">{checkResultText}</span>
+              </div>
+            )}
+
+            <div className="pt-2 flex gap-2">
+              <button
+                type="button"
+                disabled={isCheckingUpdate}
+                onClick={handleManualCheckUpdate}
+                className="flex-1 py-3 px-4 rounded-2xl bg-neutral-800 hover:bg-neutral-700 text-white text-xs font-bold transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
+              >
+                <ArrowsClockwise size={16} weight="bold" className={isCheckingUpdate ? 'animate-spin' : ''} />
+                <span>{isCheckingUpdate ? 'Checking Server...' : 'Check for Updates'}</span>
+              </button>
+
+              {hasNewUpdate && (
+                <button
+                  type="button"
+                  onClick={() => setIsUpdateModalOpen(true)}
+                  className="py-3 px-4 rounded-2xl bg-gradient-to-r from-[#0a7ea4] to-[#2dd4bf] text-neutral-950 text-xs font-bold transition-all shadow-lg shadow-[#0a7ea4]/20 flex items-center justify-center gap-1.5 active:scale-95 animate-pulse"
+                >
+                  <RocketLaunch size={16} weight="fill" />
+                  <span>Update Ready</span>
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Section 6: Data Management */}
       <div className="space-y-3">
         <span className="text-xs font-bold uppercase tracking-wider text-red-400 px-1">Data Management</span>
 
@@ -549,6 +651,14 @@ export function SettingsView({ onStartWhisperDownload, isWhisperDownloading }: S
           </div>
         </div>
       </Modal>
+
+      {/* PWA Update Prompt Modal */}
+      <UpdatePromptModal
+        isOpen={isUpdateModalOpen}
+        onClose={() => setIsUpdateModalOpen(false)}
+        onUpdate={reloadAndApplyUpdate}
+        currentVersion={APP_VERSION}
+      />
 
     </div>
   );

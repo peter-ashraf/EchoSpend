@@ -1,4 +1,5 @@
 import type { Category, Wallet } from './db';
+import { classifyExpenseCategory } from './smartCategorizer';
 
 export interface ParsedVoiceTransaction {
   amount: number | null;
@@ -68,102 +69,10 @@ export function parseVoiceInput(
     type = 'income';
   }
 
-  // 4. Extract Merchant / Place
-  let merchant = '';
-  const knownMerchants: Record<string, string> = {
-    'starbucks': 'Starbucks',
-    'ستاربكس': 'Starbucks',
-    'carrefour': 'Carrefour',
-    'كارفور': 'Carrefour',
-    'uber': 'Uber',
-    'اوبر': 'Uber',
-    'أوبر': 'Uber',
-    'careem': 'Careem',
-    'كريم': 'Careem',
-    'mcdonald': "McDonald's",
-    'ماكدونالدز': "McDonald's",
-    'ماك': "McDonald's",
-    'zara': 'Zara',
-    'زارا': 'Zara',
-    'netflix': 'Netflix',
-    'نتفلكس': 'Netflix',
-    'spotify': 'Spotify',
-    'سبوتيفاي': 'Spotify',
-    'amazon': 'Amazon',
-    'امازون': 'Amazon',
-    'noon': 'Noon',
-    'نون': 'Noon',
-    'instapay': 'InstaPay Transfer',
-    'انستاباي': 'InstaPay Transfer',
-    'vodafone': 'Vodafone',
-    'فودافون': 'Vodafone'
-  };
-
-  for (const [kw, name] of Object.entries(knownMerchants)) {
-    if (normalizedText.includes(kw)) {
-      merchant = name;
-      break;
-    }
-  }
-
-  // If no known merchant, guess from description words
-  if (!merchant) {
-    if (normalizedText.includes('coffee') || normalizedText.includes('قهوة') || normalizedText.includes('كافيه')) {
-      merchant = 'Coffee / Cafe';
-    } else if (normalizedText.includes('groceries') || normalizedText.includes('سوبرماركت') || normalizedText.includes('ماركت')) {
-      merchant = 'Supermarket';
-    } else if (normalizedText.includes('pharmacy') || normalizedText.includes('صيدلية') || normalizedText.includes('دوا')) {
-      merchant = 'Pharmacy';
-    } else if (normalizedText.includes('gas') || normalizedText.includes('بنزين') || normalizedText.includes('بنزينة')) {
-      merchant = 'Gas Station';
-    } else if (type === 'income') {
-      merchant = 'Salary / Income';
-    } else {
-      merchant = cleanRaw.length > 25 ? cleanRaw.substring(0, 25) + '...' : cleanRaw;
-    }
-  }
-
-  // 5. Match Category
-  let categoryId: string | null = null;
-  const foodKeywords = ['food', 'lunch', 'dinner', 'breakfast', 'restaurant', 'coffee', 'cafe', 'eat', 'burger', 'pizza', 'acai', 'طعام', 'اكل', 'أكل', 'غدا', 'عشا', 'فطار', 'مطعم', 'كافيه', 'قهوة', 'سوبرماركت', 'دليفري'];
-  const transportKeywords = ['uber', 'careem', 'taxi', 'gas', 'petrol', 'bus', 'train', 'flight', 'مواصلات', 'اوبر', 'تاكسي', 'بنزين', 'تفويلة', 'قطار', 'باص', 'مترو'];
-  const shoppingKeywords = ['shopping', 'clothes', 'shoes', 'amazon', 'noon', 'zara', 'mall', 'bought', 'تسوق', 'ملابس', 'هدوم', 'لبس', 'امازون', 'نون', 'شوبينج'];
-  const billKeywords = ['bill', 'rent', 'electricity', 'water', 'internet', 'subscription', 'netflix', 'spotify', 'فاتورة', 'كهربا', 'ميه', 'انترنت', 'ايجار', 'اشتراك', 'شحن'];
-
-  for (const cat of categories) {
-    const cName = cat.name.toLowerCase();
-    if (type === 'income' && (cat.type === 'income' || cName.includes('salary') || cName.includes('income'))) {
-      categoryId = cat.id;
-      break;
-    }
-
-    if (cName.includes('food') && foodKeywords.some(k => normalizedText.includes(k))) {
-      categoryId = cat.id;
-      break;
-    }
-    if (cName.includes('transport') && transportKeywords.some(k => normalizedText.includes(k))) {
-      categoryId = cat.id;
-      break;
-    }
-    if (cName.includes('shop') && shoppingKeywords.some(k => normalizedText.includes(k))) {
-      categoryId = cat.id;
-      break;
-    }
-    if ((cName.includes('sub') || cName.includes('bill')) && billKeywords.some(k => normalizedText.includes(k))) {
-      categoryId = cat.id;
-      break;
-    }
-    if (normalizedText.includes(cName)) {
-      categoryId = cat.id;
-      break;
-    }
-  }
-
-  if (!categoryId && categories.length > 0) {
-    categoryId = type === 'income' 
-      ? (categories.find(c => c.type === 'income')?.id || categories[0].id)
-      : (categories.find(c => c.type === 'expense')?.id || categories[0].id);
-  }
+  // 4. Intelligent AI Category & Merchant Classification
+  const classification = classifyExpenseCategory(cleanRaw, undefined, categories);
+  const merchant = classification.matchedMerchant || (cleanRaw.length > 25 ? cleanRaw.substring(0, 25) + '...' : cleanRaw);
+  const categoryId = classification.categoryId;
 
   // 6. Match Wallet
   let walletId = defaultWalletId;

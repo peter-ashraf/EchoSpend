@@ -1,6 +1,6 @@
 /**
  * whisperOffline.ts — Main-thread interface to the Whisper Web Worker.
- * Handles worker lifecycle, audio recording (MediaRecorder → Float32Array),
+ * Handles worker lifecycle, model pre-warming, audio recording,
  * and download progress callbacks.
  */
 
@@ -11,6 +11,7 @@ type ErrorCallback = (msg: string) => void;
 
 let worker: Worker | null = null;
 let isModelReady = false;
+let warmUpPromise: Promise<boolean> | null = null;
 
 /** Check if the Whisper model has been cached (ready for offline use) */
 export async function isWhisperCached(): Promise<boolean> {
@@ -19,7 +20,7 @@ export async function isWhisperCached(): Promise<boolean> {
     for (const name of caches_list) {
       const cache = await caches.open(name);
       const keys = await cache.keys();
-      const hasOnnx = keys.some(k => k.url.includes('whisper') || k.url.includes('.onnx'));
+      const hasOnnx = keys.some(k => k.url.includes('whisper') || k.url.includes('.onnx') || k.url.includes('Xenova'));
       if (hasOnnx) return true;
     }
     return false;
@@ -37,6 +38,33 @@ function getWorker(): Worker {
     );
   }
   return worker;
+}
+
+/** Pre-warms or initializes the worker from browser cache */
+export function ensureWhisperReady(): Promise<boolean> {
+  if (isModelReady) return Promise.resolve(true);
+  if (warmUpPromise) return warmUpPromise;
+
+  warmUpPromise = new Promise<boolean>((resolve) => {
+    const w = getWorker();
+    const handleMsg = (event: MessageEvent) => {
+      const msg = event.data;
+      if (msg.type === 'ready') {
+        w.removeEventListener('message', handleMsg);
+        isModelReady = true;
+        resolve(true);
+      } else if (msg.type === 'error') {
+        w.removeEventListener('message', handleMsg);
+        resolve(false);
+      }
+    };
+    w.addEventListener('message', handleMsg);
+    w.postMessage({ type: 'load' });
+  }).finally(() => {
+    warmUpPromise = null;
+  });
+
+  return warmUpPromise;
 }
 
 /** Terminate the worker and free memory */
@@ -58,18 +86,21 @@ export function downloadWhisperModel(opts: {
   const w = getWorker();
   isModelReady = false;
 
-  w.onmessage = (event: MessageEvent) => {
+  const handleMsg = (event: MessageEvent) => {
     const msg = event.data;
     if (msg.type === 'loading') {
       opts.onProgress(msg.progress, msg.status);
     } else if (msg.type === 'ready') {
+      w.removeEventListener('message', handleMsg);
       isModelReady = true;
       opts.onReady();
     } else if (msg.type === 'error') {
+      w.removeEventListener('message', handleMsg);
       opts.onError(msg.message);
     }
   };
 
+  w.addEventListener('message', handleMsg);
   w.postMessage({ type: 'load' });
 }
 
@@ -84,13 +115,22 @@ export async function transcribeBlob(opts: {
   onResult: ResultCallback;
   onError: ErrorCallback;
 }) {
+  // If not ready in memory yet, initialize from local browser cache
   if (!isModelReady || !worker) {
-    opts.onError('Whisper model is not ready. Please download it first.');
-    return;
+    const loaded = await ensureWhisperReady();
+    if (!loaded) {
+      opts.onError('Whisper model is not ready. Please download it first in Settings.');
+      return;
+    }
   }
 
   try {
     const arrayBuffer = await opts.blob.arrayBuffer();
+    if (!arrayBuffer || arrayBuffer.byteLength === 0) {
+      opts.onError('Empty audio recording');
+      return;
+    }
+
     const audioCtx = new AudioContext({ sampleRate: 16000 });
     const decoded = await audioCtx.decodeAudioData(arrayBuffer);
     await audioCtx.close();
@@ -100,7 +140,7 @@ export async function transcribeBlob(opts: {
     const audioData = new Float32Array(channelData.length);
     audioData.set(channelData);
 
-    const w = worker;
+    const w = getWorker();
     const handleMessage = (event: MessageEvent) => {
       const msg = event.data;
       if (msg.type === 'result') {
@@ -121,7 +161,7 @@ export async function transcribeBlob(opts: {
 
 /**
  * Record audio from the microphone and return as a Blob when stopped.
- * Returns a stop() function to trigger recording completion.
+ * Handles iOS Safari and Chrome audio MIME types reliably.
  */
 export function startRecording(opts: {
   onStop: (blob: Blob) => void;
@@ -135,18 +175,36 @@ export function startRecording(opts: {
     .getUserMedia({ audio: true, video: false })
     .then(stream => {
       mediaStream = stream;
-      // Prefer webm/opus for best browser support
-      const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
-        ? 'audio/webm;codecs=opus'
-        : 'audio/ogg;codecs=opus';
 
-      mediaRecorder = new MediaRecorder(stream, { mimeType });
-      mediaRecorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+      // Detect best supported MIME type across iOS Safari and Android Chrome
+      const supportedMime = [
+        'audio/webm;codecs=opus',
+        'audio/webm',
+        'audio/mp4',
+        'audio/aac',
+        'audio/ogg'
+      ].find(mime => {
+        try {
+          return typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported(mime);
+        } catch {
+          return false;
+        }
+      });
+
+      const options: MediaRecorderOptions | undefined = supportedMime ? { mimeType: supportedMime } : undefined;
+      mediaRecorder = new MediaRecorder(stream, options);
+
+      mediaRecorder.ondataavailable = e => {
+        if (e.data && e.data.size > 0) chunks.push(e.data);
+      };
+
       mediaRecorder.onstop = () => {
         stream.getTracks().forEach(t => t.stop());
-        const blob = new Blob(chunks, { type: mimeType });
+        const blobType = mediaRecorder?.mimeType || supportedMime || 'audio/webm';
+        const blob = new Blob(chunks, { type: blobType });
         opts.onStop(blob);
       };
+
       mediaRecorder.start();
     })
     .catch(err => {

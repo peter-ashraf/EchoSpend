@@ -84,7 +84,7 @@ export function SubscriptionsView() {
       </div>
 
       {/* Main Monthly Spending Hero Card (Say style) */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0a7ea4]/20 via-neutral-900 to-neutral-900/90 border border-[#0a7ea4]/30 p-6 backdrop-blur-xl">
+      <div className="relative overflow-hidden rounded-3xl hero-card p-6 backdrop-blur-xl">
         <div className="absolute top-0 right-0 w-48 h-48 bg-[#0a7ea4]/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
         
         <p className="text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1">Monthly spending</p>
@@ -97,17 +97,17 @@ export function SubscriptionsView() {
 
         {/* 3 Metric Pills */}
         <div className="grid grid-cols-3 gap-2 pt-4 border-t border-neutral-800/80 text-center">
-          <div className="p-2.5 rounded-2xl bg-neutral-950/40 border border-neutral-800/50">
+          <div className="p-2.5 rounded-2xl metric-pill border border-neutral-800/50">
             <p className="text-[11px] text-neutral-400 font-medium">Active</p>
             <p className="text-sm font-bold text-white mt-0.5">{activeSubs.length}</p>
           </div>
-          <div className="p-2.5 rounded-2xl bg-neutral-950/40 border border-neutral-800/50">
+          <div className="p-2.5 rounded-2xl metric-pill border border-neutral-800/50">
             <p className="text-[11px] text-neutral-400 font-medium">Per year</p>
             <p className="text-xs font-bold text-[#0a7ea4] font-mono mt-0.5 truncate">
               {currencySymbol} {Math.round(yearlyTotal).toLocaleString()}
             </p>
           </div>
-          <div className="p-2.5 rounded-2xl bg-neutral-950/40 border border-neutral-800/50">
+          <div className="p-2.5 rounded-2xl metric-pill border border-neutral-800/50">
             <p className="text-[11px] text-neutral-400 font-medium">This week</p>
             <p className="text-sm font-bold text-amber-400 mt-0.5">{thisWeekCount}</p>
           </div>

@@ -141,12 +141,15 @@ export function AnalyticsView() {
                 }}
               />
               <Bar dataKey="amount" radius={[8, 8, 4, 4]}>
-                {weeklyData.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={entry.amount > 0 ? entry.color : '#262626'}
-                  />
-                ))}
+                {weeklyData.map((entry, index) => {
+                  const isLight = settings?.theme === 'light' || (settings?.theme === 'system' && typeof window !== 'undefined' && !window.matchMedia('(prefers-color-scheme: dark)').matches);
+                  return (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={entry.amount > 0 ? entry.color : (isLight ? '#e2e8f0' : '#262626')}
+                    />
+                  );
+                })}
               </Bar>
             </BarChart>
           </ResponsiveContainer>

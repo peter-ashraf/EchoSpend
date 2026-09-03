@@ -16,11 +16,14 @@ import { VoiceMicButton } from './components/ui/VoiceMicButton';
 import { BiometricLockScreen } from './components/modals/BiometricLockScreen';
 import { OfflineVoiceConsentModal } from './components/modals/OfflineVoiceConsentModal';
 import { parseVoiceInput, type ParsedVoiceTransaction } from './lib/parseVoice';
-import { downloadWhisperModel, transcribeBlob, terminateWhisper } from './lib/whisperOffline';
-import { Keyboard, WifiSlash, CloudArrowDown } from '@phosphor-icons/react';
+import { parseBankSms, type ParsedSmsResult } from './lib/parseSms';
+import { downloadWhisperModel, transcribeBlob, terminateWhisper, ensureWhisperReady } from './lib/whisperOffline';
+import { APP_VERSION, onUpdateAvailable, reloadAndApplyUpdate } from './lib/pwaUpdate';
+import { UpdatePromptModal } from './components/modals/UpdatePromptModal';
+import { Keyboard, WifiSlash, CloudArrowDown, Check, CheckCircle, X } from '@phosphor-icons/react';
 
 function App() {
-  const { initData, isLoading, settings, categories, wallets, setOfflineVoiceStatus } = useStore();
+  const { initData, isLoading, settings, categories, wallets, setOfflineVoiceStatus, addTransaction } = useStore();
   const [activeTab, setActiveTab] = useState<NavTab>('dashboard');
   const [isManualTxOpen, setIsManualTxOpen] = useState(false);
   const [isSmsModalOpen, setIsSmsModalOpen] = useState(false);
@@ -40,6 +43,22 @@ function App() {
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [downloadStatusText, setDownloadStatusText] = useState('');
   const whisperReadyRef = useRef(false);
+
+  // ── Clipboard Auto-Detected SMS ──
+  const [detectedSms, setDetectedSms] = useState<ParsedSmsResult | null>(null);
+  const [importSuccessToast, setImportSuccessToast] = useState<string | null>(null);
+  const lastDismissedSmsText = useRef<string>('');
+  const [isGlobalUpdateAvailable, setIsGlobalUpdateAvailable] = useState(false);
+
+  // ── PWA Update Event Listener ────────────────────────────────────────
+  useEffect(() => {
+    onUpdateAvailable((hasUpdate) => {
+      if (hasUpdate) setIsGlobalUpdateAvailable(true);
+    });
+    const handleNeedRefresh = () => setIsGlobalUpdateAvailable(true);
+    window.addEventListener('pwa-need-refresh', handleNeedRefresh);
+    return () => window.removeEventListener('pwa-need-refresh', handleNeedRefresh);
+  }, []);
 
   // ── Init ──────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -71,15 +90,61 @@ function App() {
     }
   }, [settings?.theme]);
 
-  // ── First-run prompt for offline voice package ────────────────────────
+  // ── Offline voice package pre-warming from browser cache ──────────────
   useEffect(() => {
     if (settings && settings.offlineVoiceStatus === 'not-asked') {
       setShowOfflineConsent(true);
     } else if (settings?.offlineVoiceStatus === 'ready') {
       setWhisperStatus('ready');
       whisperReadyRef.current = true;
+      // Pre-warm the Web Worker in the background so it is instantly ready offline
+      ensureWhisperReady().catch(console.warn);
     }
   }, [settings?.offlineVoiceStatus]);
+
+  // ── Automatic Clipboard SMS Detection ─────────────────────────────────
+  const checkClipboardForSms = useCallback(async () => {
+    if (!navigator.clipboard?.readText) return;
+    try {
+      const clipText = await navigator.clipboard.readText();
+      if (!clipText || clipText.trim().length < 10) return;
+      if (clipText.trim() === lastDismissedSmsText.current) return;
+
+      const lower = clipText.toLowerCase();
+      const hasBankKeywords =
+        lower.includes('egp') || lower.includes('usd') || lower.includes('le') ||
+        lower.includes('ج.م') || lower.includes('جنيه') || lower.includes('purchase') ||
+        lower.includes('شراء') || lower.includes('card') || lower.includes('بطاقة') ||
+        lower.includes('instapay') || lower.includes('credited') || lower.includes('إيداع') ||
+        lower.includes('cib') || lower.includes('nbe') || lower.includes('bank') ||
+        lower.includes('ahli') || lower.includes('misr') || lower.includes('qnb');
+
+      if (!hasBankKeywords) return;
+
+      const defaultWalletId = wallets[0]?.id || '';
+      const parsed = parseBankSms(clipText, categories, wallets, defaultWalletId);
+      if (parsed && parsed.amount > 0) {
+        setDetectedSms(parsed);
+      }
+    } catch (_) {
+      // Ignore clipboard permission rejections silently
+    }
+  }, [categories, wallets]);
+
+  useEffect(() => {
+    // Check clipboard when user returns to or focuses the app
+    const onFocus = () => checkClipboardForSms();
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') checkClipboardForSms();
+    };
+
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+  }, [checkClipboardForSms]);
 
   // ── Voice transcript handler ──────────────────────────────────────────
   const handleVoiceTranscript = useCallback((text: string) => {
@@ -130,7 +195,6 @@ function App() {
 
   // ── Called when mic is pressed while offline ──────────────────────────
   const handleOfflineMicPress = useCallback((blob: Blob) => {
-    if (!whisperReadyRef.current) return;
     setWhisperStatus('transcribing');
     transcribeBlob({
       blob,
@@ -166,6 +230,106 @@ function App() {
       {isLocked && (
         <BiometricLockScreen onUnlocked={() => setIsLocked(false)} />
       )}
+
+      {/* ── Clipboard Auto-Detected SMS Floating Banner ─────────── */}
+      <AnimatePresence>
+        {detectedSms && (
+          <motion.div
+            initial={{ y: -80, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -80, opacity: 0 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            className="fixed top-3 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4 pointer-events-auto"
+          >
+            <div className="bg-neutral-900/95 border border-[#0a7ea4]/40 backdrop-blur-xl rounded-2xl p-4 shadow-2xl shadow-[#0a7ea4]/20 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-2 w-2 relative">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#0a7ea4] opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-[#0a7ea4]"></span>
+                  </span>
+                  <span className="text-xs font-bold uppercase tracking-wider text-[#0a7ea4]">
+                    Detected Bank SMS
+                  </span>
+                </div>
+                <button
+                  onClick={() => {
+                    lastDismissedSmsText.current = detectedSms.rawText;
+                    setDetectedSms(null);
+                  }}
+                  className="text-neutral-400 hover:text-white text-xs p-1"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              <div className="flex items-baseline justify-between">
+                <div>
+                  <p className="text-xs text-neutral-400">Merchant</p>
+                  <p className="text-sm font-bold text-white">{detectedSms.merchant || 'Bank Transaction'}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-neutral-400">Amount</p>
+                  <p className="text-base font-mono font-extrabold text-[#0a7ea4]">
+                    {settings.currency || 'EGP'} {detectedSms.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    lastDismissedSmsText.current = detectedSms.rawText;
+                    setDetectedSms(null);
+                  }}
+                  className="flex-1 py-2 rounded-xl border border-neutral-800 text-neutral-400 hover:text-white text-xs font-semibold"
+                >
+                  Ignore
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await addTransaction({
+                      amount: detectedSms.amount,
+                      walletId: detectedSms.walletId,
+                      categoryId: detectedSms.categoryId,
+                      type: detectedSms.type,
+                      merchant: detectedSms.merchant,
+                      note: detectedSms.note,
+                      date: detectedSms.date,
+                      source: 'sms'
+                    });
+                    lastDismissedSmsText.current = detectedSms.rawText;
+                    setDetectedSms(null);
+                    setImportSuccessToast(`Logged ${settings.currency || 'EGP'} ${detectedSms.amount} at ${detectedSms.merchant}!`);
+                    setTimeout(() => setImportSuccessToast(null), 3500);
+                  }}
+                  className="flex-[1.5] py-2 rounded-xl bg-gradient-to-r from-[#0a7ea4] to-[#2dd4bf] text-neutral-950 text-xs font-bold shadow-md shadow-[#0a7ea4]/20 flex items-center justify-center gap-1.5"
+                >
+                  <Check size={14} weight="bold" />
+                  Import Expense
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Success Toast ───────────────────────────────────────── */}
+      <AnimatePresence>
+        {importSuccessToast && (
+          <motion.div
+            initial={{ y: -50, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -50, opacity: 0 }}
+            className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-emerald-500/20 border border-emerald-500/40 backdrop-blur-md px-4 py-2 rounded-full flex items-center gap-2 shadow-xl"
+          >
+            <CheckCircle size={16} className="text-emerald-400" weight="fill" />
+            <span className="text-xs font-bold text-emerald-300">{importSuccessToast}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── App Shell (visible under lock screen blur) ──────────── */}
       <AppLayout
@@ -383,6 +547,14 @@ function App() {
         </AnimatePresence>,
         document.body
       )}
+
+      {/* ── Global PWA Update Modal ────────────────────────────── */}
+      <UpdatePromptModal
+        isOpen={isGlobalUpdateAvailable}
+        onClose={() => setIsGlobalUpdateAvailable(false)}
+        onUpdate={reloadAndApplyUpdate}
+        currentVersion={APP_VERSION}
+      />
     </>
   );
 }

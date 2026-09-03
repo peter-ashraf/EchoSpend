@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Modal } from '../ui/Modal';
+import { ConfirmModal } from '../ui/ConfirmModal';
 import { useStore } from '../../store/useStore';
 import type { Transaction } from '../../lib/db';
 import { Trash, Check, Storefront, Calendar, CreditCard, Tag } from '@phosphor-icons/react';
@@ -20,6 +21,7 @@ export function EditTransactionModal({ isOpen, onClose, transaction }: EditTrans
   const [type, setType] = useState<'expense' | 'income' | 'transfer'>('expense');
   const [date, setDate] = useState('');
   const [note, setNote] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     if (transaction) {
@@ -58,11 +60,8 @@ export function EditTransactionModal({ isOpen, onClose, transaction }: EditTrans
     onClose();
   };
 
-  const handleDelete = async () => {
-    if (confirm('Are you sure you want to delete this transaction?')) {
-      await deleteTransaction(transaction.id);
-      onClose();
-    }
+  const handleDelete = () => {
+    setShowDeleteConfirm(true);
   };
 
   return (
@@ -179,6 +178,20 @@ export function EditTransactionModal({ isOpen, onClose, transaction }: EditTrans
           </button>
         </div>
       </form>
+
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={async () => {
+          if (transaction) {
+            await deleteTransaction(transaction.id);
+            onClose();
+          }
+        }}
+        title="Delete Transaction"
+        message="Are you sure you want to delete this transaction? This action cannot be undone."
+        confirmText="Delete"
+      />
     </Modal>
   );
 }
