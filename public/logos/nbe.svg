@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 90" fill="none">
+  <g>
+    <!-- NBE Green & Gold Octagon Emblem -->
+    <rect x="5" y="5" width="80" height="80" rx="16" fill="#034728" stroke="#d4af37" stroke-width="3"/>
+    <path d="M45 15 L60 30 L80 45 L60 60 L45 75 L30 60 L10 45 L30 30 Z" fill="#d4af37" opacity="0.35"/>
+    <circle cx="45" cy="45" r="16" fill="#d4af37"/>
+    <circle cx="45" cy="45" r="8" fill="#034728"/>
+    <!-- NBE Typography -->
+    <text x="100" y="44" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="22" fill="#ffffff" letter-spacing="0.5">National Bank of Egypt</text>
+    <text x="100" y="72" font-family="'Traditional Arabic', 'Segoe UI', sans-serif" font-weight="700" font-size="22" fill="#d4af37">البنك الأهلي المصري</text>
+  </g>
+</svg>

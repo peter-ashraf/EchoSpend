@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 90" fill="none">
+  <g>
+    <rect x="5" y="5" width="80" height="80" rx="16" fill="#6d1320" stroke="#f59e0b" stroke-width="3"/>
+    <path d="M20 65 L45 25 L70 65 Z" fill="#f59e0b"/>
+    <circle cx="45" cy="50" r="6" fill="#6d1320"/>
+    <text x="100" y="44" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="24" fill="#ffffff">Banque Misr</text>
+    <text x="100" y="72" font-family="'Traditional Arabic', sans-serif" font-weight="700" font-size="22" fill="#f59e0b">بنك مصر</text>
+  </g>
+</svg>

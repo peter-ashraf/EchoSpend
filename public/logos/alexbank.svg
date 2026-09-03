@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 90" fill="none">
+  <g>
+    <rect x="5" y="5" width="80" height="80" rx="16" fill="#005247" stroke="#f97316" stroke-width="2"/>
+    <rect x="25" y="25" width="40" height="40" rx="8" stroke="#f97316" stroke-width="4" fill="none"/>
+    <circle cx="45" cy="45" r="8" fill="#f97316"/>
+    <text x="100" y="44" font-family="Arial, sans-serif" font-weight="900" font-size="24" fill="#ffffff">ALEXBANK</text>
+    <text x="100" y="72" font-family="'Traditional Arabic', sans-serif" font-weight="700" font-size="20" fill="#2dd4bf">بنك الإسكندرية</text>
+  </g>
+</svg>
