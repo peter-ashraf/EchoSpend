@@ -25,6 +25,13 @@ export interface Wallet {
   color: string;
   last4?: string;
   institution?: string;
+  bank?: 'cib' | 'nbe' | 'banque-misr' | 'qnb' | 'hsbc' | 'enbd' | 'alexbank' | 'aaib' | 'other';
+  accountTier?: 'prime' | 'plus' | 'wealth' | 'private' | 'standard';
+  creditTier?: 'classic' | 'gold' | 'titanium' | 'platinum' | 'world' | 'world-elite' | 'infinite';
+  network?: 'mastercard' | 'visa' | 'meeza';
+  cardholderName?: string;
+  expiryDate?: string;
+  cardArtwork?: string;
 }
 
 export interface Transaction {

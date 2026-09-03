@@ -81,6 +81,8 @@ export function VoiceConfirmModal({ isOpen, onClose, data, onConfirm }: VoiceCon
             <input
               type="number"
               step="any"
+              inputMode="decimal"
+              pattern="[0-9]*[.,]?[0-9]*"
               required
               autoFocus
               value={amount}

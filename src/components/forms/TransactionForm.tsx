@@ -81,7 +81,9 @@ export function TransactionForm({ onSuccess, initialData }: TransactionFormProps
             <span className="text-3xl font-bold text-brand-teal">{currencySymbol}</span>
             <input
               type="number"
-              step="0.01"
+              step="any"
+              inputMode="decimal"
+              pattern="[0-9]*[.,]?[0-9]*"
               required
               value={amount}
               onChange={(e) => setAmount(e.target.value)}

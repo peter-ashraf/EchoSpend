@@ -102,8 +102,10 @@ export function CategoryForm({ onSuccess, initialData }: CategoryFormProps) {
               <span className="text-brand-gray">{currencySymbol}</span>
               <input
                 type="number"
-                step="0.01"
+                step="any"
                 min="0"
+                inputMode="decimal"
+                pattern="[0-9]*[.,]?[0-9]*"
                 value={budgetLimit}
                 onChange={(e) => setBudgetLimit(e.target.value)}
                 className="w-full bg-transparent text-neutral-200 outline-none text-left"

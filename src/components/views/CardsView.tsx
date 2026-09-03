@@ -3,16 +3,18 @@ import { useStore } from '../../store/useStore';
 import type { Wallet } from '../../lib/db';
 import { Modal } from '../ui/Modal';
 import { ConfirmModal } from '../ui/ConfirmModal';
-import { Plus, CreditCard, Trash, Check } from '@phosphor-icons/react';
+import { RealisticCard } from '../ui/RealisticCard';
+import { Plus, CreditCard, Trash, Check, Sparkle } from '@phosphor-icons/react';
 
 const CARD_COLORS = [
   { name: 'Teal (EchoSpend)', color: '#0a7ea4' },
-  { name: 'Midnight', color: '#1e293b' },
-  { name: 'Gold / Amex', color: '#d97706' },
-  { name: 'Emerald', color: '#059669' },
+  { name: 'CIB Prime', color: '#35989e' },
+  { name: 'CIB Plus', color: '#154c9a' },
+  { name: 'Obsidian Black', color: '#0c0d0e' },
+  { name: 'Gold Luxury', color: '#d4af37' },
+  { name: 'NBE Green', color: '#05472a' },
+  { name: 'Banque Misr', color: '#7a1b28' },
   { name: 'Purple', color: '#7c3aed' },
-  { name: 'Rose', color: '#e11d48' },
-  { name: 'Orange', color: '#ea580c' }
 ];
 
 export function CardsView() {
@@ -28,6 +30,12 @@ export function CardsView() {
   const [color, setColor] = useState('#0a7ea4');
   const [last4, setLast4] = useState('');
   const [institution, setInstitution] = useState('');
+  const [bank, setBank] = useState<NonNullable<Wallet['bank']>>('cib');
+  const [accountTier, setAccountTier] = useState<NonNullable<Wallet['accountTier']>>('prime');
+  const [creditTier, setCreditTier] = useState<NonNullable<Wallet['creditTier']>>('platinum');
+  const [network, setNetwork] = useState<NonNullable<Wallet['network']>>('mastercard');
+  const [cardholderName, setCardholderName] = useState('PETER RYAD');
+  const [expiryDate, setExpiryDate] = useState('12/28');
 
   const currencySymbol = settings?.currency || 'EGP';
 
@@ -55,9 +63,15 @@ export function CardsView() {
     setName('');
     setType('checking');
     setBalance('');
-    setColor('#0a7ea4');
+    setColor('#35989e');
     setLast4('');
-    setInstitution('');
+    setInstitution('CIB Egypt');
+    setBank('cib');
+    setAccountTier('prime');
+    setCreditTier('platinum');
+    setNetwork('mastercard');
+    setCardholderName('PETER RYAD');
+    setExpiryDate('12/28');
     setIsModalOpen(true);
   };
 
@@ -69,7 +83,29 @@ export function CardsView() {
     setColor(w.color);
     setLast4(w.last4 || '');
     setInstitution(w.institution || '');
+    setBank(w.bank || 'cib');
+    setAccountTier(w.accountTier || 'prime');
+    setCreditTier(w.creditTier || 'platinum');
+    setNetwork(w.network || 'mastercard');
+    setCardholderName(w.cardholderName || 'PETER RYAD');
+    setExpiryDate(w.expiryDate || '12/28');
     setIsModalOpen(true);
+  };
+
+  // Preview object for modal
+  const previewWallet: Partial<Wallet> = {
+    name: name || (type === 'credit' ? 'CIB Platinum Credit' : 'CIB Prime Debit'),
+    type,
+    balance: parseFloat(balance) || 0,
+    color,
+    last4: last4 || '5678',
+    institution: institution || (bank === 'cib' ? 'CIB Egypt' : bank.toUpperCase()),
+    bank,
+    accountTier,
+    creditTier,
+    network,
+    cardholderName,
+    expiryDate
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -77,25 +113,28 @@ export function CardsView() {
     const numBalance = parseFloat(balance);
     if (!name || isNaN(numBalance)) return;
 
+    const payload = {
+      name,
+      type,
+      balance: numBalance,
+      color,
+      last4: last4.trim() ? last4.trim() : undefined,
+      institution: institution.trim() ? institution.trim() : undefined,
+      bank,
+      accountTier: type !== 'credit' ? accountTier : undefined,
+      creditTier: type === 'credit' ? creditTier : undefined,
+      network,
+      cardholderName: cardholderName.trim() ? cardholderName.trim() : undefined,
+      expiryDate: expiryDate.trim() ? expiryDate.trim() : undefined
+    };
+
     if (editingWallet) {
       await updateWallet({
         ...editingWallet,
-        name,
-        type,
-        balance: numBalance,
-        color,
-        last4: last4.trim() ? last4.trim() : undefined,
-        institution: institution.trim() ? institution.trim() : undefined
+        ...payload
       });
     } else {
-      await addWallet({
-        name,
-        type,
-        balance: numBalance,
-        color,
-        last4: last4.trim() ? last4.trim() : undefined,
-        institution: institution.trim() ? institution.trim() : undefined
-      });
+      await addWallet(payload);
     }
 
     setIsModalOpen(false);
@@ -112,7 +151,7 @@ export function CardsView() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-extrabold text-white tracking-tight">Manage Cards</h2>
-          <p className="text-xs text-neutral-400 font-medium">Bank accounts & digital wallets</p>
+          <p className="text-xs text-neutral-400 font-medium">Physical bank cards & wallets</p>
         </div>
         <button
           onClick={handleOpenAdd}
@@ -136,8 +175,8 @@ export function CardsView() {
         </div>
       </div>
 
-      {/* Apple Wallet Style Cards List */}
-      <div className="space-y-4">
+      {/* Photorealistic Cards List */}
+      <div className="space-y-6">
         {wallets.length === 0 ? (
           <div className="p-8 rounded-3xl bg-neutral-900/60 border border-neutral-800/80 text-center space-y-3">
             <div className="w-14 h-14 rounded-2xl bg-[#0a7ea4]/10 border border-[#0a7ea4]/20 flex items-center justify-center text-[#0a7ea4] mx-auto">
@@ -145,7 +184,7 @@ export function CardsView() {
             </div>
             <h3 className="text-base font-bold text-white">No Accounts or Cards Yet</h3>
             <p className="text-xs text-neutral-400 max-w-xs mx-auto">
-              Add your bank cards, digital wallets, or cash accounts to track balances and manage your finances.
+              Add your bank cards, digital wallets, or cash accounts to track balances and manage your finances with real-life card designs.
             </p>
             <button
               onClick={handleOpenAdd}
@@ -160,55 +199,29 @@ export function CardsView() {
             const spentThisMonth = spentPerWallet[wallet.id] || 0;
 
             return (
-              <div
-                key={wallet.id}
-                onClick={() => handleOpenEdit(wallet)}
-                className="relative overflow-hidden rounded-3xl p-6 cursor-pointer transform transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl active:scale-[0.99] border border-white/10 credit-card"
-                style={{
-                  background: `linear-gradient(135deg, ${wallet.color}ee, ${wallet.color}99 60%, #000000dd)`
-                }}
-              >
-                {/* Background ambient lighting */}
-                <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full blur-2xl pointer-events-none" />
-                
-                {/* Card Top Row */}
-                <div className="flex items-start justify-between relative z-10 mb-8">
-                  <div>
-                    <p className="text-xs uppercase tracking-widest text-white/70 font-semibold">
-                      {wallet.institution || wallet.type.toUpperCase()}
-                    </p>
-                    <h3 className="text-lg font-bold text-white tracking-wide">{wallet.name}</h3>
-                  </div>
-                  
-                  {/* Chip / Card Icon */}
+              <div key={wallet.id} className="space-y-2 group">
+                <RealisticCard
+                  wallet={wallet}
+                  spentThisMonth={spentThisMonth}
+                  currencySymbol={currencySymbol}
+                  showBalance={true}
+                  onClick={() => handleOpenEdit(wallet)}
+                />
+
+                {/* Sub-card quick info */}
+                <div className="flex items-center justify-between px-3 text-xs">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-6 rounded-md bg-amber-200/40 border border-amber-300/40 flex items-center justify-center">
-                      <div className="w-4 h-3 border border-amber-400/60 rounded-sm" />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Card Number */}
-                <div className="mb-6 relative z-10">
-                  <p className="font-mono text-sm tracking-widest text-white/80">
-                    •••• •••• •••• {wallet.last4 || '8834'}
-                  </p>
-                </div>
-
-                {/* Card Bottom Row: Spent vs Balance */}
-                <div className="flex items-end justify-between pt-4 border-t border-white/15 relative z-10">
-                  <div>
-                    <p className="text-[10px] uppercase font-bold text-white/60 tracking-wider">TOTAL SPENT</p>
-                    <p className="text-xs font-mono font-bold text-white/90">
+                    <span className="text-neutral-400 font-medium">Spent this month:</span>
+                    <span className="font-mono font-bold text-white">
                       {currencySymbol} {spentThisMonth.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                    </p>
+                    </span>
                   </div>
-                  <div className="text-right">
-                    <p className="text-[10px] uppercase font-bold text-white/60 tracking-wider">BALANCE</p>
-                    <p className="text-base font-mono font-extrabold text-white">
-                      {currencySymbol} {wallet.balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                    </p>
-                  </div>
+                  <button
+                    onClick={() => handleOpenEdit(wallet)}
+                    className="text-[#0a7ea4] hover:underline font-semibold text-[11px]"
+                  >
+                    Manage Card
+                  </button>
                 </div>
               </div>
             );
@@ -216,89 +229,253 @@ export function CardsView() {
         )}
       </div>
 
-      {/* Add / Edit Wallet Modal */}
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingWallet ? 'Edit Card' : 'Add New Card'}>
-        <form onSubmit={handleSave} className="space-y-4">
+      {/* Add / Edit Wallet Modal with Live Card Preview */}
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingWallet ? 'Edit Bank Card' : 'Add Bank Card'}>
+        <form onSubmit={handleSave} className="space-y-4 max-h-[80vh] overflow-y-auto pr-1 no-scrollbar">
+          
+          {/* Live Realistic Card Preview */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between text-xs text-neutral-400 px-1">
+              <span className="flex items-center gap-1 font-semibold">
+                <Sparkle size={14} className="text-[#0a7ea4]" weight="fill" />
+                Live Card Preview
+              </span>
+              <span className="text-[10px] uppercase font-mono tracking-wider text-neutral-500">
+                {bank.toUpperCase()} • {type === 'credit' ? creditTier.toUpperCase() : accountTier.toUpperCase()}
+              </span>
+            </div>
+            <div className="transform transition-all">
+              <RealisticCard wallet={previewWallet} showBalance={false} />
+            </div>
+          </div>
+
+          {/* Bank Selection */}
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1">
-              Account / Card Name
+              Bank / Financial Institution
+            </label>
+            <select
+              value={bank}
+              onChange={(e) => {
+                const b = e.target.value as any;
+                setBank(b);
+                if (b === 'cib') {
+                  setInstitution('CIB Egypt');
+                  setColor('#35989e');
+                  if (!name) setName(type === 'credit' ? 'CIB Platinum' : 'CIB Prime');
+                } else if (b === 'nbe') {
+                  setInstitution('National Bank of Egypt');
+                  setColor('#05472a');
+                  if (!name) setName('NBE Al-Ahli');
+                } else if (b === 'banque-misr') {
+                  setInstitution('Banque Misr');
+                  setColor('#7a1b28');
+                  if (!name) setName('Banque Misr');
+                } else if (b === 'qnb') {
+                  setInstitution('QNB Alahli');
+                  setColor('#4b1124');
+                  if (!name) setName('QNB Card');
+                } else if (b === 'hsbc') {
+                  setInstitution('HSBC Egypt');
+                  setColor('#1a1a1a');
+                  if (!name) setName('HSBC Platinum');
+                }
+              }}
+              className="w-full px-4 py-2.5 bg-neutral-900 border border-neutral-800 rounded-xl text-white text-sm focus:outline-none focus:border-[#0a7ea4]"
+            >
+              <option value="cib">Commercial International Bank (CIB)</option>
+              <option value="nbe">National Bank of Egypt (NBE - الأهلي)</option>
+              <option value="banque-misr">Banque Misr (بنك مصر)</option>
+              <option value="qnb">QNB Alahli</option>
+              <option value="hsbc">HSBC Egypt</option>
+              <option value="enbd">Emirates NBD</option>
+              <option value="alexbank">Bank of Alexandria</option>
+              <option value="aaib">Arab African Intl Bank (AAIB)</option>
+              <option value="other">Other / International Bank</option>
+            </select>
+          </div>
+
+          {/* Account Type & Tiers */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1">
+                Card Type
+              </label>
+              <select
+                value={type}
+                onChange={(e) => {
+                  const newType = e.target.value as any;
+                  setType(newType);
+                  if (newType === 'credit') {
+                    if (bank === 'cib') setColor('#0c0d0e');
+                  } else {
+                    if (bank === 'cib') setColor('#35989e');
+                  }
+                }}
+                className="w-full px-4 py-2.5 bg-neutral-900 border border-neutral-800 rounded-xl text-white text-sm focus:outline-none focus:border-[#0a7ea4]"
+              >
+                <option value="checking">Debit Card / Checking</option>
+                <option value="credit">Credit Card</option>
+                <option value="savings">Savings Account</option>
+                <option value="digital">Digital Wallet / InstaPay</option>
+                <option value="cash">Cash Account</option>
+              </select>
+            </div>
+
+            {/* Dynamic Tier Selection */}
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1">
+                {type === 'credit' ? 'Credit Card Tier' : 'Account Tier'}
+              </label>
+              {type === 'credit' ? (
+                <select
+                  value={creditTier}
+                  onChange={(e) => {
+                    const ct = e.target.value as any;
+                    setCreditTier(ct);
+                    if (ct === 'gold') setColor('#d4af37');
+                    if (ct === 'platinum') setColor('#0c0d0e');
+                    if (ct === 'titanium') setColor('#4a5568');
+                  }}
+                  className="w-full px-4 py-2.5 bg-neutral-900 border border-neutral-800 rounded-xl text-white text-sm focus:outline-none focus:border-[#0a7ea4]"
+                >
+                  <option value="platinum">Platinum (بلاتينيوم)</option>
+                  <option value="titanium">Titanium (تيتانيوم)</option>
+                  <option value="gold">Gold (ذهبية)</option>
+                  <option value="world">World / Miles (وورلد)</option>
+                  <option value="world-elite">World Elite (وورلد إيليت)</option>
+                  <option value="classic">Classic / Standard</option>
+                  <option value="infinite">Infinite (إنفينيت)</option>
+                </select>
+              ) : (
+                <select
+                  value={accountTier}
+                  onChange={(e) => {
+                    const at = e.target.value as any;
+                    setAccountTier(at);
+                    if (at === 'prime') setColor('#35989e');
+                    if (at === 'plus') setColor('#154c9a');
+                    if (at === 'wealth') setColor('#1f252d');
+                    if (at === 'private') setColor('#0d0d0d');
+                  }}
+                  className="w-full px-4 py-2.5 bg-neutral-900 border border-neutral-800 rounded-xl text-white text-sm focus:outline-none focus:border-[#0a7ea4]"
+                >
+                  <option value="prime">Prime (برايم)</option>
+                  <option value="plus">Plus (بلس)</option>
+                  <option value="wealth">Wealth (ويلث)</option>
+                  <option value="private">Private (برايفت)</option>
+                  <option value="standard">Standard Debit</option>
+                </select>
+              )}
+            </div>
+          </div>
+
+          {/* Payment Network & Cardholder Name */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1">
+                Payment Network
+              </label>
+              <select
+                value={network}
+                onChange={(e) => setNetwork(e.target.value as any)}
+                className="w-full px-4 py-2.5 bg-neutral-900 border border-neutral-800 rounded-xl text-white text-sm focus:outline-none focus:border-[#0a7ea4]"
+              >
+                <option value="mastercard">Mastercard</option>
+                <option value="visa">Visa</option>
+                <option value="meeza">Meeza (ميزة)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1">
+                Cardholder Name
+              </label>
+              <input
+                type="text"
+                value={cardholderName}
+                onChange={(e) => setCardholderName(e.target.value.toUpperCase())}
+                placeholder="PETER RYAD"
+                className="w-full px-4 py-2.5 bg-neutral-900 border border-neutral-800 rounded-xl text-white font-mono uppercase text-sm focus:outline-none focus:border-[#0a7ea4]"
+              />
+            </div>
+          </div>
+
+          {/* Card Nickname */}
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1">
+              Card Nickname / Account Name
             </label>
             <input
               type="text"
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Chase Checking, Amex Gold, InstaPay"
+              placeholder="e.g. CIB Salary Account or CIB Platinum Credit"
               className="w-full px-4 py-2.5 bg-neutral-900 border border-neutral-800 rounded-xl text-white text-sm focus:outline-none focus:border-[#0a7ea4]"
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          {/* Balance, Expiry & Last 4 Digits (All numpad enabled) */}
+          <div className="grid grid-cols-3 gap-3">
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1">
-                Account Type
-              </label>
-              <select
-                value={type}
-                onChange={(e) => setType(e.target.value as any)}
-                className="w-full px-4 py-2.5 bg-neutral-900 border border-neutral-800 rounded-xl text-white text-sm focus:outline-none focus:border-[#0a7ea4]"
-              >
-                <option value="checking">Checking Account</option>
-                <option value="credit">Credit Card</option>
-                <option value="savings">Savings Account</option>
-                <option value="cash">Cash</option>
-                <option value="digital">Digital Wallet (Vodafone/InstaPay)</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1">
-                Current Balance ({currencySymbol})
+                Balance ({currencySymbol})
               </label>
               <input
                 type="number"
                 step="any"
+                inputMode="decimal"
+                pattern="[0-9]*[.,]?[0-9]*"
                 required
                 value={balance}
                 onChange={(e) => setBalance(e.target.value)}
                 placeholder="0.00"
-                className="w-full px-4 py-2.5 bg-neutral-900 border border-neutral-800 rounded-xl text-white font-mono text-sm focus:outline-none focus:border-[#0a7ea4]"
+                className="w-full px-3 py-2.5 bg-neutral-900 border border-neutral-800 rounded-xl text-white font-mono text-sm focus:outline-none focus:border-[#0a7ea4]"
               />
             </div>
-          </div>
 
-          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1">
+                Expiry (MM/YY)
+              </label>
+              <input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={5}
+                value={expiryDate}
+                onChange={(e) => {
+                  let val = e.target.value.replace(/[^\d/]/g, '');
+                  if (val.length === 2 && !val.includes('/')) val += '/';
+                  setExpiryDate(val);
+                }}
+                placeholder="12/28"
+                className="w-full px-3 py-2.5 bg-neutral-900 border border-neutral-800 rounded-xl text-white font-mono text-sm focus:outline-none focus:border-[#0a7ea4]"
+              />
+            </div>
+
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1">
                 Last 4 Digits
               </label>
               <input
                 type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 maxLength={4}
                 value={last4}
-                onChange={(e) => setLast4(e.target.value)}
-                placeholder="4521"
-                className="w-full px-4 py-2.5 bg-neutral-900 border border-neutral-800 rounded-xl text-white font-mono text-sm focus:outline-none focus:border-[#0a7ea4]"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1">
-                Bank / Provider
-              </label>
-              <input
-                type="text"
-                value={institution}
-                onChange={(e) => setInstitution(e.target.value)}
-                placeholder="e.g. CIB, Chase, NBE"
-                className="w-full px-4 py-2.5 bg-neutral-900 border border-neutral-800 rounded-xl text-white text-sm focus:outline-none focus:border-[#0a7ea4]"
+                onChange={(e) => setLast4(e.target.value.replace(/\D/g, ''))}
+                placeholder="5678"
+                className="w-full px-3 py-2.5 bg-neutral-900 border border-neutral-800 rounded-xl text-white font-mono text-sm focus:outline-none focus:border-[#0a7ea4]"
               />
             </div>
           </div>
 
+          {/* Custom Color Accent */}
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
-              Card Color Accent
+              Color Accent Override
             </label>
             <div className="flex flex-wrap gap-2.5">
               {CARD_COLORS.map(c => (
@@ -306,21 +483,24 @@ export function CardsView() {
                   key={c.color}
                   type="button"
                   onClick={() => setColor(c.color)}
-                  className={`w-8 h-8 rounded-full transition-transform ${
-                    color === c.color ? 'scale-110 ring-2 ring-white' : 'opacity-70 hover:opacity-100'
+                  className={`w-7 h-7 rounded-full transition-transform ${
+                    color === c.color ? 'scale-110 ring-2 ring-white ring-offset-2 ring-offset-neutral-900' : 'opacity-70 hover:opacity-100'
                   }`}
                   style={{ backgroundColor: c.color }}
+                  title={c.name}
                 />
               ))}
             </div>
           </div>
 
-          <div className="flex gap-3 pt-2">
+          {/* Action Buttons */}
+          <div className="flex gap-3 pt-3 border-t border-neutral-800">
             {editingWallet && (
               <button
                 type="button"
                 onClick={handleDelete}
                 className="p-3 rounded-xl border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-colors"
+                title="Delete Card"
               >
                 <Trash size={18} />
               </button>

@@ -80,6 +80,8 @@ export function EditTransactionModal({ isOpen, onClose, transaction }: EditTrans
             <input
               type="number"
               step="any"
+              inputMode="decimal"
+              pattern="[0-9]*[.,]?[0-9]*"
               required
               value={amount}
               onChange={(e) => setAmount(e.target.value)}

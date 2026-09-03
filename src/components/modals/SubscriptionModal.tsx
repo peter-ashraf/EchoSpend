@@ -156,6 +156,8 @@ export function SubscriptionModal({ isOpen, onClose, subscription }: Subscriptio
             <input
               type="number"
               step="any"
+              inputMode="decimal"
+              pattern="[0-9]*[.,]?[0-9]*"
               required
               value={amount}
               onChange={(e) => setAmount(e.target.value)}

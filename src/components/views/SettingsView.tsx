@@ -517,11 +517,13 @@ export function SettingsView({ onStartWhisperDownload, isWhisperDownloading }: S
             </label>
             <input
               type="number"
-              required
+              step="any"
+              inputMode="decimal"
+              pattern="[0-9]*[.,]?[0-9]*"
               autoFocus
               value={newBudget}
               onChange={(e) => setNewBudget(e.target.value)}
-              placeholder="25000"
+              placeholder="0.00"
               className="w-full px-4 py-3 bg-neutral-900 border border-neutral-800 rounded-2xl text-white font-mono text-xl font-bold focus:outline-none focus:border-[#0a7ea4]"
             />
           </div>
