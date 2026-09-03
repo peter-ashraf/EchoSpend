@@ -1,5 +1,4 @@
 import { useEffect } from 'react';
-
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from '@phosphor-icons/react';
 
@@ -38,9 +37,9 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-neutral-900 border border-neutral-800 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden pointer-events-auto"
+              className="bg-neutral-900 border border-neutral-800 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden pointer-events-auto flex flex-col max-h-[90vh]"
             >
-              <div className="flex items-center justify-between p-4 border-b border-neutral-800">
+              <div className="flex items-center justify-between p-4 border-b border-neutral-800 shrink-0">
                 <h2 className="text-lg font-semibold text-neutral-100">{title}</h2>
                 <button
                   onClick={onClose}
@@ -49,7 +48,7 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
                   <X size={20} />
                 </button>
               </div>
-              <div className="p-4 max-h-[80vh] overflow-y-auto">
+              <div className="p-4 overflow-y-auto flex-1 custom-modal-scrollbar">
                 {children}
               </div>
             </motion.div>
@@ -59,5 +58,3 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
     </AnimatePresence>
   );
 }
-
-

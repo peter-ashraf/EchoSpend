@@ -34,7 +34,7 @@ export function CardsView() {
   const [accountTier, setAccountTier] = useState<NonNullable<Wallet['accountTier']>>('prime');
   const [creditTier, setCreditTier] = useState<NonNullable<Wallet['creditTier']>>('platinum');
   const [network, setNetwork] = useState<NonNullable<Wallet['network']>>('mastercard');
-  const [cardholderName, setCardholderName] = useState('PETER RYAD');
+  const [cardholderName, setCardholderName] = useState('PETER ASHRAF');
   const [expiryDate, setExpiryDate] = useState('12/28');
 
   const currencySymbol = settings?.currency || 'EGP';
@@ -70,7 +70,7 @@ export function CardsView() {
     setAccountTier('prime');
     setCreditTier('platinum');
     setNetwork('mastercard');
-    setCardholderName('PETER RYAD');
+    setCardholderName('PETER ASHRAF');
     setExpiryDate('12/28');
     setIsModalOpen(true);
   };
@@ -231,7 +231,7 @@ export function CardsView() {
 
       {/* Add / Edit Wallet Modal with Live Card Preview */}
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingWallet ? 'Edit Bank Card' : 'Add Bank Card'}>
-        <form onSubmit={handleSave} className="space-y-4 max-h-[80vh] overflow-y-auto pr-1 no-scrollbar">
+        <form onSubmit={handleSave} className="space-y-4">
           
           {/* Live Realistic Card Preview */}
           <div className="space-y-1.5">

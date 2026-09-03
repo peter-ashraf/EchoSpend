@@ -1,4 +1,3 @@
-import React from 'react';
 import type { Wallet } from '../../lib/db';
 
 interface RealisticCardProps {
@@ -16,122 +15,68 @@ export function EmvChip({ className = 'w-11 h-8' }: { className?: string }) {
     <div
       className={`relative rounded-md p-0.5 shadow-md flex items-center justify-center overflow-hidden border border-[#967420] shrink-0 ${className}`}
       style={{
-        background: 'linear-gradient(135deg, #e6c875 0%, #d4af37 40%, #aa820a 70%, #f3e5ab 100%)',
+        background: 'linear-gradient(135deg, #f0d27d 0%, #d4af37 40%, #aa820a 70%, #f7e8b0 100%)',
       }}
     >
-      {/* Precision etched circuit patterns */}
-      <div className="w-full h-full border border-[#8a6818]/60 rounded-sm relative flex flex-col justify-between p-0.5">
+      <div className="w-full h-full border border-[#7a5c12]/70 rounded-sm relative flex flex-col justify-between p-0.5">
         <div className="flex justify-between w-full h-[30%]">
-          <div className="w-[35%] border-r border-b border-[#73540e]/60" />
-          <div className="w-[35%] border-l border-b border-[#73540e]/60" />
+          <div className="w-[35%] border-r border-b border-[#664b0a]/70" />
+          <div className="w-[35%] border-l border-b border-[#664b0a]/70" />
         </div>
-        <div className="w-full h-[25%] border-t border-b border-[#73540e]/60" />
+        <div className="w-full h-[25%] border-t border-b border-[#664b0a]/70" />
         <div className="flex justify-between w-full h-[30%]">
-          <div className="w-[35%] border-r border-t border-[#73540e]/60" />
-          <div className="w-[35%] border-l border-t border-[#73540e]/60" />
+          <div className="w-[35%] border-r border-t border-[#664b0a]/70" />
+          <div className="w-[35%] border-l border-t border-[#664b0a]/70" />
         </div>
       </div>
-      {/* Metallic specular sheen */}
       <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/30 to-transparent pointer-events-none" />
     </div>
   );
 }
 
 // ── Contactless Wave Icon ───────────────────────────────────────────
-export function ContactlessWave({ size = 20, color = 'currentColor' }: { size?: number; color?: string }) {
+export function ContactlessWave({ size = 20, color = 'white' }: { size?: number; color?: string }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M7.5 7.5C8.8 8.8 9.5 10.4 9.5 12C9.5 13.6 8.8 15.2 7.5 16.5" stroke={color} strokeWidth="2.2" strokeLinecap="round" />
-      <path d="M11 5C12.9 6.9 14 9.4 14 12C14 14.6 12.9 17.1 11 19" stroke={color} strokeWidth="2.2" strokeLinecap="round" />
-      <path d="M14.5 2.5C17 5 18.5 8.3 18.5 12C18.5 15.7 17 19 14.5 21.5" stroke={color} strokeWidth="2.2" strokeLinecap="round" />
+      <path d="M7 8C8.2 9.2 8.8 10.6 8.8 12C8.8 13.4 8.2 14.8 7 16" stroke={color} strokeWidth="2.2" strokeLinecap="round" />
+      <path d="M10.5 5.5C12.3 7.3 13.2 9.5 13.2 12C13.2 14.5 12.3 16.7 10.5 18.5" stroke={color} strokeWidth="2.2" strokeLinecap="round" />
+      <path d="M14 3C16.5 5.5 17.8 8.5 17.8 12C17.8 15.5 16.5 18.5 14 21" stroke={color} strokeWidth="2.2" strokeLinecap="round" />
     </svg>
   );
 }
 
-// ── Bank Logos ──────────────────────────────────────────────────────
-export function BankLogoBadge({ bank, tier, isDebit }: { bank?: string; tier?: string; isDebit?: boolean }) {
-  if (bank === 'cib' || !bank) {
-    return (
-      <div className="flex items-center gap-1.5">
-        {/* CIB stylized globe emblem */}
-        <div className="flex items-center">
-          <span className="font-black tracking-tighter text-lg font-sans flex items-center text-white">
-            <span className="relative inline-flex items-center justify-center mr-0.5">
-              <span className="text-xl font-black">C</span>
-              <span className="w-2.5 h-2.5 rounded-full bg-[#f97316] absolute inset-0 m-auto flex items-center justify-center">
-                <span className="w-1.5 h-1.5 border border-white/80 rounded-full" />
-              </span>
-            </span>
-            <span>IB</span>
-          </span>
-          {isDebit && tier && tier !== 'standard' && (
-            <span className="ml-1.5 pl-1.5 border-l border-white/40 text-xs tracking-wider uppercase font-semibold text-white/90">
-              {tier}
-            </span>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  if (bank === 'nbe') {
-    return (
-      <div className="flex items-center gap-1.5">
-        <div className="w-6 h-6 rounded-md bg-[#05472A] border border-[#d4af37] flex items-center justify-center text-[#d4af37] font-serif font-black text-xs">
-          NBE
-        </div>
-        <div className="leading-tight">
-          <p className="text-[11px] font-bold text-white tracking-wide">National Bank of Egypt</p>
-          <p className="text-[9px] text-amber-200/80 uppercase tracking-wider font-semibold">البنك الأهلي المصري</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (bank === 'banque-misr') {
-    return (
-      <div className="flex items-center gap-1.5">
-        <div className="w-6 h-6 rounded-md bg-[#7A1B28] border border-amber-300 flex items-center justify-center text-amber-300 font-bold text-xs">
-          BM
-        </div>
-        <div className="leading-tight">
-          <p className="text-[11px] font-bold text-white tracking-wide">Banque Misr</p>
-          <p className="text-[9px] text-red-200/80 uppercase tracking-wider font-semibold">بنك مصر</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (bank === 'qnb') {
-    return (
-      <div className="flex items-center gap-1.5">
-        <div className="w-6 h-6 rounded-md bg-[#4B1124] border border-amber-400/60 flex items-center justify-center text-white font-extrabold text-xs">
-          QNB
-        </div>
-        <span className="text-xs font-extrabold text-white tracking-wider">QNB ALAHLI</span>
-      </div>
-    );
-  }
-
-  if (bank === 'hsbc') {
-    return (
-      <div className="flex items-center gap-2">
-        {/* HSBC Red and White Hexagon */}
-        <div className="w-5 h-5 relative flex items-center justify-center">
-          <div className="w-4 h-4 bg-red-600 rotate-45 flex items-center justify-center">
-            <div className="w-2 h-2 bg-white" />
-          </div>
-        </div>
-        <span className="text-xs font-black tracking-widest text-white">HSBC</span>
-      </div>
-    );
-  }
-
+// ── CIB Authentic Logo ──────────────────────────────────────────────
+export function CibLogo({ variant = 'white' }: { variant?: 'white' | 'gold' }) {
+  const textColor = variant === 'gold' ? '#d4af37' : '#ffffff';
   return (
-    <div className="flex items-center gap-1.5">
-      <span className="text-xs font-extrabold tracking-widest uppercase text-white/90">
-        {bank || 'PREMIUM BANK'}
-      </span>
+    <div className="flex items-center select-none">
+      <div className="flex items-center font-sans tracking-tight font-black text-xl" style={{ color: textColor }}>
+        <span className="relative inline-flex items-center justify-center mr-0.5">
+          <span className="text-2xl font-black leading-none">C</span>
+          {/* CIB Orange Core Globe */}
+          <span className="w-2.5 h-2.5 rounded-full bg-[#f97316] absolute inset-0 m-auto flex items-center justify-center shadow-sm">
+            <span className="w-1.5 h-1.5 border border-white/90 rounded-full" />
+          </span>
+        </span>
+        <span className="text-xl font-black tracking-tighter">IB</span>
+      </div>
+    </div>
+  );
+}
+
+// ── CIB BONUS Badge ─────────────────────────────────────────────────
+export function CibBonusBadge() {
+  return (
+    <div className="flex items-center gap-1.5 select-none">
+      {/* Gift Box Icon */}
+      <div className="w-5 h-5 relative flex items-center justify-center">
+        <div className="w-4 h-3.5 bg-white rounded-sm relative shadow-sm">
+          {/* Orange ribbon */}
+          <div className="w-1 h-full bg-[#f97316] mx-auto" />
+          <div className="w-full h-1 bg-[#f97316] absolute inset-y-0 my-auto" />
+        </div>
+      </div>
+      <span className="font-sans font-black text-xs tracking-wider text-white">BONUS</span>
     </div>
   );
 }
@@ -140,7 +85,7 @@ export function BankLogoBadge({ bank, tier, isDebit }: { bank?: string; tier?: s
 export function NetworkLogo({ network = 'mastercard' }: { network?: 'mastercard' | 'visa' | 'meeza' }) {
   if (network === 'visa') {
     return (
-      <span className="font-black italic text-xl tracking-tighter text-white drop-shadow-md select-none font-sans">
+      <span className="font-black italic text-xl tracking-tighter text-white drop-shadow select-none font-sans">
         VISA
       </span>
     );
@@ -148,22 +93,350 @@ export function NetworkLogo({ network = 'mastercard' }: { network?: 'mastercard'
 
   if (network === 'meeza') {
     return (
-      <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-white/90 text-neutral-950 font-black text-[10px] tracking-wider select-none shadow-sm">
+      <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-white/95 text-neutral-950 font-black text-[10px] tracking-wider select-none shadow">
         <span className="text-[#0a7ea4]">M</span>EEZA ميزة
       </div>
     );
   }
 
-  // Mastercard default
+  // Mastercard
   return (
     <div className="flex items-center -space-x-2.5 relative select-none">
       <div className="w-7 h-7 rounded-full bg-[#EB001B] shadow-sm" />
-      <div className="w-7 h-7 rounded-full bg-[#F79E1B]/90 shadow-sm mix-blend-screen" />
+      <div className="w-7 h-7 rounded-full bg-[#F79E1B]/95 shadow-sm mix-blend-screen" />
     </div>
   );
 }
 
-// ── Main Photorealistic Physical Card ───────────────────────────────
+// ── 1. CIB Platinum Credit Card Vector Background ───────────────────
+function CibPlatinumVectorArt() {
+  return (
+    <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 400 252" preserveAspectRatio="none" fill="none">
+      <rect width="400" height="252" fill="#0b0c0e" />
+      
+      {/* Golden concentric celestial orbits */}
+      <g stroke="#b8943f" opacity="0.35" strokeWidth="1.2">
+        <ellipse cx="370" cy="126" rx="90" ry="115" />
+        <ellipse cx="370" cy="126" rx="140" ry="160" strokeDasharray="4 4" />
+        <ellipse cx="370" cy="126" rx="190" ry="210" />
+        <ellipse cx="370" cy="126" rx="240" ry="260" strokeDasharray="8 6" />
+        <ellipse cx="370" cy="126" rx="290" ry="310" opacity="0.2" />
+      </g>
+
+      {/* Radiant orbital nodes / planets */}
+      <circle cx="280" cy="90" r="3" fill="#b8943f" opacity="0.6" />
+      <circle cx="230" cy="150" r="2.5" fill="#b8943f" opacity="0.5" />
+      <circle cx="180" cy="110" r="3.5" fill="#b8943f" opacity="0.4" />
+      <circle cx="140" cy="180" r="2" fill="#b8943f" opacity="0.5" />
+      <circle cx="320" cy="170" r="4" fill="#b8943f" opacity="0.7" />
+
+      {/* Stylized celestial globe watermark on right */}
+      <g stroke="#a68434" opacity="0.3" strokeWidth="1.5">
+        <circle cx="360" cy="126" r="65" />
+        <ellipse cx="360" cy="126" rx="30" ry="65" />
+        <line x1="295" y1="126" x2="425" y2="126" />
+        <line x1="305" y1="95" x2="415" y2="95" />
+        <line x1="305" y1="157" x2="415" y2="157" />
+      </g>
+
+      {/* Subtle bottom-right gold ambient glow */}
+      <circle cx="360" cy="130" r="100" fill="url(#goldGlow)" opacity="0.12" />
+      <defs>
+        <radialGradient id="goldGlow" cx="0.5" cy="0.5" r="0.5">
+          <stop offset="0%" stopColor="#d4af37" />
+          <stop offset="100%" stopColor="#000000" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+    </svg>
+  );
+}
+
+// ── 2. CIB Prime Debit Card Vector Background ───────────────────────
+function CibPrimeVectorArt() {
+  return (
+    <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 400 252" preserveAspectRatio="none" fill="none">
+      <rect width="400" height="252" fill="#2c969b" />
+      
+      {/* Signature CIB Segmented Mosaic Globe */}
+      <g transform="translate(195, 126)" opacity="0.85">
+        {/* Top-Left Quadrant: Blue geometric diamond pattern */}
+        <path d="M -10 -10 L -60 -10 A 60 60 0 0 1 -10 -60 Z" fill="#0284c7" />
+        <path d="M -18 -18 L -48 -18 A 48 48 0 0 1 -18 -48 Z" fill="#38bdf8" opacity="0.8" />
+        <path d="M -26 -26 L -36 -26 A 36 36 0 0 1 -26 -36 Z" fill="#0369a1" />
+
+        {/* Top-Right Quadrant: Lime polka-dots */}
+        <path d="M 10 -10 L 60 -10 A 60 60 0 0 0 10 -60 Z" fill="#84cc16" opacity="0.9" />
+        <circle cx="25" cy="-25" r="3" fill="#ffffff" opacity="0.7" />
+        <circle cx="40" cy="-20" r="2.5" fill="#ffffff" opacity="0.7" />
+        <circle cx="20" cy="-40" r="2.5" fill="#ffffff" opacity="0.7" />
+        <circle cx="35" cy="-35" r="3" fill="#ffffff" opacity="0.7" />
+
+        {/* Bottom-Left Quadrant: Chevron waves */}
+        <path d="M -10 10 L -60 10 A 60 60 0 0 0 -10 60 Z" fill="#0369a1" />
+        <path d="M -15 20 L -30 30 L -15 40" stroke="#38bdf8" strokeWidth="2.5" fill="none" opacity="0.8" />
+        <path d="M -25 20 L -40 30 L -25 40" stroke="#84cc16" strokeWidth="2" fill="none" opacity="0.8" />
+
+        {/* Bottom-Right Quadrant: Cyan/Lime stripes */}
+        <path d="M 10 10 L 60 10 A 60 60 0 0 1 10 60 Z" fill="#06b6d4" />
+        <line x1="20" y1="12" x2="20" y2="48" stroke="#84cc16" strokeWidth="3" />
+        <line x1="32" y1="12" x2="32" y2="42" stroke="#ffffff" strokeWidth="2.5" opacity="0.8" />
+        <line x1="44" y1="12" x2="44" y2="30" stroke="#0284c7" strokeWidth="3" />
+      </g>
+    </svg>
+  );
+}
+
+// ── 3. CIB Plus Debit Card Vector Background ────────────────────────
+function CibPlusVectorArt() {
+  return (
+    <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 400 252" preserveAspectRatio="none" fill="none">
+      <defs>
+        <linearGradient id="cibPlusGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#0c326d" />
+          <stop offset="50%" stopColor="#154c9e" />
+          <stop offset="100%" stopColor="#082046" />
+        </linearGradient>
+      </defs>
+      <rect width="400" height="252" fill="url(#cibPlusGrad)" />
+      
+      {/* Plus Segmented Globe in Royal Blue & Silver/Cyan */}
+      <g transform="translate(200, 126)" opacity="0.75">
+        <circle cx="0" cy="0" r="62" stroke="#60a5fa" strokeWidth="1.5" strokeDasharray="3 3" />
+        {/* Mosaic segments */}
+        <path d="M -8 -8 L -54 -8 A 54 54 0 0 1 -8 -54 Z" fill="#3b82f6" />
+        <path d="M 8 -8 L 54 -8 A 54 54 0 0 0 8 -54 Z" fill="#93c5fd" opacity="0.85" />
+        <path d="M -8 8 L -54 8 A 54 54 0 0 0 -8 54 Z" fill="#1d4ed8" />
+        <path d="M 8 8 L 54 8 A 54 54 0 0 1 8 54 Z" fill="#60a5fa" />
+      </g>
+
+      {/* Ambient specular highlight */}
+      <path d="M 0 0 L 160 0 L 60 252 L 0 252 Z" fill="white" opacity="0.04" />
+    </svg>
+  );
+}
+
+// ── 4. CIB Wealth Card Vector Background ────────────────────────────
+function CibWealthVectorArt() {
+  return (
+    <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 400 252" preserveAspectRatio="none" fill="none">
+      <defs>
+        <linearGradient id="wealthGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#161a20" />
+          <stop offset="60%" stopColor="#222832" />
+          <stop offset="100%" stopColor="#0d0f12" />
+        </linearGradient>
+      </defs>
+      <rect width="400" height="252" fill="url(#wealthGrad)" />
+      
+      {/* Champagne gold subtle concentric globe watermark */}
+      <g stroke="#d4af37" opacity="0.25" strokeWidth="1.2">
+        <circle cx="210" cy="126" r="65" />
+        <ellipse cx="210" cy="126" rx="32" ry="65" />
+        <line x1="145" y1="126" x2="275" y2="126" />
+        <ellipse cx="210" cy="126" rx="120" ry="140" strokeDasharray="6 6" />
+      </g>
+
+      {/* Wealth Gold segmented accents */}
+      <g transform="translate(210, 126)" opacity="0.4">
+        <path d="M -6 -6 L -40 -6 A 40 40 0 0 1 -6 -40 Z" fill="#d4af37" />
+        <path d="M 6 -6 L 40 -6 A 40 40 0 0 0 6 -40 Z" fill="#f3e5ab" />
+        <path d="M -6 6 L -40 6 A 40 40 0 0 0 -6 40 Z" fill="#aa820a" />
+        <path d="M 6 6 L 40 6 A 40 40 0 0 1 6 40 Z" fill="#d4af37" />
+      </g>
+    </svg>
+  );
+}
+
+// ── 5. NBE (National Bank of Egypt - البنك الأهلي المصري) ────────────
+function NbeVectorArt({ tier = 'platinum' }: { tier?: string }) {
+  const isGold = tier === 'gold';
+  return (
+    <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 400 252" preserveAspectRatio="none" fill="none">
+      <defs>
+        <linearGradient id="nbeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor={isGold ? '#1a3324' : '#033a22'} />
+          <stop offset="50%" stopColor={isGold ? '#0b4d30' : '#044e2e'} />
+          <stop offset="100%" stopColor="#022113" />
+        </linearGradient>
+      </defs>
+      <rect width="400" height="252" fill="url(#nbeGrad)" />
+      
+      {/* Islamic arabesque / geometric star watermark */}
+      <g stroke="#d4af37" opacity="0.22" strokeWidth="1.2">
+        <rect x="160" y="86" width="80" height="80" transform="rotate(45 200 126)" />
+        <rect x="160" y="86" width="80" height="80" />
+        <circle cx="200" cy="126" r="55" />
+        <circle cx="200" cy="126" r="75" strokeDasharray="4 4" />
+        <circle cx="200" cy="126" r="110" strokeDasharray="8 6" opacity="0.15" />
+      </g>
+
+      {/* Decorative side ribbons */}
+      <path d="M 330 0 L 400 0 L 400 252 L 350 252 Z" fill="#d4af37" opacity="0.08" />
+    </svg>
+  );
+}
+
+// ── 6. Banque Misr (بنك مصر) ────────────────────────────────────────
+function BanqueMisrVectorArt() {
+  return (
+    <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 400 252" preserveAspectRatio="none" fill="none">
+      <defs>
+        <linearGradient id="bmGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#6d1320" />
+          <stop offset="60%" stopColor="#871a29" />
+          <stop offset="100%" stopColor="#3b0810" />
+        </linearGradient>
+      </defs>
+      <rect width="400" height="252" fill="url(#bmGrad)" />
+      
+      {/* Geometric Islamic arches watermark */}
+      <g stroke="#f59e0b" opacity="0.2" strokeWidth="1.4">
+        <circle cx="220" cy="126" r="60" />
+        <path d="M 170 186 C 170 140 270 140 270 186" />
+        <path d="M 180 186 C 180 148 260 148 260 186" />
+        <ellipse cx="220" cy="126" rx="90" ry="120" strokeDasharray="6 4" />
+      </g>
+    </svg>
+  );
+}
+
+// ── 7. QNB Alahli ───────────────────────────────────────────────────
+function QnbVectorArt() {
+  return (
+    <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 400 252" preserveAspectRatio="none" fill="none">
+      <defs>
+        <linearGradient id="qnbGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#4a0e20" />
+          <stop offset="60%" stopColor="#63142c" />
+          <stop offset="100%" stopColor="#1a040b" />
+        </linearGradient>
+      </defs>
+      <rect width="400" height="252" fill="url(#qnbGrad)" />
+      
+      {/* Dynamic speed curve */}
+      <path d="M 150 0 C 240 80 220 180 340 252 L 400 252 L 400 0 Z" fill="#ffffff" opacity="0.05" />
+      <g stroke="#ffffff" opacity="0.15" strokeWidth="1.5">
+        <circle cx="220" cy="126" r="50" />
+        <circle cx="220" cy="126" r="75" strokeDasharray="5 5" />
+      </g>
+    </svg>
+  );
+}
+
+// ── 8. HSBC Egypt ───────────────────────────────────────────────────
+function HsbcVectorArt() {
+  return (
+    <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 400 252" preserveAspectRatio="none" fill="none">
+      <defs>
+        <linearGradient id="hsbcGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#1f1f1f" />
+          <stop offset="50%" stopColor="#2c2c2c" />
+          <stop offset="100%" stopColor="#111111" />
+        </linearGradient>
+      </defs>
+      <rect width="400" height="252" fill="url(#hsbcGrad)" />
+      
+      {/* HSBC Faceted Hexagon Geometry in background watermark */}
+      <g transform="translate(230, 126)" opacity="0.12">
+        <rect x="-40" y="-40" width="80" height="80" transform="rotate(45)" fill="#dc2626" />
+        <polygon points="-30,0 0,-30 30,0 0,30" fill="#ffffff" />
+      </g>
+      <line x1="0" y1="126" x2="400" y2="126" stroke="#ffffff" strokeWidth="0.5" opacity="0.1" />
+    </svg>
+  );
+}
+
+// ── 9. Generic Custom Brushed Metal ─────────────────────────────────
+function GenericVectorArt({ color = '#0a7ea4' }: { color?: string }) {
+  return (
+    <div
+      className="absolute inset-0 pointer-events-none"
+      style={{
+        background: `linear-gradient(135deg, ${color}ee 0%, ${color}99 55%, #000000ee 100%)`
+      }}
+    >
+      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent" />
+      <div className="absolute -right-16 -top-16 w-56 h-56 rounded-full border border-white/10" />
+      <div className="absolute -right-8 -top-8 w-40 h-40 rounded-full border border-white/10" />
+    </div>
+  );
+}
+
+// ── Bank Header Badge Component ─────────────────────────────────────
+export function BankHeader({ bank, isDebit, tierTitle }: { bank?: string; isDebit?: boolean; tierTitle?: string }) {
+  if (bank === 'cib' || !bank) {
+    return (
+      <div className="flex items-center gap-2 select-none">
+        <CibLogo variant={tierTitle === 'WEALTH' ? 'gold' : 'white'} />
+        {isDebit && tierTitle && tierTitle !== 'STANDARD' ? (
+          <span className="text-sm font-sans tracking-wide text-white/95 font-medium pl-1 border-l border-white/40">
+            {tierTitle.charAt(0) + tierTitle.slice(1).toLowerCase()}
+          </span>
+        ) : null}
+      </div>
+    );
+  }
+
+  if (bank === 'nbe') {
+    return (
+      <div className="flex items-center gap-2 select-none">
+        <div className="w-7 h-7 rounded-lg bg-[#044328] border border-[#d4af37] flex items-center justify-center text-[#d4af37] font-serif font-black text-xs shadow-sm">
+          NBE
+        </div>
+        <div className="leading-tight">
+          <p className="text-[11px] font-bold text-white tracking-wide">National Bank of Egypt</p>
+          <p className="text-[9px] text-amber-200/90 font-semibold tracking-wider">البنك الأهلي المصري</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (bank === 'banque-misr') {
+    return (
+      <div className="flex items-center gap-2 select-none">
+        <div className="w-7 h-7 rounded-lg bg-[#6d1320] border border-amber-300 flex items-center justify-center text-amber-300 font-bold text-xs shadow-sm">
+          BM
+        </div>
+        <div className="leading-tight">
+          <p className="text-[11px] font-bold text-white tracking-wide">Banque Misr</p>
+          <p className="text-[9px] text-red-200/90 font-semibold tracking-wider">بنك مصر</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (bank === 'qnb') {
+    return (
+      <div className="flex items-center gap-2 select-none">
+        <div className="w-7 h-7 rounded-lg bg-[#4a0e20] border border-amber-300/80 flex items-center justify-center text-white font-extrabold text-xs shadow-sm">
+          QNB
+        </div>
+        <span className="text-xs font-black text-white tracking-wider">QNB ALAHLI</span>
+      </div>
+    );
+  }
+
+  if (bank === 'hsbc') {
+    return (
+      <div className="flex items-center gap-2 select-none">
+        <div className="w-5 h-5 bg-red-600 rotate-45 flex items-center justify-center">
+          <div className="w-2 h-2 bg-white" />
+        </div>
+        <span className="text-xs font-black tracking-widest text-white">HSBC</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="select-none">
+      <span className="text-xs font-black tracking-widest uppercase text-white/90">
+        {bank.toUpperCase()}
+      </span>
+    </div>
+  );
+}
+
+// ── MAIN PHOTOREALISTIC CARD COMPONENT ──────────────────────────────
 export function RealisticCard({
   wallet,
   spentThisMonth = 0,
@@ -173,116 +446,56 @@ export function RealisticCard({
   onClick
 }: RealisticCardProps) {
   const isCredit = wallet.type === 'credit';
-  const isDebit = wallet.type === 'checking' || wallet.type === 'savings' || !isCredit;
+  const isDebit = !isCredit;
   const bank = wallet.bank || 'cib';
   const accountTier = wallet.accountTier || 'prime';
   const creditTier = wallet.creditTier || 'platinum';
   const network = wallet.network || 'mastercard';
 
-  // Determine card visual theme
-  const isCibPlatinum = bank === 'cib' && isCredit && creditTier === 'platinum';
-  const isCibPrime = bank === 'cib' && isDebit && accountTier === 'prime';
-  const isCibPlus = bank === 'cib' && isDebit && accountTier === 'plus';
-  const isCibWealth = bank === 'cib' && isDebit && accountTier === 'wealth';
-  const isCibPrivate = bank === 'cib' && isDebit && accountTier === 'private';
+  const tierTitle = isCredit ? creditTier.toUpperCase() : accountTier.toUpperCase();
 
-  // Tier Title display
-  const tierTitle = isCredit
-    ? creditTier.toUpperCase()
-    : accountTier.toUpperCase();
-
-  // Background styling & textures
-  const getCardBackgroundStyle = (): React.CSSProperties => {
-    // 1. CIB Platinum Credit Card (Real reference image or CSS celestial orbits)
-    if (isCibPlatinum) {
-      return {
-        backgroundImage: 'url(/cards/cib_platinum_credit.png)',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundColor: '#0c0d0e'
-      };
-    }
-
-    // 2. CIB Prime Debit Card (Real reference image or CSS segmented globe)
-    if (isCibPrime) {
-      return {
-        backgroundImage: 'url(/cards/cib_prime_debit.png)',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundColor: '#35989e'
-      };
-    }
-
-    // 3. CIB Plus Debit (Cobalt Blue Metallic with Silver accents)
-    if (isCibPlus) {
-      return {
-        background: 'linear-gradient(135deg, #0d3268 0%, #154c9a 45%, #082147 100%)',
-      };
-    }
-
-    // 4. CIB Wealth (Luxury Dark Slate with Champagne Gold)
-    if (isCibWealth) {
-      return {
-        background: 'linear-gradient(135deg, #1f252d 0%, #14171c 60%, #0a0c0e 100%)',
-      };
-    }
-
-    // 5. CIB Private (Pure Obsidian with Gold Trim)
-    if (isCibPrivate) {
-      return {
-        background: 'linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 60%, #000000 100%)',
-      };
-    }
-
-    // 6. Credit Tiers
-    if (isCredit) {
-      if (creditTier === 'gold') {
-        return {
-          background: 'linear-gradient(135deg, #d4af37 0%, #f3e5ab 35%, #aa7c11 70%, #684904 100%)',
-        };
-      }
-      if (creditTier === 'titanium') {
-        return {
-          background: 'linear-gradient(135deg, #4a5568 0%, #718096 40%, #2d3748 75%, #1a202c 100%)',
-        };
-      }
-      if (creditTier === 'world' || creditTier === 'world-elite') {
-        return {
-          background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #020617 100%)',
-        };
+  // Render authentic vector background based on exact bank and tier
+  const renderVectorBackground = () => {
+    if (bank === 'cib') {
+      if (isCredit) {
+        if (creditTier === 'platinum') return <CibPlatinumVectorArt />;
+        if (creditTier === 'gold') {
+          return (
+            <div className="absolute inset-0 pointer-events-none" style={{ background: 'linear-gradient(135deg, #c59b27 0%, #e8c868 40%, #8c6b12 100%)' }}>
+              <CibPlatinumVectorArt />
+            </div>
+          );
+        }
+        if (creditTier === 'titanium') {
+          return (
+            <div className="absolute inset-0 pointer-events-none" style={{ background: 'linear-gradient(135deg, #3b4252 0%, #4c566a 50%, #242831 100%)' }}>
+              <CibPlatinumVectorArt />
+            </div>
+          );
+        }
+        return <CibPlatinumVectorArt />;
+      } else {
+        if (accountTier === 'prime') return <CibPrimeVectorArt />;
+        if (accountTier === 'plus') return <CibPlusVectorArt />;
+        if (accountTier === 'wealth') return <CibWealthVectorArt />;
+        if (accountTier === 'private') {
+          return (
+            <div className="absolute inset-0 pointer-events-none" style={{ background: 'linear-gradient(135deg, #111 0%, #1a1a1a 50%, #050505 100%)' }}>
+              <CibWealthVectorArt />
+            </div>
+          );
+        }
+        return <CibPrimeVectorArt />;
       }
     }
 
-    // 7. Other Egyptian Banks
-    if (bank === 'nbe') {
-      return {
-        background: 'linear-gradient(135deg, #05472a 0%, #0b6940 50%, #022314 100%)',
-      };
-    }
-    if (bank === 'banque-misr') {
-      return {
-        background: 'linear-gradient(135deg, #7a1b28 0%, #9e2334 50%, #460f17 100%)',
-      };
-    }
-    if (bank === 'qnb') {
-      return {
-        background: 'linear-gradient(135deg, #4b1124 0%, #6b1d36 50%, #1a060d 100%)',
-      };
-    }
-    if (bank === 'hsbc') {
-      return {
-        background: 'linear-gradient(135deg, #1f1f1f 0%, #2e2e2e 50%, #121212 100%)',
-      };
-    }
+    if (bank === 'nbe') return <NbeVectorArt tier={creditTier} />;
+    if (bank === 'banque-misr') return <BanqueMisrVectorArt />;
+    if (bank === 'qnb') return <QnbVectorArt />;
+    if (bank === 'hsbc') return <HsbcVectorArt />;
 
-    // Default fallback using wallet color
-    const baseColor = wallet.color || '#0a7ea4';
-    return {
-      background: `linear-gradient(135deg, ${baseColor}ee 0%, ${baseColor}99 55%, #000000ee 100%)`
-    };
+    return <GenericVectorArt color={wallet.color} />;
   };
-
-  const usePhotoOverlay = isCibPlatinum || isCibPrime;
 
   return (
     <div
@@ -290,132 +503,102 @@ export function RealisticCard({
       className={`relative w-full aspect-[1.586/1] rounded-[22px] p-5 md:p-6 overflow-hidden shadow-2xl transition-all duration-300 border border-white/15 select-none ${
         onClick ? 'cursor-pointer hover:-translate-y-1 hover:shadow-cyan-500/10 active:scale-[0.99]' : ''
       } ${className}`}
-      style={getCardBackgroundStyle()}
     >
-      {/* Dynamic ambient gloss / physical sheen */}
-      <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/10 to-transparent pointer-events-none" />
+      {/* ── 100% PURE VECTOR ART BACKGROUND ─────────────────────── */}
+      {renderVectorBackground()}
 
-      {/* Decorative vector elements for non-photo cards */}
-      {!usePhotoOverlay && (
-        <>
-          <div className="absolute -right-16 -top-16 w-56 h-56 rounded-full border border-white/10 pointer-events-none" />
-          <div className="absolute -right-8 -top-8 w-40 h-40 rounded-full border border-white/10 pointer-events-none" />
-          <div className="absolute right-6 top-6 w-24 h-24 rounded-full border border-white/5 pointer-events-none" />
-        </>
-      )}
+      {/* Surface ambient specular gloss */}
+      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.08] to-transparent pointer-events-none" />
 
-      {/* ── CARD TOP ROW ───────────────────────────────────────── */}
+      {/* ── CARD TOP ROW: BANK LOGO & BONUS / CONTACTLESS ───────── */}
       <div className="flex items-start justify-between relative z-10">
         <div>
-          {!usePhotoOverlay ? (
-            <BankLogoBadge bank={bank} tier={tierTitle} isDebit={isDebit} />
-          ) : (
-            <div className="h-6" /> /* Spacing for photo card logo */
+          <BankHeader bank={bank} isDebit={isDebit} tierTitle={tierTitle} />
+          {bank === 'cib' && isDebit && (
+            <p className="text-[10px] font-mono tracking-widest text-white/70 font-bold mt-0.5">EGP</p>
           )}
-          <p className="text-[10px] font-mono tracking-wider text-white/70 mt-0.5">
-            {wallet.institution || (bank === 'cib' ? 'CIB Egypt' : bank?.toUpperCase())}
-          </p>
         </div>
 
-        {/* Contactless Wave & Optional BONUS badge */}
+        {/* Top Right Badges */}
         <div className="flex items-center gap-3">
-          {isCredit && bank === 'cib' && !usePhotoOverlay && (
-            <div className="flex items-center gap-1 text-[10px] font-bold text-white tracking-widest bg-white/10 px-2 py-0.5 rounded-full border border-white/20">
-              <span>🎁 BONUS</span>
-            </div>
-          )}
-          {!usePhotoOverlay && (
-            <div className="text-white/80">
-              <ContactlessWave size={18} color="currentColor" />
-            </div>
-          )}
+          {bank === 'cib' && isCredit && <CibBonusBadge />}
+          <div className="text-white/85 drop-shadow-sm">
+            <ContactlessWave size={20} color="currentColor" />
+          </div>
         </div>
       </div>
 
-      {/* ── CARD MIDDLE: EMV CHIP & CONTACTLESS ────────────────── */}
-      <div className="my-auto pt-3 pb-1 flex items-center justify-between relative z-10">
-        {!usePhotoOverlay ? (
-          <div className="flex items-center gap-3">
-            <EmvChip />
-            <div className="text-white/70">
-              <ContactlessWave size={18} color="currentColor" />
-            </div>
-          </div>
-        ) : (
-          <div className="h-8" /> /* Photo provides its own EMV chip */
-        )}
+      {/* ── CARD MIDDLE: REAL EMV CHIP & TIER BADGE ────────────── */}
+      <div className="my-auto pt-2 pb-1 flex items-center justify-between relative z-10">
+        <EmvChip />
 
-        {/* Tier text for vector cards */}
-        {!usePhotoOverlay && (
-          <div className="text-right">
-            <p className="text-[11px] font-mono font-black tracking-widest text-white/90 uppercase drop-shadow-sm">
-              {isCredit ? `${creditTier} CREDIT` : `${accountTier} DEBIT`}
-            </p>
-          </div>
-        )}
+        <div className="text-right">
+          <p
+            className="text-xs font-mono font-black tracking-widest text-white/95 uppercase drop-shadow"
+            style={{ fontFamily: "'Courier New', Courier, monospace" }}
+          >
+            {isCredit ? `${creditTier} CREDIT` : `${accountTier} DEBIT`}
+          </p>
+        </div>
       </div>
 
       {/* ── CARD EMBOSSED NUMBER ───────────────────────────────── */}
-      <div className="relative z-10 my-1">
+      <div className="relative z-10 my-0.5">
         <p
           className="font-mono text-base md:text-lg tracking-[0.25em] text-white font-extrabold select-none"
           style={{
-            textShadow: '0 1px 1px rgba(0,0,0,0.8), 0 -1px 1px rgba(255,255,255,0.4)',
+            textShadow: '0 1.5px 2px rgba(0,0,0,0.9), 0 -1px 1px rgba(255,255,255,0.4)',
             fontFamily: "'Courier New', Courier, monospace"
           }}
         >
-          •••• •••• •••• {wallet.last4 || '8834'}
+          •••• •••• •••• {wallet.last4 || '5678'}
         </p>
       </div>
 
-      {/* ── CARD BOTTOM ROW: HOLDER, EXPIRY & NETWORK ──────────── */}
+      {/* ── CARD BOTTOM ROW: CARDHOLDER, EXPIRY & NETWORK ──────── */}
       <div className="flex items-end justify-between relative z-10 pt-1">
         <div className="space-y-0.5">
-          <div className="flex items-center gap-3">
-            <span className="text-[9px] uppercase tracking-widest text-white/70 font-semibold">
+          <div className="flex items-center gap-2">
+            <span className="text-[8px] uppercase tracking-widest text-white/75 font-bold">
               VALID THRU
             </span>
             <span
-              className="text-xs font-mono font-bold text-white tracking-widest"
+              className="text-xs font-mono font-extrabold text-white tracking-widest"
               style={{ textShadow: '0 1px 1px rgba(0,0,0,0.8)' }}
             >
               {wallet.expiryDate || '12/28'}
             </span>
           </div>
           <p
-            className="text-xs font-mono font-extrabold tracking-widest text-white uppercase truncate max-w-[190px]"
+            className="text-xs font-mono font-black tracking-wider text-white uppercase truncate max-w-[200px]"
             style={{
-              textShadow: '0 1px 1px rgba(0,0,0,0.8), 0 -1px 1px rgba(255,255,255,0.3)',
+              textShadow: '0 1.5px 2px rgba(0,0,0,0.9), 0 -1px 1px rgba(255,255,255,0.3)',
               fontFamily: "'Courier New', Courier, monospace"
             }}
           >
-            {wallet.cardholderName || wallet.name || 'PETER RYAD'}
+            {wallet.cardholderName || wallet.name || 'PETER ASHRAF'}
           </p>
         </div>
 
-        {/* Network Logo */}
-        {!usePhotoOverlay ? (
-          <div className="pb-0.5">
-            <NetworkLogo network={network} />
-          </div>
-        ) : (
-          <div className="w-10 h-6" /> /* Handled by photo */
-        )}
+        {/* Network Logo (Mastercard / Visa / Meeza) */}
+        <div className="pb-0.5">
+          <NetworkLogo network={network} />
+        </div>
       </div>
 
-      {/* ── BALANCE & SPENT PILL OVERLAY (When inside App View) ─── */}
+      {/* ── BALANCE & SPENT PILL OVERLAY (In Card List) ─────────── */}
       {showBalance && (
         <div className="absolute top-3 right-3 z-20 flex items-center gap-1.5">
           {spentThisMonth > 0 && (
-            <div className="px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-md border border-white/15 text-right shadow-lg hidden sm:block">
+            <div className="px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-right shadow-lg hidden sm:block">
               <p className="text-[8px] uppercase font-bold text-neutral-400 tracking-wider">SPENT</p>
               <p className="text-[11px] font-mono font-bold text-white/90">
                 {currencySymbol} {spentThisMonth.toLocaleString(undefined, { minimumFractionDigits: 0 })}
               </p>
             </div>
           )}
-          <div className="px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-right shadow-lg">
-            <p className="text-[9px] uppercase font-bold text-neutral-300 tracking-wider">BALANCE</p>
+          <div className="px-3 py-1 rounded-full bg-black/70 backdrop-blur-md border border-white/20 text-right shadow-lg">
+            <p className="text-[8px] uppercase font-bold text-neutral-300 tracking-wider">BALANCE</p>
             <p className="text-xs font-mono font-extrabold text-white">
               {currencySymbol} {(wallet.balance ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
             </p>

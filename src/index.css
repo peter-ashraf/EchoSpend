@@ -215,3 +215,22 @@
 .pt-safe-top {
   padding-top: calc(1rem + env(safe-area-inset-top, 0px));
 }
+
+/* ─── Single Sleek Modal Scrollbar ────────────────────────── */
+.custom-modal-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+.custom-modal-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+.custom-modal-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-modal-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 9999px;
+}
+.custom-modal-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
