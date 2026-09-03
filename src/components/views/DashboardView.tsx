@@ -76,6 +76,13 @@ export function DashboardView({ onNavigateToCards }: DashboardViewProps) {
   const weekDays = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
   const today = new Date();
   const currentDayIndex = (today.getDay() + 6) % 7; // Monday = 0, Sunday = 6
+  const weekStart = useMemo(() => {
+    const d = new Date();
+    const day = (d.getDay() + 6) % 7;
+    d.setDate(d.getDate() - day);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, []);
 
   // Filtered transactions for feed
   const displayTransactions = useMemo(() => {
@@ -170,24 +177,37 @@ export function DashboardView({ onNavigateToCards }: DashboardViewProps) {
           </div>
           <div>
             <div className="flex items-center gap-1.5">
-              <span className="text-sm font-bold text-white">{streak?.currentStreak || 5} Days Streak</span>
-              <span className="text-xs text-amber-400 font-bold">🔥</span>
+              <span className="text-sm font-bold text-white">
+                {(streak?.currentStreak ?? 0) > 0 
+                  ? `${streak?.currentStreak} Day${streak!.currentStreak > 1 ? 's' : ''} Streak`
+                  : '0 Days Streak'}
+              </span>
+              {(streak?.currentStreak ?? 0) > 0 && <span className="text-xs text-amber-400 font-bold">🔥</span>}
             </div>
-            <p className="text-[11px] text-neutral-400">Daily expense tracking habit</p>
+            <p className="text-[11px] text-neutral-400">
+              {(streak?.currentStreak ?? 0) > 0 ? 'Daily expense tracking habit' : 'Log an expense today to start streak'}
+            </p>
           </div>
         </div>
 
         {/* 7 Days check dots */}
         <div className="flex items-center gap-1">
           {weekDays.map((day, idx) => {
-            const isCompleted = idx <= currentDayIndex;
+            const dayDate = new Date(weekStart);
+            dayDate.setDate(dayDate.getDate() + idx);
+            const dateStr = dayDate.toISOString().split('T')[0];
+            const isCompleted = streak?.history?.includes(dateStr) || false;
+            const isToday = idx === currentDayIndex;
+
             return (
               <div
                 key={idx}
                 className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-all ${
                   isCompleted
                     ? 'bg-[#0a7ea4] text-white shadow-sm'
-                    : 'bg-neutral-800 text-neutral-500'
+                    : isToday
+                    ? 'bg-neutral-800 border border-[#0a7ea4]/40 text-neutral-300'
+                    : 'bg-neutral-800/60 text-neutral-500'
                 }`}
               >
                 {isCompleted ? <Check size={10} weight="bold" /> : day}
@@ -209,16 +229,18 @@ export function DashboardView({ onNavigateToCards }: DashboardViewProps) {
           <div className="text-left">
             <span className="text-xs font-bold uppercase tracking-wider text-neutral-400">All Accounts</span>
             <p className="text-sm font-bold text-white group-hover:text-[#0a7ea4] transition-colors">
-              {wallets.length} Cards & Wallets
+              {wallets.length === 0 ? 'No accounts added yet' : `${wallets.length} Card${wallets.length > 1 ? 's' : ''} & Wallet${wallets.length > 1 ? 's' : ''}`}
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
           <div className="text-right">
-            <span className="text-[10px] uppercase font-bold text-neutral-500">BALANCE</span>
+            <span className="text-[10px] uppercase font-bold text-neutral-500">
+              {wallets.length === 0 ? 'STATUS' : 'BALANCE'}
+            </span>
             <p className="text-sm font-mono font-extrabold text-white">
-              {currencySymbol} {totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              {wallets.length === 0 ? 'Tap to add' : `${currencySymbol} ${totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
             </p>
           </div>
           <ArrowRight size={16} className="text-neutral-500 group-hover:text-[#0a7ea4] transition-colors" />

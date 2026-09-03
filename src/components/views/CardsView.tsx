@@ -138,63 +138,82 @@ export function CardsView() {
 
       {/* Apple Wallet Style Cards List */}
       <div className="space-y-4">
-        {wallets.map((wallet) => {
-          const spentThisMonth = spentPerWallet[wallet.id] || 0;
-
-          return (
-            <div
-              key={wallet.id}
-              onClick={() => handleOpenEdit(wallet)}
-              className="relative overflow-hidden rounded-3xl p-6 cursor-pointer transform transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl active:scale-[0.99] border border-white/10 credit-card"
-              style={{
-                background: `linear-gradient(135deg, ${wallet.color}ee, ${wallet.color}99 60%, #000000dd)`
-              }}
+        {wallets.length === 0 ? (
+          <div className="p-8 rounded-3xl bg-neutral-900/60 border border-neutral-800/80 text-center space-y-3">
+            <div className="w-14 h-14 rounded-2xl bg-[#0a7ea4]/10 border border-[#0a7ea4]/20 flex items-center justify-center text-[#0a7ea4] mx-auto">
+              <CreditCard size={28} weight="duotone" />
+            </div>
+            <h3 className="text-base font-bold text-white">No Accounts or Cards Yet</h3>
+            <p className="text-xs text-neutral-400 max-w-xs mx-auto">
+              Add your bank cards, digital wallets, or cash accounts to track balances and manage your finances.
+            </p>
+            <button
+              onClick={handleOpenAdd}
+              className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#0a7ea4] hover:bg-[#086F8A] text-white text-xs font-bold transition-all shadow-lg shadow-[#0a7ea4]/20 active:scale-95"
             >
-              {/* Background ambient lighting */}
-              <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full blur-2xl pointer-events-none" />
-              
-              {/* Card Top Row */}
-              <div className="flex items-start justify-between relative z-10 mb-8">
-                <div>
-                  <p className="text-xs uppercase tracking-widest text-white/70 font-semibold">
-                    {wallet.institution || wallet.type.toUpperCase()}
-                  </p>
-                  <h3 className="text-lg font-bold text-white tracking-wide">{wallet.name}</h3>
-                </div>
+              <Plus size={16} weight="bold" />
+              <span>Add First Account</span>
+            </button>
+          </div>
+        ) : (
+          wallets.map((wallet) => {
+            const spentThisMonth = spentPerWallet[wallet.id] || 0;
+
+            return (
+              <div
+                key={wallet.id}
+                onClick={() => handleOpenEdit(wallet)}
+                className="relative overflow-hidden rounded-3xl p-6 cursor-pointer transform transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl active:scale-[0.99] border border-white/10 credit-card"
+                style={{
+                  background: `linear-gradient(135deg, ${wallet.color}ee, ${wallet.color}99 60%, #000000dd)`
+                }}
+              >
+                {/* Background ambient lighting */}
+                <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full blur-2xl pointer-events-none" />
                 
-                {/* Chip / Card Icon */}
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-6 rounded-md bg-amber-200/40 border border-amber-300/40 flex items-center justify-center">
-                    <div className="w-4 h-3 border border-amber-400/60 rounded-sm" />
+                {/* Card Top Row */}
+                <div className="flex items-start justify-between relative z-10 mb-8">
+                  <div>
+                    <p className="text-xs uppercase tracking-widest text-white/70 font-semibold">
+                      {wallet.institution || wallet.type.toUpperCase()}
+                    </p>
+                    <h3 className="text-lg font-bold text-white tracking-wide">{wallet.name}</h3>
+                  </div>
+                  
+                  {/* Chip / Card Icon */}
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-6 rounded-md bg-amber-200/40 border border-amber-300/40 flex items-center justify-center">
+                      <div className="w-4 h-3 border border-amber-400/60 rounded-sm" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Card Number */}
+                <div className="mb-6 relative z-10">
+                  <p className="font-mono text-sm tracking-widest text-white/80">
+                    •••• •••• •••• {wallet.last4 || '8834'}
+                  </p>
+                </div>
+
+                {/* Card Bottom Row: Spent vs Balance */}
+                <div className="flex items-end justify-between pt-4 border-t border-white/15 relative z-10">
+                  <div>
+                    <p className="text-[10px] uppercase font-bold text-white/60 tracking-wider">TOTAL SPENT</p>
+                    <p className="text-xs font-mono font-bold text-white/90">
+                      {currencySymbol} {spentThisMonth.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[10px] uppercase font-bold text-white/60 tracking-wider">BALANCE</p>
+                    <p className="text-base font-mono font-extrabold text-white">
+                      {currencySymbol} {wallet.balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    </p>
                   </div>
                 </div>
               </div>
-
-              {/* Card Number */}
-              <div className="mb-6 relative z-10">
-                <p className="font-mono text-sm tracking-widest text-white/80">
-                  •••• •••• •••• {wallet.last4 || '8834'}
-                </p>
-              </div>
-
-              {/* Card Bottom Row: Spent vs Balance */}
-              <div className="flex items-end justify-between pt-4 border-t border-white/15 relative z-10">
-                <div>
-                  <p className="text-[10px] uppercase font-bold text-white/60 tracking-wider">TOTAL SPENT</p>
-                  <p className="text-xs font-mono font-bold text-white/90">
-                    {currencySymbol} {spentThisMonth.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-[10px] uppercase font-bold text-white/60 tracking-wider">BALANCE</p>
-                  <p className="text-base font-mono font-extrabold text-white">
-                    {currencySymbol} {wallet.balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                  </p>
-                </div>
-              </div>
-            </div>
-          );
-        })}
+            );
+          })
+        )}
       </div>
 
       {/* Add / Edit Wallet Modal */}

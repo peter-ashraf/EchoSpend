@@ -194,22 +194,13 @@ export async function seedDatabase() {
 
   const existingWallets = await db.getAll('wallets');
   for (const w of existingWallets) {
-    if (w.id === 'w-2' || w.id === 'w-3') {
+    if (['w-1', 'w-2', 'w-3'].includes(w.id) || w.name === 'Main Wallet' || w.name === 'Chase Checking') {
       await db.delete('wallets', w.id);
-    } else if (w.id === 'w-1' && (w.name === 'Chase Checking' || w.balance === 12974.64)) {
-      await db.put('wallets', {
-        id: 'w-1',
-        name: 'Main Wallet',
-        type: 'checking',
-        balance: 0,
-        color: '#0a7ea4',
-        institution: 'Bank / Cash'
-      });
     }
   }
 
   const existingStreak = await db.get('streaks', 'main-streak');
-  if (existingStreak && existingStreak.bestStreak === 14 && existingStreak.currentStreak === 5) {
+  if (existingStreak && (existingStreak.bestStreak === 14 || existingStreak.currentStreak === 5)) {
     await db.put('streaks', {
       id: 'main-streak',
       currentStreak: 0,
@@ -219,22 +210,7 @@ export async function seedDatabase() {
     });
   }
 
-  const walletsCount = await db.count('wallets');
-  if (walletsCount === 0) {
-    const defaultWallets: Wallet[] = [
-      {
-        id: 'w-1',
-        name: 'Main Wallet',
-        type: 'checking',
-        balance: 0,
-        color: '#0a7ea4',
-        institution: 'Bank / Cash'
-      }
-    ];
-    for (const w of defaultWallets) {
-      await db.put('wallets', w);
-    }
-  }
+  // On first install, accounts list starts completely empty so user configures their own cards.
 
   const categoriesCount = await db.count('categories');
   if (categoriesCount === 0) {
