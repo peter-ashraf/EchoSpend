@@ -47,13 +47,20 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'prompt',
+      registerType: 'autoUpdate',
       devOptions: {
         enabled: true,
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,jpg,svg,ts,tsx,onnx,json}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,jpg,svg,ts,tsx,onnx}'],
+        globIgnores: ['**/version.json'],
         maximumFileSizeToCacheInBytes: 100 * 1024 * 1024, // Allow up to 100MB for Whisper model
+        runtimeCaching: [
+          {
+            urlPattern: /\/version\.json$/,
+            handler: 'NetworkOnly',
+          }
+        ]
       },
       manifest: {
         name: 'EchoSpend - Voice Budget & Expense',

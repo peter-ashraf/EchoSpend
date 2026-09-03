@@ -59,16 +59,19 @@ export async function checkForAppUpdate(): Promise<CheckUpdateResult> {
   try {
     // 1. Direct server check against version.json with fresh timestamp
     try {
-      const vRes = await fetch(`./version.json?t=${Date.now()}`, { cache: 'no-store' });
+      const vRes = await fetch(`./version.json?t=${Date.now()}`, { cache: 'no-store', headers: { 'Cache-Control': 'no-cache, no-store' } });
       if (vRes.ok) {
         const serverInfo = await vRes.json();
-        if (serverInfo?.version && serverInfo.version !== APP_VERSION) {
+        const isNewVersion = serverInfo?.version && serverInfo.version !== APP_VERSION;
+        const isNewCommit = serverInfo?.commit && serverInfo.commit !== GIT_HASH;
+        if (isNewVersion || isNewCommit) {
           if (registrationInstance) {
             registrationInstance.update().catch(() => {});
           }
+          window.dispatchEvent(new CustomEvent('pwa-need-refresh'));
           return {
             hasUpdate: true,
-            statusText: `New release v${serverInfo.version} found!`
+            statusText: `New build ${serverInfo.version} (${serverInfo.commit || 'update'}) found!`
           };
         }
       }
