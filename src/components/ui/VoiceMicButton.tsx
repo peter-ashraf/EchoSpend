@@ -64,29 +64,10 @@ export function VoiceMicButton({
     };
   }, []);
 
-  // ── Sync mic permission with localStorage and Permissions API ──
+  // ── Sync mic permission with localStorage (without triggering aggressive permissions prompt)
   useEffect(() => {
-    if (navigator.permissions && navigator.permissions.query) {
-      navigator.permissions
-        .query({ name: 'microphone' as PermissionName })
-        .then((permissionStatus) => {
-          if (permissionStatus.state === 'granted') {
-            try {
-              localStorage.setItem(MIC_PERMISSION_STORAGE_KEY, 'granted');
-            } catch (_) {}
-          }
-          permissionStatus.onchange = () => {
-            try {
-              if (permissionStatus.state === 'granted') {
-                localStorage.setItem(MIC_PERMISSION_STORAGE_KEY, 'granted');
-              } else if (permissionStatus.state === 'denied') {
-                localStorage.setItem(MIC_PERMISSION_STORAGE_KEY, 'denied');
-              }
-            } catch (_) {}
-          };
-        })
-        .catch(() => {});
-    }
+    // Intentionally omitting navigator.permissions.query('microphone') as it triggers
+    // aggressive permission prompts or breaks webkitSpeechRecognition on iOS Safari.
   }, []);
 
   // ── Sync processing state with parent's Whisper transcribing state ──
@@ -243,6 +224,7 @@ export function VoiceMicButton({
 
     try {
       const recognition = new SpeechRecognition();
+      recognitionRef.current = recognition;
       // Continuous false, interimResults true to display real-time live transcript
       recognition.continuous = false;
       recognition.interimResults = true;

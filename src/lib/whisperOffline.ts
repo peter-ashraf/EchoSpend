@@ -169,11 +169,16 @@ export function startRecording(opts: {
 }): { stop: () => void } {
   let mediaRecorder: MediaRecorder | null = null;
   let mediaStream: MediaStream | null = null;
+  let isStopped = false;
   const chunks: Blob[] = [];
 
   navigator.mediaDevices
     .getUserMedia({ audio: true, video: false })
     .then(stream => {
+      if (isStopped) {
+        stream.getTracks().forEach(t => t.stop());
+        return;
+      }
       mediaStream = stream;
 
       // Detect best supported MIME type across iOS Safari and Android Chrome
@@ -208,11 +213,14 @@ export function startRecording(opts: {
       mediaRecorder.start();
     })
     .catch(err => {
-      opts.onError(err?.message || 'Microphone access denied');
+      if (!isStopped) {
+        opts.onError(err?.message || 'Microphone access denied');
+      }
     });
 
   return {
     stop: () => {
+      isStopped = true;
       if (mediaRecorder && mediaRecorder.state !== 'inactive') {
         try { mediaRecorder.stop(); } catch (_) {}
       } else if (mediaStream) {

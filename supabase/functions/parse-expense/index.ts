@@ -91,16 +91,17 @@ Your task is to parse conversational voice logs of daily spending in either lang
 - Egyptian Arabic: 'صرفت ٧٠ ج.م في كارفور على البقالة', 'دفعت ميتين جنيه في فودافون فاتورة', 'اشتريت بنزين بستين جنيه من موبيل', 'كوفي بـ ٤٥ جنيه من كوستا'
 - English: 'Spent 150 EGP at Starbucks on coffee', 'Paid 200 pounds for Vodafone bill', 'Bought groceries for 350 from Carrefour', 'Uber ride 85 pounds', 'Dinner at McDonald\'s 220 EGP'
 - Mixed / Franco: 'دفعت 60 EGP Uber', 'اشتريت من Starbucks بـ 80 جنيه'
+- Multi-item: 'اشتريت بـ 10 جنيه فلامنكو و 15 جنيه بيبسي' (I bought 10 EGP Flamenko and 15 EGP Pepsi)
 
 Extract the following fields accurately:
-1. amount: The numeric value spent. Convert numbers in any format: standard digits (70, 150), Eastern Arabic numerals (٠, ١, ٢, ٣, ٤, ٥, ٦, ٧, ٨, ٩), English number words ('seventy' -> 70, 'two hundred' -> 200, 'fifty' -> 50, 'thousand' -> 1000), and Egyptian verbal numbers ('سبعين' -> 70, 'ميتين' / 'مائتين' -> 200, 'خمسين' -> 50, 'ألف' -> 1000, 'ألف ونص' -> 1500, 'باكو' -> 1000, 'نص باكو' -> 500) into a standard positive JavaScript number.
+1. amount: The numeric value spent. Convert numbers in any format to a standard positive JavaScript number. IMPORTANT: If multiple items and prices are mentioned in the same sentence (e.g. 10 for X and 15 for Y), you MUST SUM ALL THE AMOUNTS TOGETHER (e.g. 25). Do NOT ignore any numbers or items.
 2. currency: Strictly the string "EGP".
-3. merchant: The store, brand, or service name if mentioned (e.g., 'Carrefour' / 'كارفور', 'Starbucks', 'Vodafone' / 'فودافون', 'Uber' / 'أوبر', 'Costa', 'سوبرماركت', 'صيدلية العزبي'). If not explicitly mentioned, provide a short descriptive vendor name or 'General'.
+3. merchant: The store, brand, or items purchased (e.g. 'Carrefour', 'Uber'). If multiple items are mentioned, COMBINE them (e.g. 'فلامنكو و بيبسي'). If not explicitly mentioned, provide a short descriptive vendor name or 'General'.
 4. category: Classify the expense into one of these standard categories:
    - "Food & Dining" (groceries, restaurants, cafes, supermarkets, coffee, snacks, food items, meat, vegetables)
    - "Transportation" (Uber, Careem, metro, taxi, petrol/gas, bus, parking, car service)
    - "Shopping" (clothing, electronics, retail, hardware, gifts, personal items)
-   - "Subscriptions & Bills" (mobile bills, internet, electricity, water, gas, telecom, Vodafone, Orange, WE, Etisalat)
+   - "Subscriptions & Bills" (mobile bills, internet, electricity, water, gas, telecom)
    - "Entertainment" (cinema, gaming, events, hobbies, movies)
    - "Health & Fitness" (pharmacy, doctor, medicine, gym, clinic)
    - "Other" (uncategorized or miscellaneous)
@@ -113,8 +114,7 @@ CRITICAL INSTRUCTIONS:
     "merchant": string,
     "category": string
   }
-- Do NOT wrap in markdown code blocks (\`\`\`json or \`\`\`).
-- Do NOT output any preamble, comments, or explanations.
+- Do NOT wrap in markdown code blocks (```json or ```).
 - Output ONLY the raw JSON object.`;
 
     // 5. Call Google Gemini API (gemini-1.5-flash with structured JSON response)
