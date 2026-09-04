@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Modal } from '../ui/Modal';
 import { useStore } from '../../store/useStore';
 import type { ParsedVoiceTransaction } from '../../lib/parseVoice';
-import { Check, CreditCard, Tag, Storefront, Microphone } from '@phosphor-icons/react';
+import { Check, CreditCard, Tag, Storefront, Microphone, Sparkle } from '@phosphor-icons/react';
 
 interface VoiceConfirmModalProps {
   isOpen: boolean;
@@ -84,12 +84,20 @@ export function VoiceConfirmModal({ isOpen, onClose, data, onConfirm }: VoiceCon
     >
       <div className="space-y-4 p-4">
         
-        {/* Transcript Speech bubble */}
-        <div className="p-3 rounded-2xl bg-[#0a7ea4]/10 border border-[#0a7ea4]/30 flex items-start gap-2.5">
+        {/* Transcript Speech bubble with Gemini AI badge */}
+        <div className="p-3.5 rounded-2xl bg-[#0a7ea4]/10 border border-[#0a7ea4]/30 flex items-start gap-2.5">
           <Microphone size={18} className="text-[#0a7ea4] flex-shrink-0 mt-0.5" weight="fill" />
-          <div>
-            <p className="text-[11px] uppercase font-bold text-[#0a7ea4] tracking-wider">You Said:</p>
-            <p className="text-sm font-medium text-white italic">"{data.transcript}"</p>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between gap-2 mb-1">
+              <p className="text-[11px] uppercase font-bold text-[#0a7ea4] tracking-wider">
+                Voice Input (الصوت الملتقط):
+              </p>
+              <span className="text-[10px] font-bold text-cyan-300 bg-cyan-950/80 border border-cyan-500/30 px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0">
+                <Sparkle size={10} weight="fill" className="text-cyan-400" />
+                Gemini AI
+              </span>
+            </div>
+            <p className="text-sm font-medium text-white italic" dir="auto">"{data.transcript}"</p>
           </div>
         </div>
 

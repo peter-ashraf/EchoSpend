@@ -16,6 +16,7 @@ import { VoiceMicButton } from './components/ui/VoiceMicButton';
 import { BiometricLockScreen } from './components/modals/BiometricLockScreen';
 import { OfflineVoiceConsentModal } from './components/modals/OfflineVoiceConsentModal';
 import { parseVoiceInput, type ParsedVoiceTransaction } from './lib/parseVoice';
+import { parseExpenseWithGemini, matchCategoryToId } from './lib/geminiParser';
 import { parseBankSms, type ParsedSmsResult } from './lib/parseSms';
 import { downloadWhisperModel, transcribeBlob, terminateWhisper, ensureWhisperReady } from './lib/whisperOffline';
 import { APP_VERSION, onUpdateAvailable, reloadAndApplyUpdate } from './lib/pwaUpdate';
@@ -146,11 +147,29 @@ function App() {
     };
   }, [checkClipboardForSms]);
 
-  // ── Voice transcript handler ──────────────────────────────────────────
-  const handleVoiceTranscript = useCallback((text: string) => {
+  // ── Voice transcript handler via Gemini AI & Supabase Edge Function ──
+  const handleVoiceTranscript = useCallback(async (text: string) => {
     const defaultWalletId = wallets[0]?.id || '';
-    const parsedData = parseVoiceInput(text, categories, wallets, defaultWalletId);
-    setVoiceParsedData(parsedData);
+    try {
+      // Send raw Arabic transcript to Supabase Edge Function (powered by Gemini)
+      const extracted = await parseExpenseWithGemini(text, categories);
+      const matchedCategoryId = matchCategoryToId(extracted.category, categories);
+
+      // Populate confirmation modal with extracted values for user review (do not auto-save)
+      setVoiceParsedData({
+        amount: extracted.amount || null,
+        merchant: extracted.merchant || '',
+        categoryId: matchedCategoryId || categories[0]?.id || '',
+        walletId: defaultWalletId,
+        type: 'expense',
+        note: text,
+        transcript: text,
+      });
+    } catch (err) {
+      console.warn('Voice AI parsing fallback to local parser:', err);
+      const parsedData = parseVoiceInput(text, categories, wallets, defaultWalletId);
+      setVoiceParsedData(parsedData);
+    }
   }, [categories, wallets]);
 
   const openNewTx = () => setIsManualTxOpen(true);
