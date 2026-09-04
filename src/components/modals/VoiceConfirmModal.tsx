@@ -170,7 +170,7 @@ export function VoiceConfirmModal({ isOpen, onClose, data, onConfirm }: VoiceCon
               className="w-full px-3 py-2.5 bg-neutral-900 border border-neutral-800 rounded-xl text-white text-xs font-semibold focus:outline-none focus:border-[#0a7ea4]"
             >
               {wallets.map(w => (
-                <option key={w.id} value={w.id}>{w.name}</option>
+                <option key={w.id} value={w.id}>{w.type === 'cash' ? `💵 ${w.name} (Cash)` : `💳 ${w.name}`}</option>
               ))}
             </select>
           </div>

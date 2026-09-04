@@ -4,10 +4,11 @@ import type { Wallet } from '../../lib/db';
 import { Modal } from '../ui/Modal';
 import { ConfirmModal } from '../ui/ConfirmModal';
 import { RealisticCard } from '../ui/RealisticCard';
-import { Plus, CreditCard, Trash, Check, Sparkle } from '@phosphor-icons/react';
+import { Plus, CreditCard, Trash, Check, Sparkle, Money } from '@phosphor-icons/react';
 import { formatAmount } from '../../lib/formatters';
 
 const CARD_COLORS = [
+  { name: 'Emerald Banknote (Cash)', color: '#059669' },
   { name: 'Teal (EchoSpend)', color: '#0a7ea4' },
   { name: 'CIB Prime', color: '#35989e' },
   { name: 'CIB Plus', color: '#154c9a' },
@@ -77,6 +78,18 @@ export function CardsView() {
     setIsModalOpen(true);
   };
 
+  const handleOpenAddCash = () => {
+    setEditingWallet(null);
+    setName('Cash');
+    setType('cash');
+    setBalance('');
+    setColor('#059669');
+    setLast4('');
+    setInstitution('Physical Cash in Hand');
+    setBank('other');
+    setIsModalOpen(true);
+  };
+
   const handleOpenEdit = (w: Wallet) => {
     setEditingWallet(w);
     setName(w.name);
@@ -96,13 +109,13 @@ export function CardsView() {
 
   // Preview object for modal
   const previewWallet: Partial<Wallet> = {
-    name: name || (type === 'credit' ? 'CIB Platinum Credit' : 'CIB Prime Debit'),
+    name: name || (type === 'cash' ? 'Cash' : type === 'credit' ? 'CIB Platinum Credit' : 'CIB Prime Debit'),
     type,
     balance: parseFloat(balance) || 0,
     color,
-    last4: last4 || '5678',
-    institution: institution || (bank === 'cib' ? 'CIB Egypt' : bank.toUpperCase()),
-    bank,
+    last4: type !== 'cash' ? (last4 || '5678') : undefined,
+    institution: type === 'cash' ? 'Physical Cash in Hand' : (institution || (bank === 'cib' ? 'CIB Egypt' : bank.toUpperCase())),
+    bank: type !== 'cash' ? bank : 'other',
     accountTier,
     creditTier,
     network,
@@ -120,14 +133,14 @@ export function CardsView() {
       type,
       balance: numBalance,
       color,
-      last4: last4.trim() ? last4.trim() : undefined,
-      institution: institution.trim() ? institution.trim() : undefined,
-      bank,
-      accountTier: type !== 'credit' ? accountTier : undefined,
+      last4: type !== 'cash' && last4.trim() ? last4.trim() : undefined,
+      institution: type === 'cash' ? 'Physical Cash in Hand' : (institution.trim() ? institution.trim() : undefined),
+      bank: type !== 'cash' ? bank : 'other',
+      accountTier: type !== 'cash' && type !== 'credit' ? accountTier : undefined,
       creditTier: type === 'credit' ? creditTier : undefined,
-      network,
-      cardholderName: cardholderName.trim() ? cardholderName.trim() : undefined,
-      expiryDate: expiryDate.trim() ? expiryDate.trim() : undefined
+      network: type !== 'cash' ? network : undefined,
+      cardholderName: type !== 'cash' && cardholderName.trim() ? cardholderName.trim() : undefined,
+      expiryDate: type !== 'cash' && expiryDate.trim() ? expiryDate.trim() : undefined
     };
 
     if (editingWallet) {
@@ -152,16 +165,27 @@ export function CardsView() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-extrabold text-white tracking-tight">Manage Cards</h2>
-          <p className="text-xs text-neutral-400 font-medium">Physical bank cards & wallets</p>
+          <h2 className="text-2xl font-extrabold text-white tracking-tight">Cards & Cash</h2>
+          <p className="text-xs text-neutral-400 font-medium">Bank cards, digital wallets & cash</p>
         </div>
-        <button
-          onClick={handleOpenAdd}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#0a7ea4] hover:bg-[#086F8A] text-white text-xs font-bold transition-all shadow-lg shadow-[#0a7ea4]/20 active:scale-95"
-        >
-          <Plus size={16} weight="bold" />
-          <span>Add Card</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleOpenAddCash}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 text-xs font-bold transition-all shadow-md active:scale-95"
+            title="Add Cash Wallet"
+          >
+            <Money size={16} weight="bold" />
+            <span>+ Cash</span>
+          </button>
+          <button
+            onClick={handleOpenAdd}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-[#0a7ea4] hover:bg-[#086F8A] text-white text-xs font-bold transition-all shadow-lg shadow-[#0a7ea4]/20 active:scale-95"
+            title="Add Bank Card"
+          >
+            <Plus size={16} weight="bold" />
+            <span>+ Card</span>
+          </button>
+        </div>
       </div>
 
       {/* Net Balance Banner */}
@@ -235,7 +259,7 @@ export function CardsView() {
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title={editingWallet ? 'Edit Bank Card' : 'Add Bank Card'}
+        title={editingWallet ? (editingWallet.type === 'cash' ? 'Edit Cash Wallet' : 'Edit Bank Card') : (type === 'cash' ? 'Add Cash Wallet' : 'Add Bank Card')}
         footer={
           <>
             {editingWallet && (
@@ -243,7 +267,7 @@ export function CardsView() {
                 type="button"
                 onClick={handleDelete}
                 className="p-3 rounded-xl border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-colors shrink-0"
-                title="Delete Card"
+                title="Delete Account"
               >
                 <Trash size={18} />
               </button>
@@ -258,10 +282,14 @@ export function CardsView() {
             <button
               type="button"
               onClick={handleSave}
-              className="flex-1 py-3 px-4 rounded-xl bg-[#0a7ea4] hover:bg-[#086F8A] text-white transition-all text-sm font-bold flex items-center justify-center gap-2 shadow-lg shadow-[#0a7ea4]/20 active:scale-95"
+              className={`flex-1 py-3 px-4 rounded-xl text-white transition-all text-sm font-bold flex items-center justify-center gap-2 shadow-lg active:scale-95 ${
+                type === 'cash'
+                  ? 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/25'
+                  : 'bg-[#0a7ea4] hover:bg-[#086F8A] shadow-[#0a7ea4]/20'
+              }`}
             >
               <Check size={18} weight="bold" />
-              {editingWallet ? 'Update Card' : 'Save Card'}
+              {editingWallet ? 'Update' : 'Save'} {type === 'cash' ? 'Cash Wallet' : 'Card'}
             </button>
           </>
         }
@@ -272,11 +300,11 @@ export function CardsView() {
           <div className="space-y-1.5">
             <div className="flex items-center justify-between text-xs text-neutral-400 px-1">
               <span className="flex items-center gap-1 font-semibold">
-                <Sparkle size={14} className="text-[#0a7ea4]" weight="fill" />
-                Live Card Preview
+                <Sparkle size={14} className={type === 'cash' ? 'text-emerald-400' : 'text-[#0a7ea4]'} weight="fill" />
+                Live Preview
               </span>
               <span className="text-[10px] uppercase font-mono tracking-wider text-neutral-500">
-                {bank.toUpperCase()} • {type === 'credit' ? creditTier.toUpperCase() : accountTier.toUpperCase()}
+                {type === 'cash' ? 'PHYSICAL CASH • LIQUID' : `${bank.toUpperCase()} • ${type === 'credit' ? creditTier.toUpperCase() : accountTier.toUpperCase()}`}
               </span>
             </div>
             <div className="transform transition-all">
@@ -284,80 +312,85 @@ export function CardsView() {
             </div>
           </div>
 
-          {/* Bank Selection */}
+          {/* Account Type Selection */}
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1">
-              Bank / Financial Institution
+              Account Type
             </label>
             <select
-              value={bank}
+              value={type}
               onChange={(e) => {
-                const b = e.target.value as any;
-                setBank(b);
-                if (b === 'cib') {
-                  setInstitution('CIB Egypt');
-                  setColor('#35989e');
-                  if (!name) setName(type === 'credit' ? 'CIB Platinum' : 'CIB Prime');
-                } else if (b === 'nbe') {
-                  setInstitution('National Bank of Egypt');
-                  setColor('#05472a');
-                  if (!name) setName('NBE Al-Ahli');
-                } else if (b === 'banque-misr') {
-                  setInstitution('Banque Misr');
-                  setColor('#7a1b28');
-                  if (!name) setName('Banque Misr');
-                } else if (b === 'qnb') {
-                  setInstitution('QNB Alahli');
-                  setColor('#4b1124');
-                  if (!name) setName('QNB Card');
-                } else if (b === 'hsbc') {
-                  setInstitution('HSBC Egypt');
-                  setColor('#1a1a1a');
-                  if (!name) setName('HSBC Platinum');
+                const newType = e.target.value as any;
+                setType(newType);
+                if (newType === 'cash') {
+                  setColor('#059669');
+                  if (!name || name.includes('CIB') || name.includes('Prime') || name.includes('Credit')) setName('Cash');
+                } else if (newType === 'credit') {
+                  if (bank === 'cib') setColor('#0c0d0e');
+                } else {
+                  if (bank === 'cib') setColor('#35989e');
                 }
               }}
               className="w-full px-4 py-2.5 bg-neutral-900 border border-neutral-800 rounded-xl text-white text-sm focus:outline-none focus:border-[#0a7ea4]"
             >
-              <option value="cib">Commercial International Bank (CIB)</option>
-              <option value="nbe">National Bank of Egypt (NBE - الأهلي)</option>
-              <option value="banque-misr">Banque Misr (بنك مصر)</option>
-              <option value="qnb">QNB Alahli</option>
-              <option value="hsbc">HSBC Egypt</option>
-              <option value="enbd">Emirates NBD</option>
-              <option value="alexbank">Bank of Alexandria</option>
-              <option value="aaib">Arab African Intl Bank (AAIB)</option>
-              <option value="other">Other / International Bank</option>
+              <option value="cash">💵 Cash Account (محفظة كاش / نقدي)</option>
+              <option value="checking">💳 Debit Card / Checking Account</option>
+              <option value="credit">💳 Credit Card</option>
+              <option value="savings">🏦 Savings Account</option>
+              <option value="digital">📱 Digital Wallet / InstaPay</option>
             </select>
           </div>
 
-          {/* Account Type & Tiers */}
-          <div className="grid grid-cols-2 gap-3">
+          {/* Bank Selection (Only for Cards / Banking) */}
+          {type !== 'cash' && (
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1">
-                Card Type
+                Bank / Financial Institution
               </label>
               <select
-                value={type}
+                value={bank}
                 onChange={(e) => {
-                  const newType = e.target.value as any;
-                  setType(newType);
-                  if (newType === 'credit') {
-                    if (bank === 'cib') setColor('#0c0d0e');
-                  } else {
-                    if (bank === 'cib') setColor('#35989e');
+                  const b = e.target.value as any;
+                  setBank(b);
+                  if (b === 'cib') {
+                    setInstitution('CIB Egypt');
+                    setColor('#35989e');
+                    if (!name) setName(type === 'credit' ? 'CIB Platinum' : 'CIB Prime');
+                  } else if (b === 'nbe') {
+                    setInstitution('National Bank of Egypt');
+                    setColor('#05472a');
+                    if (!name) setName('NBE Al-Ahli');
+                  } else if (b === 'banque-misr') {
+                    setInstitution('Banque Misr');
+                    setColor('#7a1b28');
+                    if (!name) setName('Banque Misr');
+                  } else if (b === 'qnb') {
+                    setInstitution('QNB Alahli');
+                    setColor('#4b1124');
+                    if (!name) setName('QNB Card');
+                  } else if (b === 'hsbc') {
+                    setInstitution('HSBC Egypt');
+                    setColor('#1a1a1a');
+                    if (!name) setName('HSBC Platinum');
                   }
                 }}
                 className="w-full px-4 py-2.5 bg-neutral-900 border border-neutral-800 rounded-xl text-white text-sm focus:outline-none focus:border-[#0a7ea4]"
               >
-                <option value="checking">Debit Card / Checking</option>
-                <option value="credit">Credit Card</option>
-                <option value="savings">Savings Account</option>
-                <option value="digital">Digital Wallet / InstaPay</option>
-                <option value="cash">Cash Account</option>
+                <option value="cib">Commercial International Bank (CIB)</option>
+                <option value="nbe">National Bank of Egypt (NBE - الأهلي)</option>
+                <option value="banque-misr">Banque Misr (بنك مصر)</option>
+                <option value="qnb">QNB Alahli</option>
+                <option value="hsbc">HSBC Egypt</option>
+                <option value="enbd">Emirates NBD</option>
+                <option value="alexbank">Bank of Alexandria</option>
+                <option value="aaib">Arab African Intl Bank (AAIB)</option>
+                <option value="other">Other / International Bank</option>
               </select>
             </div>
+          )}
 
-            {/* Dynamic Tier Selection */}
+          {/* Dynamic Tier Selection (Only for Cards) */}
+          {type !== 'cash' && (
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1">
                 {type === 'credit' ? 'Credit Card Tier' : 'Account Tier'}
@@ -403,59 +436,61 @@ export function CardsView() {
                 </select>
               )}
             </div>
-          </div>
+          )}
 
-          {/* Payment Network & Cardholder Name */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1">
-                Payment Network
-              </label>
-              <select
-                value={network}
-                onChange={(e) => setNetwork(e.target.value as any)}
-                className="w-full px-4 py-2.5 bg-neutral-900 border border-neutral-800 rounded-xl text-white text-sm focus:outline-none focus:border-[#0a7ea4]"
-              >
-                <option value="mastercard">Mastercard</option>
-                <option value="visa">Visa</option>
-                <option value="meeza">Meeza (ميزة)</option>
-              </select>
+          {/* Payment Network & Cardholder Name (Only for Cards) */}
+          {type !== 'cash' && (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1">
+                  Payment Network
+                </label>
+                <select
+                  value={network}
+                  onChange={(e) => setNetwork(e.target.value as any)}
+                  className="w-full px-4 py-2.5 bg-neutral-900 border border-neutral-800 rounded-xl text-white text-sm focus:outline-none focus:border-[#0a7ea4]"
+                >
+                  <option value="mastercard">Mastercard</option>
+                  <option value="visa">Visa</option>
+                  <option value="meeza">Meeza (ميزة)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1">
+                  Cardholder Name
+                </label>
+                <input
+                  type="text"
+                  value={cardholderName}
+                  onChange={(e) => setCardholderName(e.target.value.toUpperCase())}
+                  placeholder="PETER RYAD"
+                  className="w-full px-4 py-2.5 bg-neutral-900 border border-neutral-800 rounded-xl text-white font-mono uppercase text-sm focus:outline-none focus:border-[#0a7ea4]"
+                />
+              </div>
             </div>
+          )}
 
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1">
-                Cardholder Name
-              </label>
-              <input
-                type="text"
-                value={cardholderName}
-                onChange={(e) => setCardholderName(e.target.value.toUpperCase())}
-                placeholder="PETER RYAD"
-                className="w-full px-4 py-2.5 bg-neutral-900 border border-neutral-800 rounded-xl text-white font-mono uppercase text-sm focus:outline-none focus:border-[#0a7ea4]"
-              />
-            </div>
-          </div>
-
-          {/* Card Nickname */}
+          {/* Account Nickname / Cash Name */}
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1">
-              Card Nickname / Account Name
+              {type === 'cash' ? 'Cash Account Name' : 'Card Nickname / Account Name'}
             </label>
             <input
               type="text"
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. CIB Salary Account or CIB Platinum Credit"
+              placeholder={type === 'cash' ? 'e.g. Cash or Cash in Hand' : 'e.g. CIB Salary or CIB Platinum Credit'}
               className="w-full px-4 py-2.5 bg-neutral-900 border border-neutral-800 rounded-xl text-white text-sm focus:outline-none focus:border-[#0a7ea4]"
             />
           </div>
 
-          {/* Balance, Expiry & Last 4 Digits (All numpad enabled) */}
-          <div className="grid grid-cols-3 gap-3">
+          {/* Balance for Cash vs (Balance + Expiry + Last4) for Cards */}
+          {type === 'cash' ? (
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1">
-                Balance ({currencySymbol})
+                Current Cash Balance ({currencySymbol})
               </label>
               <input
                 type="number"
@@ -466,46 +501,65 @@ export function CardsView() {
                 value={balance}
                 onChange={(e) => setBalance(e.target.value)}
                 placeholder="0.00"
-                className="w-full px-3 py-2.5 bg-neutral-900 border border-neutral-800 rounded-xl text-white font-mono text-sm focus:outline-none focus:border-[#0a7ea4]"
+                className="w-full px-4 py-3 bg-neutral-900 border border-neutral-800 rounded-xl text-white font-mono text-base font-bold focus:outline-none focus:border-emerald-500"
               />
             </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1">
+                  Balance ({currencySymbol})
+                </label>
+                <input
+                  type="number"
+                  step="any"
+                  inputMode="decimal"
+                  pattern="[0-9]*[.,]?[0-9]*"
+                  required
+                  value={balance}
+                  onChange={(e) => setBalance(e.target.value)}
+                  placeholder="0.00"
+                  className="w-full px-3 py-2.5 bg-neutral-900 border border-neutral-800 rounded-xl text-white font-mono text-sm focus:outline-none focus:border-[#0a7ea4]"
+                />
+              </div>
 
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1">
-                Expiry (MM/YY)
-              </label>
-              <input
-                type="text"
-                inputMode="numeric"
-                pattern="^(0[1-9]|1[0-2])\/[0-9]{2}$"
-                maxLength={5}
-                value={expiryDate}
-                onChange={(e) => {
-                  let val = e.target.value.replace(/[^\d/]/g, '');
-                  if (val.length === 2 && !val.includes('/')) val += '/';
-                  setExpiryDate(val);
-                }}
-                placeholder="12/28"
-                className="w-full px-3 py-2.5 bg-neutral-900 border border-neutral-800 rounded-xl text-white font-mono text-sm focus:outline-none focus:border-[#0a7ea4]"
-              />
-            </div>
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1">
+                  Expiry (MM/YY)
+                </label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="^(0[1-9]|1[0-2])\/[0-9]{2}$"
+                  maxLength={5}
+                  value={expiryDate}
+                  onChange={(e) => {
+                    let val = e.target.value.replace(/[^\d/]/g, '');
+                    if (val.length === 2 && !val.includes('/')) val += '/';
+                    setExpiryDate(val);
+                  }}
+                  placeholder="12/28"
+                  className="w-full px-3 py-2.5 bg-neutral-900 border border-neutral-800 rounded-xl text-white font-mono text-sm focus:outline-none focus:border-[#0a7ea4]"
+                />
+              </div>
 
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1">
-                Last 4 Digits
-              </label>
-              <input
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                maxLength={4}
-                value={last4}
-                onChange={(e) => setLast4(e.target.value.replace(/\D/g, ''))}
-                placeholder="5678"
-                className="w-full px-3 py-2.5 bg-neutral-900 border border-neutral-800 rounded-xl text-white font-mono text-sm focus:outline-none focus:border-[#0a7ea4]"
-              />
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1">
+                  Last 4 Digits
+                </label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={4}
+                  value={last4}
+                  onChange={(e) => setLast4(e.target.value.replace(/\D/g, ''))}
+                  placeholder="5678"
+                  className="w-full px-3 py-2.5 bg-neutral-900 border border-neutral-800 rounded-xl text-white font-mono text-sm focus:outline-none focus:border-[#0a7ea4]"
+                />
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Custom Color Accent */}
           <div>

@@ -74,12 +74,21 @@ export function parseVoiceInput(
   const merchant = classification.matchedMerchant || (cleanRaw.length > 25 ? cleanRaw.substring(0, 25) + '...' : cleanRaw);
   const categoryId = classification.categoryId;
 
-  // 6. Match Wallet
+  // 6. Match Wallet (Cards, Cash, or Specific Bank)
   let walletId = defaultWalletId;
-  for (const w of wallets) {
-    if (normalizedText.includes(w.name.toLowerCase()) || (w.institution && normalizedText.includes(w.institution.toLowerCase()))) {
-      walletId = w.id;
-      break;
+  const cashKeywords = ['كاش', 'cash', 'نقدا', 'نقداً', 'نقد', 'كاشات', 'من المحفظة', 'من جيبي', 'في جيبي', 'فلوس كاش'];
+  const hasCashMention = cashKeywords.some(k => normalizedText.includes(k));
+  if (hasCashMention) {
+    const cashWallet = wallets.find(w => w.type === 'cash' || w.name.toLowerCase().includes('cash') || w.name.includes('كاش'));
+    if (cashWallet) {
+      walletId = cashWallet.id;
+    }
+  } else {
+    for (const w of wallets) {
+      if (normalizedText.includes(w.name.toLowerCase()) || (w.institution && normalizedText.includes(w.institution.toLowerCase()))) {
+        walletId = w.id;
+        break;
+      }
     }
   }
 

@@ -129,7 +129,10 @@ export function TransactionForm({ onSuccess, initialData }: TransactionFormProps
             <Wallet size={20} className="text-brand-gray" />
             <div className="flex flex-col items-start">
               <span className="text-xs text-brand-gray font-medium">{t('account')}</span>
-              <span className="text-neutral-200 font-bold">{wallets.find(w => w.id === walletId)?.name || 'Select Account'}</span>
+              <span className="text-neutral-200 font-bold flex items-center gap-1.5">
+                {wallets.find(w => w.id === walletId)?.type === 'cash' ? '💵 ' : '💳 '}
+                {wallets.find(w => w.id === walletId)?.name || 'Select Account'}
+              </span>
             </div>
           </div>
           <CaretRight size={20} className="text-brand-gray" />
@@ -182,7 +185,10 @@ export function TransactionForm({ onSuccess, initialData }: TransactionFormProps
         isOpen={walletSheetOpen}
         onClose={() => setWalletSheetOpen(false)}
         title={t('account')}
-        options={wallets.map(w => ({ value: w.id, label: w.name }))}
+        options={wallets.map(w => ({
+          value: w.id,
+          label: w.type === 'cash' ? `💵 ${w.name} (Cash)` : `💳 ${w.name}`
+        }))}
         selectedValue={walletId}
         onSelect={(val) => setWalletId(val)}
         lang={lang}

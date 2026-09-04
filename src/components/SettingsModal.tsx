@@ -40,11 +40,11 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     reader.onload = async (event) => {
       const content = event.target?.result as string;
       if (content) {
-        const success = await importData(content);
-        if (success) {
+        const res = await importData(content);
+        if (res.success) {
           setStatus('Data imported successfully!');
         } else {
-          setStatus('Failed to import data. Invalid format.');
+          setStatus(`Failed to import data: ${res.error || 'Invalid format.'}`);
         }
         setTimeout(() => setStatus(''), 3000);
       }

@@ -188,40 +188,57 @@ export async function seedDatabase() {
     }
   }
 
-  // Purge legacy mock data if present in IndexedDB
-  const existingTxs = await db.getAll('transactions');
-  for (const tx of existingTxs) {
-    if (['tx-1', 'tx-2', 'tx-3', 'tx-4'].includes(tx.id)) {
-      await db.delete('transactions', tx.id);
+  // Purge legacy mock data only once during initial migration if present
+  if (typeof window !== 'undefined' && !localStorage.getItem('echospend_mock_data_purged_v2')) {
+    const existingTxs = await db.getAll('transactions');
+    for (const tx of existingTxs) {
+      if (['tx-1', 'tx-2', 'tx-3', 'tx-4'].includes(tx.id)) {
+        await db.delete('transactions', tx.id);
+      }
     }
-  }
 
-  const existingSubs = await db.getAll('subscriptions');
-  for (const sub of existingSubs) {
-    if (['sub-1', 'sub-2', 'sub-3', 'sub-4'].includes(sub.id)) {
-      await db.delete('subscriptions', sub.id);
+    const existingSubs = await db.getAll('subscriptions');
+    for (const sub of existingSubs) {
+      if (['sub-1', 'sub-2', 'sub-3', 'sub-4'].includes(sub.id)) {
+        await db.delete('subscriptions', sub.id);
+      }
     }
-  }
 
-  const existingWallets = await db.getAll('wallets');
-  for (const w of existingWallets) {
-    if (['w-1', 'w-2', 'w-3'].includes(w.id) || w.name === 'Main Wallet' || w.name === 'Chase Checking') {
-      await db.delete('wallets', w.id);
+    const existingWallets = await db.getAll('wallets');
+    for (const w of existingWallets) {
+      if (['w-1', 'w-2', 'w-3'].includes(w.id) || w.name === 'Main Wallet' || w.name === 'Chase Checking') {
+        await db.delete('wallets', w.id);
+      }
     }
+
+    const existingStreak = await db.get('streaks', 'main-streak');
+    if (existingStreak && (existingStreak.bestStreak === 14 || existingStreak.currentStreak === 5)) {
+      await db.put('streaks', {
+        id: 'main-streak',
+        currentStreak: 0,
+        bestStreak: 0,
+        lastActiveDate: '',
+        history: []
+      });
+    }
+    localStorage.setItem('echospend_mock_data_purged_v2', 'true');
   }
 
-  const existingStreak = await db.get('streaks', 'main-streak');
-  if (existingStreak && (existingStreak.bestStreak === 14 || existingStreak.currentStreak === 5 || existingStreak.currentStreak === 0)) {
-    await db.put('streaks', {
-      id: 'main-streak',
-      currentStreak: 0,
-      bestStreak: 0,
-      lastActiveDate: '',
-      history: []
-    });
+  // Ensure default Cash wallet exists so users can track physical cash expenses alongside bank cards
+  const existingWalletsList = await db.getAll('wallets');
+  const hasCashWallet = existingWalletsList.some(w => w.type === 'cash' || w.name.toLowerCase() === 'cash' || w.name === 'كاش');
+  if (!hasCashWallet && typeof window !== 'undefined' && !localStorage.getItem('echospend_cash_wallet_seeded_v1')) {
+    const defaultCashWallet: Wallet = {
+      id: 'wallet-cash',
+      name: 'Cash',
+      type: 'cash',
+      balance: 0,
+      color: '#059669',
+      institution: 'Physical Cash in Hand'
+    };
+    await db.put('wallets', defaultCashWallet);
+    localStorage.setItem('echospend_cash_wallet_seeded_v1', 'true');
   }
-
-  // On first install, accounts list starts completely empty so user configures their own cards.
 
   const categoriesCount = await db.count('categories');
   if (categoriesCount === 0) {

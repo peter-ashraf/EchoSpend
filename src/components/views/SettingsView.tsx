@@ -1,7 +1,7 @@
-import { useStore } from '../../store/useStore';
+import { useStore, type BackupStats } from '../../store/useStore';
 import { getTranslation } from '../../lib/i18n';
-import { Waveform, Moon, Sun, CaretRight, Translate, UserCircle, Trash, Warning, CurrencyDollar, Desktop, WifiSlash, CloudArrowDown, Fingerprint, Check, Lock, X, ArrowsClockwise, RocketLaunch, Sparkle, EyeSlash } from '@phosphor-icons/react';
-import { useState, useEffect } from 'react';
+import { Waveform, Moon, Sun, CaretRight, Translate, UserCircle, Trash, Warning, CurrencyDollar, Desktop, WifiSlash, CloudArrowDown, Fingerprint, Check, Lock, X, ArrowsClockwise, RocketLaunch, Sparkle, EyeSlash, DownloadSimple, UploadSimple, ShieldCheck } from '@phosphor-icons/react';
+import { useState, useEffect, useRef } from 'react';
 import { CategoryIcon } from '../ui/CategoryIcon';
 import { ActionSheet } from '../ui/ActionSheet';
 import { Modal } from '../ui/Modal';
@@ -20,7 +20,20 @@ interface SettingsViewProps {
 }
 
 export function SettingsView({ onStartWhisperDownload, isWhisperDownloading }: SettingsViewProps) {
-  const { settings, categories, updateSettings, initData, removeWhisperCache } = useStore();
+  const { settings, categories, updateSettings, initData, removeWhisperCache, exportData, inspectBackupData, importData } = useStore();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [exportLoading, setExportLoading] = useState(false);
+  const [exportToast, setExportToast] = useState<string | null>(null);
+  const [importToast, setImportToast] = useState<string | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
+  const [isConfirmImportOpen, setIsConfirmImportOpen] = useState(false);
+  const [pendingBackup, setPendingBackup] = useState<{ rawJson: string; stats?: BackupStats; isEncrypted: boolean } | null>(null);
+  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
+  const [decryptPassword, setDecryptPassword] = useState('');
+  const [isDecrypting, setIsDecrypting] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [isRestoring, setIsRestoring] = useState(false);
+
   const [langSheetOpen, setLangSheetOpen] = useState(false);
   const [voiceLangSheetOpen, setVoiceLangSheetOpen] = useState(false);
   const [currencySheetOpen, setCurrencySheetOpen] = useState(false);
@@ -52,6 +65,11 @@ export function SettingsView({ onStartWhisperDownload, isWhisperDownloading }: S
     }
   };
 
+  // Check biometric support on mount
+  useEffect(() => {
+    isBiometricSupported().then(setBiometricSupported);
+  }, []);
+
   if (!settings) return null;
   const lang = settings.language;
   const t = (key: any) => getTranslation(lang, key);
@@ -75,11 +93,6 @@ export function SettingsView({ onStartWhisperDownload, isWhisperDownloading }: S
     window.location.reload();
   };
 
-  // Check biometric support on mount
-  useEffect(() => {
-    isBiometricSupported().then(setBiometricSupported);
-  }, []);
-
   const handleBiometricToggle = async () => {
     if (!biometricSupported) return;
     setBiometricLoading(true);
@@ -101,6 +114,109 @@ export function SettingsView({ onStartWhisperDownload, isWhisperDownloading }: S
       setBiometricError(msg);
     } finally {
       setBiometricLoading(false);
+    }
+  };
+
+  const handleExport = async () => {
+    try {
+      setExportLoading(true);
+      setExportToast(null);
+      const jsonString = await exportData();
+      const isEncrypted = settings?.encryptBackups;
+      const dateStr = new Date().toISOString().split('T')[0];
+      const fileName = `echospend-backup-${dateStr}${isEncrypted ? '-encrypted' : ''}.json`;
+
+      const blob = new Blob([jsonString], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      setExportToast(`Downloaded "${fileName}"`);
+      setTimeout(() => setExportToast(null), 4000);
+    } catch (err: any) {
+      setExportToast(`Export failed: ${err?.message || 'Unknown error'}`);
+      setTimeout(() => setExportToast(null), 4000);
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
+  const handleTriggerImport = () => {
+    setImportError(null);
+    setImportToast(null);
+    fileInputRef.current?.click();
+  };
+
+  const handleFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const content = event.target?.result as string;
+      if (!content) return;
+
+      const inspection = await inspectBackupData(content);
+      if (inspection.needsPassword) {
+        setPendingBackup({ rawJson: content, isEncrypted: true });
+        setDecryptPassword('');
+        setPasswordError(null);
+        setPasswordModalOpen(true);
+      } else if (!inspection.valid) {
+        setImportError(inspection.error || 'Invalid backup file format.');
+        setTimeout(() => setImportError(null), 5000);
+      } else {
+        setPendingBackup({ rawJson: content, stats: inspection.stats, isEncrypted: inspection.isEncrypted });
+        setIsConfirmImportOpen(true);
+      }
+    };
+    reader.readAsText(file);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!pendingBackup?.rawJson) return;
+
+    setIsDecrypting(true);
+    setPasswordError(null);
+    const inspection = await inspectBackupData(pendingBackup.rawJson, decryptPassword);
+    setIsDecrypting(false);
+
+    if (!inspection.valid) {
+      setPasswordError(inspection.error || 'Incorrect password.');
+      return;
+    }
+
+    setPasswordModalOpen(false);
+    setPendingBackup({ rawJson: pendingBackup.rawJson, stats: inspection.stats, isEncrypted: true });
+    setIsConfirmImportOpen(true);
+  };
+
+  const handleExecuteRestore = async () => {
+    if (!pendingBackup?.rawJson) return;
+
+    setIsRestoring(true);
+    const res = await importData(pendingBackup.rawJson, decryptPassword || undefined);
+    setIsRestoring(false);
+    setIsConfirmImportOpen(false);
+    setPendingBackup(null);
+    setDecryptPassword('');
+
+    if (res.success) {
+      const txCount = res.stats?.transactionsCount ?? 0;
+      const wCount = res.stats?.walletsCount ?? 0;
+      const cCount = res.stats?.categoriesCount ?? 0;
+      setImportToast(`Restored: ${txCount} transactions, ${wCount} accounts, ${cCount} categories.`);
+      setTimeout(() => setImportToast(null), 5000);
+    } else {
+      setImportError(`Failed to restore backup: ${res.error}`);
+      setTimeout(() => setImportError(null), 5000);
     }
   };
 
@@ -556,9 +672,109 @@ export function SettingsView({ onStartWhisperDownload, isWhisperDownloading }: S
         </div>
       </div>
 
+      {/* Section: Backup & Restore */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between px-1">
+          <span className="text-xs font-bold uppercase tracking-wider text-neutral-400">
+            {t('backupAndRestore') || 'Backup & Restore'}
+          </span>
+          {settings.encryptBackups && (
+            <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
+              <Lock size={10} />
+              AES-256 Enabled
+            </span>
+          )}
+        </div>
+
+        <div className="bg-neutral-900/60 border border-neutral-800/80 rounded-3xl p-5 space-y-4">
+          <p className="text-xs text-neutral-400 leading-relaxed">
+            {t('backupExportDesc') || 'Export and backup your complete financial records, or restore from a previously downloaded EchoSpend JSON file.'}
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+            {/* Export Button */}
+            <button
+              type="button"
+              disabled={exportLoading}
+              onClick={handleExport}
+              className="p-4 rounded-2xl bg-neutral-800/70 hover:bg-neutral-800 border border-neutral-700/60 text-white flex items-center justify-between group transition-all active:scale-95 disabled:opacity-50"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#0a7ea4]/15 border border-[#0a7ea4]/30 flex items-center justify-center text-[#0a7ea4]">
+                  <DownloadSimple size={20} weight="bold" className={exportLoading ? 'animate-bounce' : ''} />
+                </div>
+                <div className="text-left rtl:text-right">
+                  <p className="text-xs font-bold text-white group-hover:text-[#0a7ea4] transition-colors">
+                    {t('exportBackup') || 'Export Backup'}
+                  </p>
+                  <p className="text-[10px] text-neutral-400">
+                    {settings.encryptBackups ? 'AES-256 .json' : 'Standard .json'}
+                  </p>
+                </div>
+              </div>
+            </button>
+
+            {/* Import Button */}
+            <button
+              type="button"
+              disabled={isRestoring}
+              onClick={handleTriggerImport}
+              className="p-4 rounded-2xl bg-neutral-800/70 hover:bg-neutral-800 border border-neutral-700/60 text-white flex items-center justify-between group transition-all active:scale-95 disabled:opacity-50"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                  <UploadSimple size={20} weight="bold" />
+                </div>
+                <div className="text-left rtl:text-right">
+                  <p className="text-xs font-bold text-white group-hover:text-emerald-400 transition-colors">
+                    {t('importBackup') || 'Import & Restore'}
+                  </p>
+                  <p className="text-[10px] text-neutral-400">
+                    Select .json backup
+                  </p>
+                </div>
+              </div>
+            </button>
+
+            {/* Hidden File Input */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              accept=".json,application/json"
+              onChange={handleFileSelected}
+              className="hidden"
+            />
+          </div>
+
+          {/* Export Toast / Status */}
+          {exportToast && (
+            <div className="flex items-center gap-2 p-3 rounded-2xl bg-[#0a7ea4]/10 border border-[#0a7ea4]/30 text-[#0a7ea4] text-xs font-medium">
+              <Check size={16} weight="bold" className="flex-shrink-0" />
+              <span>{exportToast}</span>
+            </div>
+          )}
+
+          {/* Import Toast / Status */}
+          {importToast && (
+            <div className="flex items-center gap-2 p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-medium">
+              <Check size={16} weight="bold" className="flex-shrink-0" />
+              <span>{importToast}</span>
+            </div>
+          )}
+
+          {/* Import Error */}
+          {importError && (
+            <div className="flex items-center gap-2 p-3 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-medium">
+              <Warning size={16} weight="bold" className="flex-shrink-0" />
+              <span>{importError}</span>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Section 6: Data Management */}
       <div className="space-y-3">
-        <span className="text-xs font-bold uppercase tracking-wider text-red-400 px-1">Data Management</span>
+        <span className="text-xs font-bold uppercase tracking-wider text-red-400 px-1">Danger Zone</span>
 
         <div className="bg-neutral-900/60 border border-neutral-800/80 rounded-3xl p-4">
           <button 
@@ -731,6 +947,144 @@ export function SettingsView({ onStartWhisperDownload, isWhisperDownloading }: S
         onUpdate={reloadAndApplyUpdate}
         currentVersion={APP_VERSION}
       />
+
+      {/* Confirm Restore Modal */}
+      <Modal 
+        isOpen={isConfirmImportOpen} 
+        onClose={() => {
+          if (!isRestoring) {
+            setIsConfirmImportOpen(false);
+            setPendingBackup(null);
+          }
+        }} 
+        title="Confirm Backup Restore"
+      >
+        <div className="space-y-4">
+          <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 space-y-3">
+            <div className="flex items-center gap-2 text-emerald-400">
+              <ShieldCheck size={20} weight="bold" />
+              <span className="text-sm font-bold text-white">Valid Backup Verified</span>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-2 text-xs pt-1">
+              <div className="p-2.5 rounded-xl bg-neutral-900/60 border border-neutral-800">
+                <span className="text-neutral-400 block text-[10px]">Wallets / Accounts</span>
+                <span className="text-white font-bold text-sm">{pendingBackup?.stats?.walletsCount ?? 0}</span>
+              </div>
+              <div className="p-2.5 rounded-xl bg-neutral-900/60 border border-neutral-800">
+                <span className="text-neutral-400 block text-[10px]">Transactions</span>
+                <span className="text-white font-bold text-sm">{pendingBackup?.stats?.transactionsCount ?? 0}</span>
+              </div>
+              <div className="p-2.5 rounded-xl bg-neutral-900/60 border border-neutral-800">
+                <span className="text-neutral-400 block text-[10px]">Categories</span>
+                <span className="text-white font-bold text-sm">{pendingBackup?.stats?.categoriesCount ?? 0}</span>
+              </div>
+              <div className="p-2.5 rounded-xl bg-neutral-900/60 border border-neutral-800">
+                <span className="text-neutral-400 block text-[10px]">Subscriptions</span>
+                <span className="text-white font-bold text-sm">{pendingBackup?.stats?.subscriptionsCount ?? 0}</span>
+              </div>
+            </div>
+
+            {pendingBackup?.stats?.exportDate && (
+              <p className="text-[10px] text-neutral-400">
+                Backup timestamp: {new Date(pendingBackup.stats.exportDate).toLocaleString()}
+              </p>
+            )}
+          </div>
+
+          <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-2.5">
+            <Warning size={18} className="text-amber-400 flex-shrink-0 mt-0.5" weight="fill" />
+            <p className="text-xs text-amber-200/90 leading-relaxed">
+              Restoring this backup will replace all current wallets, transactions, and categories with the backup data.
+            </p>
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <button
+              type="button"
+              disabled={isRestoring}
+              onClick={() => {
+                setIsConfirmImportOpen(false);
+                setPendingBackup(null);
+              }}
+              className="flex-1 py-3 rounded-xl border border-neutral-800 text-neutral-300 text-sm font-semibold hover:bg-neutral-800 disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={isRestoring}
+              onClick={handleExecuteRestore}
+              className="flex-1 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              {isRestoring ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <span>Restoring...</span>
+                </>
+              ) : (
+                <span>Confirm & Restore</span>
+              )}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Decrypt Password Modal */}
+      <Modal 
+        isOpen={passwordModalOpen} 
+        onClose={() => {
+          if (!isDecrypting) setPasswordModalOpen(false);
+        }} 
+        title="Unlock Encrypted Backup"
+      >
+        <form onSubmit={handlePasswordSubmit} className="space-y-4">
+          <div className="p-3.5 rounded-2xl bg-[#0a7ea4]/10 border border-[#0a7ea4]/30 flex items-center gap-3">
+            <Lock size={20} className="text-[#0a7ea4] flex-shrink-0" />
+            <p className="text-xs text-neutral-300 leading-relaxed">
+              This backup was encrypted with a custom password. Please enter the password to decrypt and restore.
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1">
+              Decryption Password
+            </label>
+            <input
+              type="password"
+              autoFocus
+              value={decryptPassword}
+              onChange={(e) => {
+                setDecryptPassword(e.target.value);
+                setPasswordError(null);
+              }}
+              placeholder="Enter password..."
+              className="w-full px-4 py-3 bg-neutral-900 border border-neutral-800 rounded-2xl text-white text-sm font-medium focus:outline-none focus:border-[#0a7ea4]"
+            />
+            {passwordError && (
+              <p className="text-xs text-red-400 mt-1.5 font-medium">{passwordError}</p>
+            )}
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <button
+              type="button"
+              disabled={isDecrypting}
+              onClick={() => setPasswordModalOpen(false)}
+              className="flex-1 py-3 rounded-xl border border-neutral-800 text-neutral-300 text-sm font-semibold hover:bg-neutral-800"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isDecrypting || !decryptPassword}
+              className="flex-1 py-3 rounded-xl bg-[#0a7ea4] hover:bg-[#086F8A] text-white text-sm font-bold shadow-lg shadow-[#0a7ea4]/20 disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {isDecrypting ? 'Decrypting...' : 'Unlock Backup'}
+            </button>
+          </div>
+        </form>
+      </Modal>
 
     </div>
   );

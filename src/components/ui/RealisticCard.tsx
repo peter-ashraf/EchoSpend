@@ -2,6 +2,7 @@ import type { Wallet } from '../../lib/db';
 import { CibLogo, NbeLogo, BanqueMisrLogo, QnbLogo, HsbcLogo, AlexbankLogo, AaibLogo, EnbdLogo } from './BankLogos';
 import { useStore } from '../../store/useStore';
 import { formatAmount } from '../../lib/formatters';
+import { Money, Coins, Wallet as WalletIcon } from '@phosphor-icons/react';
 
 export interface RealisticCardProps {
   wallet: Partial<Wallet>;
@@ -525,6 +526,55 @@ export function BankHeader({ bank, isDebit, tierTitle }: { bank?: string; isDebi
   );
 }
 
+// ── CASH WALLET VECTOR ART (Banknote Guilloche Texture) ─────────────
+function CashWalletVectorArt({ color = '#059669' }: { color?: string }) {
+  return (
+    <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 400 252" preserveAspectRatio="none" fill="none">
+      <defs>
+        <radialGradient id="cashGlow" cx="50%" cy="40%" r="70%">
+          <stop offset="0%" stopColor={color} stopOpacity="0.4" />
+          <stop offset="60%" stopColor="#06281c" stopOpacity="0.9" />
+          <stop offset="100%" stopColor="#02140e" stopOpacity="0.98" />
+        </radialGradient>
+        <linearGradient id="cashBorderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#34d399" stopOpacity="0.7" />
+          <stop offset="50%" stopColor="#fbbf24" stopOpacity="0.5" />
+          <stop offset="100%" stopColor="#059669" stopOpacity="0.7" />
+        </linearGradient>
+        <pattern id="guillocheMesh" width="24" height="24" patternUnits="userSpaceOnUse">
+          <circle cx="12" cy="12" r="10" stroke="#34d399" strokeWidth="0.5" strokeOpacity="0.12" fill="none" />
+          <path d="M0 12 Q6 0 12 12 T24 12" stroke="#fbbf24" strokeWidth="0.4" strokeOpacity="0.08" fill="none" />
+        </pattern>
+      </defs>
+
+      <rect width="400" height="252" fill="#03140e" />
+      <rect width="400" height="252" fill="url(#cashGlow)" />
+      <rect width="400" height="252" fill="url(#guillocheMesh)" />
+
+      {/* Intricate Banknote Guilloche Borders */}
+      <rect x="10" y="10" width="380" height="232" rx="14" stroke="url(#cashBorderGrad)" strokeWidth="1" strokeDasharray="3 3" fill="none" opacity="0.6" />
+      <rect x="15" y="15" width="370" height="222" rx="11" stroke="#34d399" strokeWidth="0.75" fill="none" opacity="0.35" />
+
+      {/* Corner Rosettes */}
+      <circle cx="24" cy="24" r="7" stroke="#fbbf24" strokeWidth="0.8" opacity="0.4" fill="none" />
+      <circle cx="376" cy="24" r="7" stroke="#fbbf24" strokeWidth="0.8" opacity="0.4" fill="none" />
+      <circle cx="24" cy="228" r="7" stroke="#fbbf24" strokeWidth="0.8" opacity="0.4" fill="none" />
+      <circle cx="376" cy="228" r="7" stroke="#fbbf24" strokeWidth="0.8" opacity="0.4" fill="none" />
+
+      {/* Center Banknote Watermark Rosette */}
+      <g transform="translate(200, 126)" opacity="0.08">
+        <circle r="65" stroke="#34d399" strokeWidth="1.5" fill="none" />
+        <circle r="50" stroke="#fbbf24" strokeWidth="1" fill="none" />
+        <circle r="35" stroke="#34d399" strokeWidth="1" fill="none" />
+        <ellipse rx="58" ry="22" stroke="#34d399" strokeWidth="0.7" fill="none" />
+        <ellipse rx="58" ry="22" stroke="#34d399" strokeWidth="0.7" transform="rotate(45)" fill="none" />
+        <ellipse rx="58" ry="22" stroke="#34d399" strokeWidth="0.7" transform="rotate(90)" fill="none" />
+        <ellipse rx="58" ry="22" stroke="#34d399" strokeWidth="0.7" transform="rotate(135)" fill="none" />
+      </g>
+    </svg>
+  );
+}
+
 // ── MAIN PHOTOREALISTIC CARD COMPONENT ──────────────────────────────
 export function RealisticCard({
   wallet,
@@ -536,6 +586,112 @@ export function RealisticCard({
 }: RealisticCardProps) {
   const { settings } = useStore();
   const hideBalance = settings?.hideBalance ?? false;
+
+  // Dedicated Cash Wallet Presentation
+  if (wallet.type === 'cash') {
+    return (
+      <div
+        onClick={onClick}
+        className={`relative w-full aspect-[1.586/1] rounded-[22px] p-5 md:p-6 overflow-hidden shadow-2xl transition-all duration-300 border border-emerald-500/30 select-none ${
+          onClick ? 'cursor-pointer hover:-translate-y-1 hover:shadow-emerald-500/10 active:scale-[0.99]' : ''
+        } ${className}`}
+      >
+        <CashWalletVectorArt color={wallet.color} />
+
+        {/* Specular ambient gloss */}
+        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.06] to-transparent pointer-events-none" />
+
+        {/* Top Row: Cash Header & Badge */}
+        <div className="flex items-start justify-between relative z-10">
+          <div className="flex items-center gap-2.5">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#10b981] to-[#047857] border border-[#34d399]/40 flex items-center justify-center text-white shadow-md shadow-emerald-950/50">
+              <Money size={24} weight="fill" />
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm font-black tracking-wider text-white uppercase font-sans">
+                  CASH WALLET
+                </span>
+                <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-400/20 text-emerald-300 border border-emerald-400/30">
+                  كاش
+                </span>
+              </div>
+              <p className="text-[10px] font-mono text-emerald-200/70 font-semibold tracking-wide">
+                Physical Cash in Hand
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-950/70 border border-emerald-500/30 text-emerald-300 text-[10px] font-mono font-bold">
+            <Coins size={14} weight="fill" className="text-amber-400" />
+            <span>DIRECT TENDER</span>
+          </div>
+        </div>
+
+        {/* Center Account Name & Status */}
+        <div className="my-auto py-2.5 flex items-center justify-between relative z-10">
+          <div className="flex flex-col">
+            <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-emerald-300/70">
+              Account
+            </span>
+            <span
+              className="text-lg md:text-xl font-extrabold text-white tracking-wide truncate max-w-[220px]"
+              style={{ textShadow: '0 1.5px 3px rgba(0,0,0,0.8)' }}
+            >
+              {wallet.name || 'Cash'}
+            </span>
+          </div>
+
+          <div className="text-right">
+            <span className="text-[9px] font-mono font-bold uppercase tracking-widest text-emerald-400/75 block">
+              STATUS
+            </span>
+            <span className="text-xs font-mono font-black text-emerald-300 bg-emerald-500/10 px-2 py-0.5 rounded-lg border border-emerald-500/20">
+              LIQUID
+            </span>
+          </div>
+        </div>
+
+        {/* Bottom Row: Currency info & Banknote Seal */}
+        <div className="flex items-end justify-between relative z-10 pt-1 border-t border-emerald-500/20">
+          <div className="flex items-center gap-2">
+            <span className="text-[9px] uppercase font-mono tracking-widest text-emerald-200/60 font-medium">
+              CURRENCY:
+            </span>
+            <span className="text-xs font-mono font-bold text-emerald-100 tracking-wider">
+              {currencySymbol} • PHYSICAL NOTES
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1.5 text-emerald-300/80">
+            <WalletIcon size={16} weight="bold" />
+            <span className="text-[10px] font-mono tracking-wider font-semibold">DIRECT SPEND</span>
+          </div>
+        </div>
+
+        {/* Balance & Spent Overlay */}
+        {showBalance && (
+          <div className="absolute top-3 right-3 z-20 flex items-center gap-1.5">
+            {spentThisMonth > 0 && (
+              <div className="px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-right shadow-lg hidden sm:block">
+                <p className="text-[8px] uppercase font-bold text-neutral-400 tracking-wider">SPENT</p>
+                <p className="text-[11px] font-mono font-bold text-white/90">
+                  {formatAmount(spentThisMonth, currencySymbol, hideBalance)}
+                </p>
+              </div>
+            )}
+            <div className="px-3 py-1 rounded-full bg-black/70 backdrop-blur-md border border-emerald-500/30 text-right shadow-lg">
+              <p className="text-[8px] uppercase font-bold text-emerald-300 tracking-wider">CASH BALANCE</p>
+              <p className="text-xs font-mono font-extrabold text-emerald-400">
+                {formatAmount(wallet.balance ?? 0, currencySymbol, hideBalance)}
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   const isCredit = wallet.type === 'credit';
   const isDebit = !isCredit;
   const bank = wallet.bank || 'cib';

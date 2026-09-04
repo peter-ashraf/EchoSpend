@@ -6,7 +6,32 @@ import { encryptData, decryptData } from '../lib/crypto';
 export type Category = DbCategory;
 export type { Subscription, HabitStreak };
 
-interface AppState {
+export interface BackupStats {
+  walletsCount: number;
+  transactionsCount: number;
+  categoriesCount: number;
+  subscriptionsCount: number;
+  hasSettings: boolean;
+  exportDate?: string;
+  isEncrypted: boolean;
+}
+
+export interface BackupInspectionResult {
+  valid: boolean;
+  isEncrypted: boolean;
+  needsPassword?: boolean;
+  error?: string;
+  stats?: BackupStats;
+  payload?: any;
+}
+
+export interface ImportResult {
+  success: boolean;
+  error?: string;
+  stats?: BackupStats;
+}
+
+export interface AppState {
   settings: Settings | null;
   wallets: Wallet[];
   transactions: Transaction[];
@@ -45,7 +70,8 @@ interface AppState {
   
   // Backup & Encryption
   exportData: (password?: string) => Promise<string>;
-  importData: (jsonData: string, password?: string) => Promise<boolean>;
+  inspectBackupData: (jsonData: string, password?: string) => Promise<BackupInspectionResult>;
+  importData: (jsonData: string, password?: string) => Promise<ImportResult>;
 
   // Offline Voice
   setOfflineVoiceStatus: (status: 'not-asked' | 'declined' | 'ready') => Promise<void>;
@@ -280,7 +306,18 @@ export const useStore = create<AppState>((set, get) => {
       const subscriptions = await db.getAll('subscriptions');
       const streaks = await db.getAll('streaks');
       
-      const payload = { settings, wallets, transactions, categories, subscriptions, streaks };
+      const payload = {
+        version: '1.3.0',
+        appName: 'EchoSpend',
+        exportDate: new Date().toISOString(),
+        settings: settings || null,
+        wallets: wallets || [],
+        transactions: transactions || [],
+        categories: categories || [],
+        subscriptions: subscriptions || [],
+        streaks: streaks || []
+      };
+
       if (password || settings?.encryptBackups) {
         const encrypted = await encryptData(payload, password);
         return JSON.stringify(encrypted, null, 2);
@@ -288,24 +325,86 @@ export const useStore = create<AppState>((set, get) => {
       return JSON.stringify(payload, null, 2);
     },
 
-    importData: async (jsonData: string, password?: string) => {
+    inspectBackupData: async (jsonData: string, password?: string): Promise<BackupInspectionResult> => {
       try {
-        let data = JSON.parse(jsonData);
+        let raw: any;
+        try {
+          raw = JSON.parse(jsonData);
+        } catch {
+          return { valid: false, isEncrypted: false, error: 'File is not valid JSON.' };
+        }
 
-        // Handle AES-256 encrypted payload
-        if (data.isEncrypted) {
+        let data = raw;
+        const isEncrypted = Boolean(raw?.isEncrypted);
+
+        if (isEncrypted) {
           try {
-            data = await decryptData(data, password);
-          } catch (decryptErr) {
-            console.error('Decryption failed:', decryptErr);
-            return false;
+            data = await decryptData(raw, password);
+          } catch {
+            return {
+              valid: false,
+              isEncrypted: true,
+              needsPassword: true,
+              error: 'Encrypted backup. Password required or incorrect.'
+            };
           }
         }
 
-        if (!data || !data.wallets || !data.transactions || !data.categories) return false;
-        
+        if (!data || typeof data !== 'object') {
+          return { valid: false, isEncrypted, error: 'Empty or corrupt backup file.' };
+        }
+
+        const wallets = Array.isArray(data.wallets) ? data.wallets : null;
+        const transactions = Array.isArray(data.transactions) ? data.transactions : null;
+        const categories = Array.isArray(data.categories) ? data.categories : null;
+
+        if (!wallets || !transactions || !categories) {
+          return {
+            valid: false,
+            isEncrypted,
+            error: 'Invalid backup: missing accounts, transactions, or categories collections.'
+          };
+        }
+
+        const subscriptions = Array.isArray(data.subscriptions) ? data.subscriptions : [];
+
+        return {
+          valid: true,
+          isEncrypted,
+          stats: {
+            walletsCount: wallets.length,
+            transactionsCount: transactions.length,
+            categoriesCount: categories.length,
+            subscriptionsCount: subscriptions.length,
+            hasSettings: Boolean(data.settings),
+            exportDate: data.exportDate || undefined,
+            isEncrypted
+          },
+          payload: data
+        };
+      } catch (err: any) {
+        return { valid: false, isEncrypted: false, error: err?.message || 'Failed to parse backup.' };
+      }
+    },
+
+    importData: async (jsonData: string, password?: string) => {
+      try {
+        const inspection = await get().inspectBackupData(jsonData, password);
+        if (!inspection.valid || !inspection.payload) {
+          return {
+            success: false,
+            error: inspection.error || 'Invalid backup format.'
+          };
+        }
+
+        const data = inspection.payload;
         const db = await getDB();
         
+        // Prevent seedDatabase from purging mock data over imported user data
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('echospend_mock_data_purged_v2', 'true');
+        }
+
         await db.clear('settings');
         await db.clear('wallets');
         await db.clear('transactions');
@@ -313,22 +412,42 @@ export const useStore = create<AppState>((set, get) => {
         await db.clear('subscriptions');
         await db.clear('streaks');
         
-        if (data.settings) await db.put('settings', data.settings);
-        for (const w of data.wallets) await db.put('wallets', w);
-        for (const t of data.transactions) await db.put('transactions', t);
-        for (const c of data.categories) await db.put('categories', c);
-        if (data.subscriptions) {
-          for (const s of data.subscriptions) await db.put('subscriptions', s);
+        if (data.settings && typeof data.settings === 'object') {
+          await db.put('settings', { ...data.settings, id: 'app-settings' });
         }
-        if (data.streaks) {
-          for (const st of data.streaks) await db.put('streaks', st);
+        for (const w of data.wallets) {
+          await db.put('wallets', w);
+        }
+        for (const t of data.transactions) {
+          await db.put('transactions', t);
+        }
+        for (const c of data.categories) {
+          await db.put('categories', c);
+        }
+        if (Array.isArray(data.subscriptions)) {
+          for (const s of data.subscriptions) {
+            await db.put('subscriptions', s);
+          }
+        }
+        if (Array.isArray(data.streaks)) {
+          for (const st of data.streaks) {
+            await db.put('streaks', st);
+          }
+        } else if (data.streak && typeof data.streak === 'object') {
+          await db.put('streaks', data.streak);
         }
         
         await get().initData();
-        return true;
-      } catch (e) {
+        return {
+          success: true,
+          stats: inspection.stats
+        };
+      } catch (e: any) {
         console.error('Import failed', e);
-        return false;
+        return {
+          success: false,
+          error: e?.message || 'Import failed unexpectedly.'
+        };
       }
     },
 

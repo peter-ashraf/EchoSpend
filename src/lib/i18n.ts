@@ -45,8 +45,12 @@ export const translations = {
     viewAll: 'View All',
     accountAndAppSetup: 'Account & App Settings',
     voiceCalibration: 'Voice Calibration',
-    defaultCurrency: 'Default Currency',
     exportData: 'Export Data',
+    backupAndRestore: 'Backup & Restore',
+    exportBackup: 'Export Backup (JSON)',
+    importBackup: 'Import & Restore Backup',
+    backupExportDesc: 'Save all your wallets, transactions, categories, and settings to a JSON file.',
+    backupImportDesc: 'Restore your complete financial records from an EchoSpend backup file.',
     themeDarkLight: 'Theme: Dark/Light',
 
     // Transaction Form
@@ -113,8 +117,12 @@ export const translations = {
     viewAll: 'عرض الكل',
     accountAndAppSetup: 'إعدادات الحساب والتطبيق',
     voiceCalibration: 'معايرة الصوت',
-    defaultCurrency: 'العملة الإفتراضية',
     exportData: 'تصدير البيانات',
+    backupAndRestore: 'النسخ الاحتياطي والاستعادة',
+    exportBackup: 'تصدير نسخة احتياطية (JSON)',
+    importBackup: 'استيراد واستعادة البيانات',
+    backupExportDesc: 'حفظ جميع المحافظ والمعاملات والفئات والإعدادات كملف JSON.',
+    backupImportDesc: 'استعادة سجلك المالي الكامل من ملف نسخة احتياطية لـ EchoSpend.',
     themeDarkLight: 'المظهر: داكن/فاتح',
 
     // Transaction Form
