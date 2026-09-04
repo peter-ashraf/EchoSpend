@@ -15,7 +15,7 @@ import { VoiceConfirmModal } from './components/modals/VoiceConfirmModal';
 import { VoiceMicButton } from './components/ui/VoiceMicButton';
 import { BiometricLockScreen } from './components/modals/BiometricLockScreen';
 import { OfflineVoiceConsentModal } from './components/modals/OfflineVoiceConsentModal';
-import { parseVoiceInput, type ParsedVoiceTransaction } from './lib/parseVoice';
+import { parseVoiceInput, matchWalletFromText, type ParsedVoiceTransaction } from './lib/parseVoice';
 import { parseExpenseWithGemini, matchCategoryToId } from './lib/geminiParser';
 import type { ParsedSmsResult } from './lib/parseSms';
 import { downloadWhisperModel, transcribeBlob, terminateWhisper, ensureWhisperReady } from './lib/whisperOffline';
@@ -110,14 +110,15 @@ function App() {
       // Send raw Arabic transcript to Supabase Edge Function (powered by Gemini)
       const extracted = await parseExpenseWithGemini(text, categories);
       const matchedCategoryId = matchCategoryToId(extracted.category, categories);
+      const detectedWalletId = matchWalletFromText(text, wallets, defaultWalletId);
 
       // Populate confirmation modal with extracted values for user review (do not auto-save)
       setVoiceParsedData({
         amount: extracted.amount || null,
         merchant: extracted.merchant || '',
         categoryId: matchedCategoryId || categories[0]?.id || '',
-        walletId: defaultWalletId,
-        type: 'expense',
+        walletId: detectedWalletId,
+        type: extracted.type || 'expense',
         note: text,
         transcript: text,
       });
