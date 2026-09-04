@@ -17,14 +17,14 @@ import { BiometricLockScreen } from './components/modals/BiometricLockScreen';
 import { OfflineVoiceConsentModal } from './components/modals/OfflineVoiceConsentModal';
 import { parseVoiceInput, type ParsedVoiceTransaction } from './lib/parseVoice';
 import { parseExpenseWithGemini, matchCategoryToId } from './lib/geminiParser';
-import { parseBankSms, type ParsedSmsResult } from './lib/parseSms';
+import type { ParsedSmsResult } from './lib/parseSms';
 import { downloadWhisperModel, transcribeBlob, terminateWhisper, ensureWhisperReady } from './lib/whisperOffline';
 import { APP_VERSION, onUpdateAvailable, reloadAndApplyUpdate } from './lib/pwaUpdate';
 import { UpdatePromptModal } from './components/modals/UpdatePromptModal';
 import { Keyboard, WifiSlash, CloudArrowDown, Check, CheckCircle, X } from '@phosphor-icons/react';
 
 function App() {
-  const { initData, isLoading, settings, categories, wallets, setOfflineVoiceStatus, addTransaction } = useStore();
+  const { initData, isLoading, settings, categories, wallets, setOfflineVoiceStatus, addTransaction, updateSettings } = useStore();
   const [activeTab, setActiveTab] = useState<NavTab>('dashboard');
   const [isManualTxOpen, setIsManualTxOpen] = useState(false);
   const [isSmsModalOpen, setIsSmsModalOpen] = useState(false);
@@ -102,50 +102,6 @@ function App() {
       ensureWhisperReady().catch(console.warn);
     }
   }, [settings?.offlineVoiceStatus]);
-
-  // ── Automatic Clipboard SMS Detection ─────────────────────────────────
-  const checkClipboardForSms = useCallback(async () => {
-    if (!navigator.clipboard?.readText) return;
-    try {
-      const clipText = await navigator.clipboard.readText();
-      if (!clipText || clipText.trim().length < 10) return;
-      if (clipText.trim() === lastDismissedSmsText.current) return;
-
-      const lower = clipText.toLowerCase();
-      const hasBankKeywords =
-        lower.includes('egp') || lower.includes('usd') || lower.includes('le') ||
-        lower.includes('ج.م') || lower.includes('جنيه') || lower.includes('purchase') ||
-        lower.includes('شراء') || lower.includes('card') || lower.includes('بطاقة') ||
-        lower.includes('instapay') || lower.includes('credited') || lower.includes('إيداع') ||
-        lower.includes('cib') || lower.includes('nbe') || lower.includes('bank') ||
-        lower.includes('ahli') || lower.includes('misr') || lower.includes('qnb');
-
-      if (!hasBankKeywords) return;
-
-      const defaultWalletId = wallets[0]?.id || '';
-      const parsed = parseBankSms(clipText, categories, wallets, defaultWalletId);
-      if (parsed && parsed.amount > 0) {
-        setDetectedSms(parsed);
-      }
-    } catch (_) {
-      // Ignore clipboard permission rejections silently
-    }
-  }, [categories, wallets]);
-
-  useEffect(() => {
-    // Check clipboard when user returns to or focuses the app
-    const onFocus = () => checkClipboardForSms();
-    const onVisibilityChange = () => {
-      if (document.visibilityState === 'visible') checkClipboardForSms();
-    };
-
-    window.addEventListener('focus', onFocus);
-    document.addEventListener('visibilitychange', onVisibilityChange);
-    return () => {
-      window.removeEventListener('focus', onFocus);
-      document.removeEventListener('visibilitychange', onVisibilityChange);
-    };
-  }, [checkClipboardForSms]);
 
   // ── Voice transcript handler via Gemini AI & Supabase Edge Function ──
   const handleVoiceTranscript = useCallback(async (text: string) => {
@@ -400,6 +356,8 @@ function App() {
         <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-40">
           <VoiceMicButton
             onTranscript={handleVoiceTranscript}
+            voiceLanguage={settings.voiceLanguage || 'ar-EG'}
+            onVoiceLanguageChange={(lang) => updateSettings({ voiceLanguage: lang })}
             onRequestKeyboard={openKeyboardModal}
             onRequestOfflineConsent={() => setShowOfflineConsent(true)}
             onOfflineAudioReady={handleOfflineMicPress}

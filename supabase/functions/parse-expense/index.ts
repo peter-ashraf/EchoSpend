@@ -85,20 +85,23 @@ Deno.serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    // 4. Construct strict financial extraction prompt for Egyptian Arabic
-    const systemPrompt = `You are a financial transaction data extractor specializing in conversational Egyptian Arabic (اللهجة المصرية العامية) and Arabic numerals.
-Your task is to parse conversational voice logs of daily spending (such as: 'صرفت ٧٠ ج.م في كارفور على البقالة', 'دفعت ميتين جنيه في فودافون فاتورة', 'اشتريت بنزين بستين جنيه من موبيل', 'كوفي بـ ٤٥ جنيه من كوستا').
+    // 4. Construct strict bilingual financial extraction prompt for Egyptian Arabic and English
+    const systemPrompt = `You are a bilingual financial transaction data extractor specializing in conversational Egyptian Arabic (اللهجة المصرية العامية), English, and mixed franco-arab speech.
+Your task is to parse conversational voice logs of daily spending in either language, such as:
+- Egyptian Arabic: 'صرفت ٧٠ ج.م في كارفور على البقالة', 'دفعت ميتين جنيه في فودافون فاتورة', 'اشتريت بنزين بستين جنيه من موبيل', 'كوفي بـ ٤٥ جنيه من كوستا'
+- English: 'Spent 150 EGP at Starbucks on coffee', 'Paid 200 pounds for Vodafone bill', 'Bought groceries for 350 from Carrefour', 'Uber ride 85 pounds', 'Dinner at McDonald\'s 220 EGP'
+- Mixed / Franco: 'دفعت 60 EGP Uber', 'اشتريت من Starbucks بـ 80 جنيه'
 
 Extract the following fields accurately:
-1. amount: The numeric value spent. Convert Eastern Arabic numerals (٠, ١, ٢, ٣, ٤, ٥, ٦, ٧, ٨, ٩) and Egyptian verbal numbers ('سبعين' -> 70, 'ميتين' / 'مائتين' -> 200, 'خمسين' -> 50, 'ألف' -> 1000, 'ألف ونص' -> 1500, 'باكو' -> 1000, 'نص باكو' -> 500) into a standard positive JavaScript number.
+1. amount: The numeric value spent. Convert numbers in any format: standard digits (70, 150), Eastern Arabic numerals (٠, ١, ٢, ٣, ٤, ٥, ٦, ٧, ٨, ٩), English number words ('seventy' -> 70, 'two hundred' -> 200, 'fifty' -> 50, 'thousand' -> 1000), and Egyptian verbal numbers ('سبعين' -> 70, 'ميتين' / 'مائتين' -> 200, 'خمسين' -> 50, 'ألف' -> 1000, 'ألف ونص' -> 1500, 'باكو' -> 1000, 'نص باكو' -> 500) into a standard positive JavaScript number.
 2. currency: Strictly the string "EGP".
-3. merchant: The store, brand, or service name if mentioned (e.g., 'كارفور', 'فودافون', 'أوبر', 'سوبرماركت', 'صيدلية العزبي', 'كوستا', 'بنزينة'). If not explicitly mentioned, provide a short descriptive vendor or 'General'.
+3. merchant: The store, brand, or service name if mentioned (e.g., 'Carrefour' / 'كارفور', 'Starbucks', 'Vodafone' / 'فودافون', 'Uber' / 'أوبر', 'Costa', 'سوبرماركت', 'صيدلية العزبي'). If not explicitly mentioned, provide a short descriptive vendor name or 'General'.
 4. category: Classify the expense into one of these standard categories:
-   - "Food & Dining" (groceries, restaurants, cafes, supermarkets, food items, meat, vegetables, coffee)
-   - "Transportation" (Uber, Careem, metro, taxi, petrol/gas, bus, parking)
+   - "Food & Dining" (groceries, restaurants, cafes, supermarkets, coffee, snacks, food items, meat, vegetables)
+   - "Transportation" (Uber, Careem, metro, taxi, petrol/gas, bus, parking, car service)
    - "Shopping" (clothing, electronics, retail, hardware, gifts, personal items)
    - "Subscriptions & Bills" (mobile bills, internet, electricity, water, gas, telecom, Vodafone, Orange, WE, Etisalat)
-   - "Entertainment" (cinema, gaming, events, hobbies)
+   - "Entertainment" (cinema, gaming, events, hobbies, movies)
    - "Health & Fitness" (pharmacy, doctor, medicine, gym, clinic)
    - "Other" (uncategorized or miscellaneous)
 

@@ -4,7 +4,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { startRecording } from '../../lib/whisperOffline';
 
 interface VoiceMicButtonProps {
-  onTranscript: (text: string) => void;
+  onTranscript: (text: string) => Promise<void> | void;
+  voiceLanguage?: 'ar-EG' | 'en-US';
+  onVoiceLanguageChange?: (lang: 'ar-EG' | 'en-US') => void;
   onParsingStart?: () => void;
   /** Called when the keyboard fallback should open. offline=true when triggered by offline detection. */
   onRequestKeyboard?: (offline?: boolean) => void;
@@ -18,8 +20,12 @@ interface VoiceMicButtonProps {
   isWhisperTranscribing?: boolean;
 }
 
+const MIC_PERMISSION_STORAGE_KEY = 'echospend_mic_permission';
+
 export function VoiceMicButton({
   onTranscript,
+  voiceLanguage = 'ar-EG',
+  onVoiceLanguageChange,
   onParsingStart,
   onRequestKeyboard,
   onRequestOfflineConsent,
@@ -27,8 +33,7 @@ export function VoiceMicButton({
   offlineVoiceStatus,
   isWhisperTranscribing,
 }: VoiceMicButtonProps) {
-  // Hardcode recognition language strictly to Egyptian Arabic (ar-EG)
-  const HARDCODED_VOICE_LANG = 'ar-EG';
+  const currentLang = voiceLanguage || 'ar-EG';
 
   const [isListening, setIsListening] = useState(false);
   const [liveTranscript, setLiveTranscript] = useState<string>('');
@@ -59,7 +64,32 @@ export function VoiceMicButton({
     };
   }, []);
 
-  // Sync processing state with parent's Whisper transcribing state
+  // ── Sync mic permission with localStorage and Permissions API ──
+  useEffect(() => {
+    if (navigator.permissions && navigator.permissions.query) {
+      navigator.permissions
+        .query({ name: 'microphone' as PermissionName })
+        .then((permissionStatus) => {
+          if (permissionStatus.state === 'granted') {
+            try {
+              localStorage.setItem(MIC_PERMISSION_STORAGE_KEY, 'granted');
+            } catch (_) {}
+          }
+          permissionStatus.onchange = () => {
+            try {
+              if (permissionStatus.state === 'granted') {
+                localStorage.setItem(MIC_PERMISSION_STORAGE_KEY, 'granted');
+              } else if (permissionStatus.state === 'denied') {
+                localStorage.setItem(MIC_PERMISSION_STORAGE_KEY, 'denied');
+              }
+            } catch (_) {}
+          };
+        })
+        .catch(() => {});
+    }
+  }, []);
+
+  // ── Sync processing state with parent's Whisper transcribing state ──
   useEffect(() => {
     if (isWhisperTranscribing) {
       setIsProcessing(true);
@@ -67,6 +97,25 @@ export function VoiceMicButton({
       setIsProcessing(false);
     }
   }, [isWhisperTranscribing]);
+
+  // ── Absolute Processing Timeout Failsafe ────────────────────
+  // If parsing or network hangs, unconditionally reset isProcessing after 7s
+  useEffect(() => {
+    if (isProcessing && !isWhisperTranscribing) {
+      const failsafeTimer = setTimeout(() => {
+        setIsProcessing(false);
+        setLiveTranscript('');
+        setErrorMessage(
+          currentLang === 'ar-EG'
+            ? 'انتهت مهلة التحليل — تم الإلغاء تلقائياً'
+            : 'Parsing timed out — auto canceled'
+        );
+        setTimeout(() => setErrorMessage(null), 3000);
+      }, 7000);
+
+      return () => clearTimeout(failsafeTimer);
+    }
+  }, [isProcessing, isWhisperTranscribing, currentLang]);
 
   // ── Cleanup a Web Speech API session safely ────────────────
   const stopAndCleanupRecognition = useCallback(() => {
@@ -90,10 +139,15 @@ export function VoiceMicButton({
     setIsListening(false);
   }, []);
 
-  // ── Handle captured transcript ───────────────────────────────
-  const handleCapturedText = useCallback((text: string) => {
+  // ── Handle captured transcript with failsafe ───────────────
+  const handleCapturedText = useCallback(async (text: string) => {
     if (!text || text.trim().length === 0) {
-      setErrorMessage('لم يتم التقاط صوت — حاول مرة أخرى');
+      setIsProcessing(false);
+      setErrorMessage(
+        currentLang === 'ar-EG'
+          ? 'لم يتم التقاط صوت — حاول مرة أخرى'
+          : 'No voice detected — try again'
+      );
       setTimeout(() => setErrorMessage(null), 3500);
       return;
     }
@@ -104,18 +158,20 @@ export function VoiceMicButton({
     setIsProcessing(true);
     if (onParsingStart) onParsingStart();
     
-    // Pass transcript to parent to execute Gemini parsing via Supabase Edge Function
-    onTranscript(text.trim());
-
-    setTimeout(() => {
+    try {
+      // Pass transcript to parent to execute Gemini parsing via Supabase Edge Function
+      await Promise.resolve(onTranscript(text.trim()));
+    } catch (err) {
+      console.warn('Voice parsing error in handleCapturedText:', err);
+    } finally {
       setIsProcessing(false);
-    }, 600);
+    }
 
     setTimeout(() => {
       setSuccessPreview(null);
       setLiveTranscript('');
     }, 3500);
-  }, [onParsingStart, onTranscript]);
+  }, [currentLang, onParsingStart, onTranscript]);
 
   // ── Offline recording (MediaRecorder → Whisper) ──────────────
   const startOfflineRecording = useCallback(() => {
@@ -134,6 +190,7 @@ export function VoiceMicButton({
       onError: (msg) => {
         setIsOfflineRecording(false);
         setIsListening(false);
+        setIsProcessing(false);
         setErrorMessage(msg);
         setTimeout(() => setErrorMessage(null), 3500);
       },
@@ -159,6 +216,7 @@ export function VoiceMicButton({
     setErrorMessage(null);
     setSuccessPreview(null);
     setLiveTranscript('');
+    setIsProcessing(false);
 
     // ── Offline path ──────────────────────────────────────────
     if (!navigator.onLine) {
@@ -188,13 +246,18 @@ export function VoiceMicButton({
       // Continuous false, interimResults true to display real-time live transcript
       recognition.continuous = false;
       recognition.interimResults = true;
-      // Hardcoded strictly to Egyptian Arabic (ar-EG)
-      recognition.lang = HARDCODED_VOICE_LANG;
+      // Dynamically set recognition language from user choice (ar-EG or en-US)
+      recognition.lang = currentLang;
       recognition.maxAlternatives = 1;
 
       recognition.onstart = () => {
         if (sessionIdRef.current !== currentSessionId) return;
+        try {
+          // Save granted voice permission in local storage
+          localStorage.setItem(MIC_PERMISSION_STORAGE_KEY, 'granted');
+        } catch (_) {}
         setIsListening(true);
+        setIsProcessing(false);
       };
 
       recognition.onresult = (event: any) => {
@@ -220,18 +283,22 @@ export function VoiceMicButton({
 
       recognition.onerror = (event: any) => {
         if (sessionIdRef.current !== currentSessionId) return;
+        setIsProcessing(false);
         if (event.error !== 'aborted') {
           if (event.error === 'not-allowed') {
-            setErrorMessage('تم رفض الوصول للميكروفون');
+            try {
+              localStorage.setItem(MIC_PERMISSION_STORAGE_KEY, 'denied');
+            } catch (_) {}
+            setErrorMessage(currentLang === 'ar-EG' ? 'تم رفض الوصول للميكروفون' : 'Microphone access denied');
             setTimeout(() => { setErrorMessage(null); onRequestKeyboard?.(false); }, 2000);
           } else if (event.error === 'no-speech') {
-            setErrorMessage('لم نسمع شيئاً — حاول مجدداً');
+            setErrorMessage(currentLang === 'ar-EG' ? 'لم نسمع شيئاً — حاول مجدداً' : 'No speech heard — try again');
             setTimeout(() => setErrorMessage(null), 3000);
           } else if (event.error === 'network') {
-            setErrorMessage('خطأ في الشبكة — استخدم لوحة المفاتيح ⌨');
+            setErrorMessage(currentLang === 'ar-EG' ? 'خطأ في الشبكة — استخدم لوحة المفاتيح ⌨' : 'Network error — use keyboard ⌨');
             setTimeout(() => { setErrorMessage(null); onRequestKeyboard?.(true); }, 2500);
           } else {
-            setErrorMessage('تعذر التعرف — اضغط للمحاولة');
+            setErrorMessage(currentLang === 'ar-EG' ? 'تعذر التعرف — اضغط للمحاولة' : 'Recognition error — tap to retry');
             setTimeout(() => setErrorMessage(null), 3500);
           }
         }
@@ -251,10 +318,11 @@ export function VoiceMicButton({
         capturedTranscriptRef.current = '';
         if (text && text.trim().length > 0) {
           handleCapturedText(text.trim());
+        } else {
+          setIsProcessing(false);
         }
       };
 
-      recognitionRef.current = recognition;
       recognition.start();
 
       // Auto-stop timeout if no end event fired after 12s
@@ -266,22 +334,29 @@ export function VoiceMicButton({
       }, 12000);
     } catch (e) {
       setIsListening(false);
+      setIsProcessing(false);
       stopAndCleanupRecognition();
       onRequestKeyboard?.(false);
     }
-  }, [stopAndCleanupRecognition, handleCapturedText, onRequestKeyboard, onRequestOfflineConsent, offlineVoiceStatus, startOfflineRecording, liveTranscript]);
+  }, [currentLang, stopAndCleanupRecognition, handleCapturedText, onRequestKeyboard, onRequestOfflineConsent, offlineVoiceStatus, startOfflineRecording, liveTranscript]);
 
   const stopListening = useCallback(() => {
     setIsListening(false);
-    setIsProcessing(true);
     if (isOfflineRecording) {
+      setIsProcessing(true);
       stopOfflineRecording();
     } else {
       const rec = recognitionRef.current;
       if (rec) {
-        try { rec.stop(); } catch (_) { stopAndCleanupRecognition(); }
+        try {
+          rec.stop();
+        } catch (_) {
+          stopAndCleanupRecognition();
+          setIsProcessing(false);
+        }
       } else {
         stopAndCleanupRecognition();
+        setIsProcessing(false);
       }
     }
   }, [isOfflineRecording, stopOfflineRecording, stopAndCleanupRecognition]);
@@ -343,24 +418,37 @@ export function VoiceMicButton({
                   />
                 ))}
               </div>
-              <span>جاري الاستماع... (Listening...)</span>
-              <span className="text-[10px] bg-red-500/20 text-red-300 px-2 py-0.5 rounded-full font-mono">
-                ar-EG
+              <span>
+                {currentLang === 'ar-EG' ? 'جاري الاستماع... (Listening...)' : 'Listening... (جاري الاستماع)'}
+              </span>
+              <span className="text-[10px] bg-red-500/20 text-red-300 px-2 py-0.5 rounded-full font-mono font-bold">
+                {currentLang}
               </span>
             </div>
 
             {/* Live transcript text */}
-            <div className="text-sm font-medium text-white px-2 py-1 min-h-[30px] flex items-center justify-center max-w-full" dir="rtl">
+            <div
+              className="text-sm font-medium text-white px-2 py-1 min-h-[30px] flex items-center justify-center max-w-full"
+              dir={currentLang === 'ar-EG' ? 'rtl' : 'ltr'}
+            >
               {liveTranscript ? (
                 <span className="text-emerald-300 font-bold italic tracking-wide text-base animate-pulse">
                   "{liveTranscript}"
                 </span>
-              ) : (
+              ) : currentLang === 'ar-EG' ? (
                 <span className="text-neutral-400 text-xs italic font-medium leading-relaxed">
                   تحدث الآن باللهجة المصرية...
                   <br />
                   <span className="text-neutral-500 text-[11px]">
                     (مثال: "صرفت ٧٠ ج.م في كارفور على البقالة")
+                  </span>
+                </span>
+              ) : (
+                <span className="text-neutral-400 text-xs italic font-medium leading-relaxed">
+                  Speak now in English...
+                  <br />
+                  <span className="text-neutral-500 text-[11px]">
+                    (e.g., "Spent 150 EGP at Starbucks on coffee")
                   </span>
                 </span>
               )}
@@ -390,12 +478,32 @@ export function VoiceMicButton({
         )}
       </AnimatePresence>
 
-      {/* Language badge + keyboard trigger */}
-      <div className="flex items-center gap-1.5 mb-2 bg-neutral-900/90 border border-neutral-800 backdrop-blur-md px-3 py-1 rounded-full shadow-lg">
-        <span className="text-[11px] font-bold text-white flex items-center gap-1">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-          لهجة مصرية (ar-EG)
-        </span>
+      {/* Dynamic Voice Language Selector & Keyboard Trigger */}
+      <div className="flex items-center gap-1 mb-2 bg-neutral-900/90 border border-neutral-800 backdrop-blur-md px-2.5 py-1 rounded-full shadow-lg">
+        <button
+          type="button"
+          onClick={() => onVoiceLanguageChange?.('ar-EG')}
+          title="عربي (مصر) - Egyptian Arabic"
+          className={`px-2.5 py-0.5 text-[11px] font-bold rounded-full transition-all ${
+            currentLang === 'ar-EG'
+              ? 'bg-[#0a7ea4] text-white shadow-sm'
+              : 'text-neutral-400 hover:text-white'
+          }`}
+        >
+          عربي
+        </button>
+        <button
+          type="button"
+          onClick={() => onVoiceLanguageChange?.('en-US')}
+          title="English (US)"
+          className={`px-2.5 py-0.5 text-[11px] font-bold rounded-full transition-all ${
+            currentLang === 'en-US'
+              ? 'bg-[#0a7ea4] text-white shadow-sm'
+              : 'text-neutral-400 hover:text-white'
+          }`}
+        >
+          EN
+        </button>
         <div className="w-[1px] h-3 bg-neutral-700 mx-0.5" />
         <button
           type="button"
@@ -462,7 +570,9 @@ export function VoiceMicButton({
             className="mt-2 flex items-center gap-2 text-xs font-bold text-white bg-neutral-950/90 px-3.5 py-1.5 rounded-full border border-[#0a7ea4]/40 shadow-md whitespace-nowrap"
           >
             <Sparkle size={14} weight="fill" className="text-[#0a7ea4] animate-spin" />
-            <span>الذكاء الاصطناعي يحول الصوت...</span>
+            <span>
+              {currentLang === 'ar-EG' ? 'الذكاء الاصطناعي يحول الصوت...' : 'AI transcribing audio...'}
+            </span>
           </motion.div>
         )}
 
@@ -479,7 +589,11 @@ export function VoiceMicButton({
               transition={{ repeat: Infinity, duration: 1.2, ease: 'linear' }}
               className="w-3.5 h-3.5 border-2 border-[#0a7ea4]/30 border-t-[#0a7ea4] rounded-full"
             />
-            <span>جاري تحليل المعاملة عبر الذكاء الاصطناعي (Gemini)...</span>
+            <span>
+              {currentLang === 'ar-EG'
+                ? 'جاري تحليل المعاملة عبر الذكاء الاصطناعي (Gemini)...'
+                : 'Parsing expense via Gemini AI...'}
+            </span>
           </motion.div>
         )}
 

@@ -49,8 +49,9 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       devOptions: {
-        enabled: true,
+        enabled: false, // Disable in dev to prevent ERR_CONNECTION_REFUSED and caching conflicts with HMR
       },
+      includeAssets: ['favicon.png', 'favicon.svg', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png'],
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,jpg,svg,ts,tsx,onnx}'],
         globIgnores: ['**/version.json'],
@@ -70,21 +71,23 @@ export default defineConfig({
         background_color: '#0a0a0a',
         display: 'standalone',
         orientation: 'portrait',
+        start_url: './',
+        scope: './',
         icons: [
           {
-            src: './icon-192.png',
+            src: 'icon-192.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any maskable'
           },
           {
-            src: './icon-512.png',
+            src: 'icon-512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable'
           },
           {
-            src: './apple-touch-icon.png',
+            src: 'apple-touch-icon.png',
             sizes: '180x180',
             type: 'image/png',
             purpose: 'any'

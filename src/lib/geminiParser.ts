@@ -87,12 +87,16 @@ export async function parseExpenseWithGemini(
 ): Promise<ExtractedExpenseData> {
   const cleanTranscript = (arabicTranscript || '').trim();
 
-  // If Supabase credentials are configured, call the Supabase Edge Function
+  // If Supabase credentials are configured, call the Supabase Edge Function with strict 5s timeout failsafe
   if (isSupabaseConfigured() && navigator.onLine) {
+    const controller = new AbortController();
+    const timeoutTimer = setTimeout(() => controller.abort(), 5000);
+
     try {
       const endpoint = `${SUPABASE_URL}/functions/v1/parse-expense`;
       const response = await fetch(endpoint, {
         method: 'POST',
+        signal: controller.signal,
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
@@ -100,6 +104,8 @@ export async function parseExpenseWithGemini(
         },
         body: JSON.stringify({ text: cleanTranscript }),
       });
+
+      clearTimeout(timeoutTimer);
 
       if (response.ok) {
         const data = await response.json();
@@ -113,7 +119,8 @@ export async function parseExpenseWithGemini(
       }
       console.warn('Supabase Edge Function error, falling back to local parser:', response.status);
     } catch (err) {
-      console.warn('Failed calling parse-expense edge function:', err);
+      clearTimeout(timeoutTimer);
+      console.warn('Edge function timed out or unreachable, falling back to local parser:', err);
     }
   }
 
