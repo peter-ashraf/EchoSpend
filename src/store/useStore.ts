@@ -201,6 +201,40 @@ export const useStore = create<AppState>((set, get) => {
         await db.put('wallets', wallet);
       }
 
+      // Auto-link to Subscriptions to roll over due date
+      if (tx.type === 'expense') {
+        const subs = await db.getAll('subscriptions');
+        for (const sub of subs) {
+          if (!sub.active) continue;
+          
+          const txMerchant = (tx.merchant || '').toLowerCase();
+          const subName = sub.name.toLowerCase();
+          const note = (tx.note || '').toLowerCase();
+          
+          // Check for match: either exact match, or significant keyword match
+          const isMatch = txMerchant.includes(subName) || 
+                          subName.includes(txMerchant) || 
+                          note.includes(subName);
+                          
+          if (isMatch && txMerchant.length > 2) {
+            const currentNextDate = new Date(sub.nextBillingDate);
+            const txDate = new Date(tx.date);
+            
+            // Only roll over if it's due soon (within 14 days) or overdue
+            const diffDays = (currentNextDate.getTime() - txDate.getTime()) / (1000 * 60 * 60 * 24);
+            if (diffDays <= 14) {
+              if (sub.billingCycle === 'yearly') {
+                currentNextDate.setFullYear(currentNextDate.getFullYear() + 1);
+              } else {
+                currentNextDate.setMonth(currentNextDate.getMonth() + 1);
+              }
+              sub.nextBillingDate = currentNextDate.toISOString().split('T')[0];
+              await db.put('subscriptions', sub);
+            }
+          }
+        }
+      }
+
       await db.put('transactions', tx);
       await get().recordHabitActivity();
       await get().initData();

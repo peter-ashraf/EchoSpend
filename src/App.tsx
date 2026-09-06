@@ -456,7 +456,7 @@ function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/75 backdrop-blur-sm z-[9999] flex items-end sm:items-center justify-center p-4"
+            className="fixed inset-0 bg-black/75 backdrop-blur-sm z-[9999] flex items-start pt-24 sm:pt-0 sm:items-center justify-center p-4"
             onClick={(e) => { if (e.target === e.currentTarget) { setShowKeyboardModal(false); setKeyboardText(''); } }}
           >
             <motion.div
