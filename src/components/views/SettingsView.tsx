@@ -590,6 +590,8 @@ export function SettingsView({ onStartWhisperDownload, isWhisperDownloading }: S
         </div>
       </div>
 
+      <GeminiTestSection />
+
       {/* Section 5: App & Build Information */}
       <div className="space-y-3">
         <span className="text-xs font-bold uppercase tracking-wider text-neutral-400 px-1">App & Version Info</span>
@@ -1124,3 +1126,75 @@ export function SettingsView({ onStartWhisperDownload, isWhisperDownloading }: S
     </div>
   );
 }
+
+// --- TEMPORARY GEMINI TEST SECTION (EASILY REMOVABLE) ---
+function GeminiTestSection() {
+  const [status, setStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
+  const [log, setLog] = useState<string>('');
+
+  const testConnection = async () => {
+    setStatus('testing');
+    setLog('Initializing test...\n');
+    try {
+      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+      const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      
+      setLog(prev => prev + `URL Configured: ${SUPABASE_URL ? (SUPABASE_URL.startsWith('http') ? 'YES (Valid)' : 'INVALID FORMAT (Missing http)') : 'NO'}\n`);
+      setLog(prev => prev + `KEY Configured: ${SUPABASE_ANON_KEY ? 'YES' : 'NO'}\n\n`);
+
+      if (!SUPABASE_URL || !SUPABASE_URL.startsWith('http')) {
+        throw new Error('Supabase URL is malformed or missing (Check GitHub Secrets). It must start with https://');
+      }
+
+      setLog(prev => prev + 'Sending ping to Edge Function...\n');
+      const endpoint = `${SUPABASE_URL}/functions/v1/parse-expense`;
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+        },
+        body: JSON.stringify({ transcript: 'test ping' })
+      });
+
+      setLog(prev => prev + `Status Code: ${res.status}\n`);
+      
+      const data = await res.text();
+      setLog(prev => prev + `Response Body:\n${data.substring(0, 150)}${data.length > 150 ? '...' : ''}\n`);
+
+      if (res.ok) {
+        setStatus('success');
+      } else {
+        throw new Error(`HTTP Error ${res.status}`);
+      }
+    } catch (err: any) {
+      setStatus('error');
+      setLog(prev => prev + `\nEXCEPTION:\n${err.message}`);
+    }
+  };
+
+  return (
+    <div className="space-y-3 mb-6 p-4 rounded-3xl bg-neutral-900 border border-neutral-800">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-bold text-white flex items-center gap-2">
+          <Sparkle size={16} className="text-[#0a7ea4]" weight="fill" />
+          Gemini API Connection Test
+        </h3>
+        <button
+          onClick={testConnection}
+          disabled={status === 'testing'}
+          className="px-3 py-1.5 bg-[#0a7ea4]/20 text-[#0a7ea4] text-xs font-bold rounded-lg hover:bg-[#0a7ea4]/30 transition-colors disabled:opacity-50"
+        >
+          {status === 'testing' ? 'Testing...' : 'Run Test'}
+        </button>
+      </div>
+      
+      {log && (
+        <div className={`p-3 rounded-xl font-mono text-[10px] whitespace-pre-wrap overflow-x-auto ${status === 'error' ? 'bg-red-950/30 text-red-400 border border-red-900/50' : status === 'success' ? 'bg-green-950/30 text-green-400 border border-green-900/50' : 'bg-neutral-950 text-neutral-400 border border-neutral-800'}`}>
+          {log}
+        </div>
+      )}
+    </div>
+  );
+}
+// --- END TEMPORARY GEMINI TEST SECTION ---
