@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Modal } from '../ui/Modal';
 import { ConfirmModal } from '../ui/ConfirmModal';
 import { useStore } from '../../store/useStore';
@@ -12,18 +12,20 @@ interface EditTransactionModalProps {
 }
 
 export function EditTransactionModal({ isOpen, onClose, transaction }: EditTransactionModalProps) {
-  const { categories, wallets, deleteTransaction, addTransaction, settings } = useStore();
+  const { categories, wallets, updateTransaction, deleteTransaction, settings } = useStore();
 
-  const [amount, setAmount] = useState('');
-  const [merchant, setMerchant] = useState('');
-  const [categoryId, setCategoryId] = useState('');
-  const [walletId, setWalletId] = useState('');
-  const [type, setType] = useState<'expense' | 'income' | 'transfer'>('expense');
-  const [date, setDate] = useState('');
-  const [note, setNote] = useState('');
+  const [amount, setAmount] = useState(transaction?.amount ? transaction.amount.toString() : '');
+  const [merchant, setMerchant] = useState(transaction?.merchant || '');
+  const [categoryId, setCategoryId] = useState(transaction?.categoryId || categories[0]?.id || '');
+  const [walletId, setWalletId] = useState(transaction?.walletId || wallets[0]?.id || '');
+  const [type, setType] = useState<'expense' | 'income' | 'transfer'>(transaction?.type || 'expense');
+  const [date, setDate] = useState(transaction?.date ? transaction.date.split('T')[0] : new Date().toISOString().split('T')[0]);
+  const [note, setNote] = useState(transaction?.note || '');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  useEffect(() => {
+  const [prevTx, setPrevTx] = useState(transaction);
+  if (transaction !== prevTx) {
+    setPrevTx(transaction);
     if (transaction) {
       setAmount(transaction.amount.toString());
       setMerchant(transaction.merchant || '');
@@ -33,7 +35,7 @@ export function EditTransactionModal({ isOpen, onClose, transaction }: EditTrans
       setDate(transaction.date ? transaction.date.split('T')[0] : new Date().toISOString().split('T')[0]);
       setNote(transaction.note || '');
     }
-  }, [transaction, categories, wallets]);
+  }
 
   if (!transaction) return null;
 
@@ -44,16 +46,26 @@ export function EditTransactionModal({ isOpen, onClose, transaction }: EditTrans
     const numAmount = parseFloat(amount);
     if (isNaN(numAmount) || numAmount <= 0) return;
 
-    // Delete old transaction and add updated one to preserve balance calculations
-    await deleteTransaction(transaction.id);
-    await addTransaction({
+    let updatedDate = transaction.date;
+    if (date) {
+      const orig = new Date(transaction.date || new Date().toISOString());
+      const [y, m, d] = date.split('-').map(Number);
+      if (!isNaN(y) && !isNaN(m) && !isNaN(d)) {
+        const dObj = new Date(orig.getTime());
+        dObj.setFullYear(y, m - 1, d);
+        updatedDate = dObj.toISOString();
+      }
+    }
+
+    // Atomic in-place update preserving ID and balance deltas
+    await updateTransaction(transaction.id, {
       amount: numAmount,
       merchant: merchant.trim() || 'Transaction',
       categoryId: categoryId || categories[0]?.id || '',
       walletId: walletId || wallets[0]?.id || '',
       type,
       note,
-      date: new Date(date).toISOString(),
+      date: updatedDate,
       source: transaction.source
     });
 

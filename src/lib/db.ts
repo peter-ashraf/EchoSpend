@@ -41,6 +41,7 @@ export interface Wallet {
 export interface Transaction {
   id: string;
   walletId: string;
+  targetWalletId?: string;
   categoryId: string;
   amount: number;
   date: string;

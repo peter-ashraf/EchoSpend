@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { Fingerprint, Lock, Warning, ArrowClockwise } from '@phosphor-icons/react';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { authenticateWithBiometric } from '../../lib/biometricAuth';
 import { useStore } from '../../store/useStore';
 
@@ -13,13 +13,15 @@ export function BiometricLockScreen({ onUnlocked }: BiometricLockScreenProps) {
   const [status, setStatus] = useState<'idle' | 'authenticating' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
 
+  const credentialId = settings?.biometricCredentialId;
+
   const handleUnlock = useCallback(async () => {
-    if (!settings?.biometricCredentialId) return;
+    if (!credentialId) return;
     setStatus('authenticating');
     setErrorMsg('');
 
     try {
-      const ok = await authenticateWithBiometric(settings.biometricCredentialId);
+      const ok = await authenticateWithBiometric(credentialId);
       if (ok) {
         setStatus('idle');
         onUnlocked();
@@ -33,10 +35,14 @@ export function BiometricLockScreen({ onUnlocked }: BiometricLockScreenProps) {
       setErrorMsg(msg);
       setStatus('error');
     }
-  }, [settings?.biometricCredentialId, onUnlocked]);
+  }, [credentialId, onUnlocked]);
 
+  const hasTriggeredRef = useRef(false);
   useEffect(() => {
-    handleUnlock();
+    if (!hasTriggeredRef.current) {
+      hasTriggeredRef.current = true;
+      handleUnlock();
+    }
   }, [handleUnlock]);
 
   return (

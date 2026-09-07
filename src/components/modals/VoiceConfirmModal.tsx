@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Modal } from '../ui/Modal';
 import { useStore } from '../../store/useStore';
 import type { ParsedVoiceTransaction } from '../../lib/parseVoice';
@@ -14,14 +14,16 @@ interface VoiceConfirmModalProps {
 export function VoiceConfirmModal({ isOpen, onClose, data, onConfirm }: VoiceConfirmModalProps) {
   const { categories, wallets, addTransaction, settings } = useStore();
 
-  const [amount, setAmount] = useState('');
-  const [merchant, setMerchant] = useState('');
-  const [categoryId, setCategoryId] = useState('');
-  const [walletId, setWalletId] = useState('');
-  const [type, setType] = useState<'expense' | 'income'>('expense');
-  const [note, setNote] = useState('');
+  const [amount, setAmount] = useState(data?.amount ? data.amount.toString() : '');
+  const [merchant, setMerchant] = useState(data?.merchant || '');
+  const [categoryId, setCategoryId] = useState(data?.categoryId || categories[0]?.id || '');
+  const [walletId, setWalletId] = useState(data?.walletId || wallets[0]?.id || '');
+  const [type, setType] = useState<'expense' | 'income'>(data?.type || 'expense');
+  const [note, setNote] = useState(data?.transcript || '');
 
-  useEffect(() => {
+  const [prevData, setPrevData] = useState(data);
+  if (data !== prevData) {
+    setPrevData(data);
     if (data) {
       setAmount(data.amount ? data.amount.toString() : '');
       setMerchant(data.merchant || '');
@@ -30,7 +32,7 @@ export function VoiceConfirmModal({ isOpen, onClose, data, onConfirm }: VoiceCon
       setType(data.type || 'expense');
       setNote(data.transcript || '');
     }
-  }, [data, categories, wallets]);
+  }
 
   if (!data) return null;
 

@@ -65,7 +65,7 @@ export function SmsImportModal({ isOpen, onClose, onSuccess }: SmsImportModalPro
           handleTextChange(text);
         }
       }
-    } catch (_) {
+    } catch {
       // Ignore clipboard read errors silently
     }
   };

@@ -53,7 +53,7 @@ export default defineConfig({
       },
       includeAssets: ['favicon.png', 'favicon.svg', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png'],
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,jpg,svg,ts,tsx,onnx}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,jpg,svg,onnx}'],
         globIgnores: ['**/version.json'],
         maximumFileSizeToCacheInBytes: 100 * 1024 * 1024, // Allow up to 100MB for Whisper model
         runtimeCaching: [
@@ -95,5 +95,25 @@ export default defineConfig({
         ]
       }
     })
-  ]
+  ],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
+            return 'vendor-react';
+          }
+          if (id.includes('node_modules/framer-motion')) {
+            return 'vendor-motion';
+          }
+          if (id.includes('node_modules/recharts')) {
+            return 'vendor-charts';
+          }
+          if (id.includes('node_modules/@phosphor-icons/react')) {
+            return 'vendor-icons';
+          }
+        }
+      }
+    }
+  }
 })

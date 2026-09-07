@@ -8,8 +8,7 @@ import { SubscriptionsView } from './components/views/SubscriptionsView';
 import { CardsView } from './components/views/CardsView';
 import { AnalyticsView } from './components/views/AnalyticsView';
 import { SettingsView } from './components/views/SettingsView';
-import { Modal } from './components/ui/Modal';
-import { TransactionForm } from './components/forms/TransactionForm';
+import { TransactionModal } from './components/forms/TransactionForm';
 import { SmsImportModal } from './components/modals/SmsImportModal';
 import { VoiceConfirmModal } from './components/modals/VoiceConfirmModal';
 import { VoiceMicButton } from './components/ui/VoiceMicButton';
@@ -66,42 +65,53 @@ function App() {
     initData();
   }, [initData]);
 
-  // ── Biometric: lock on every app open ────────────────────────────────
-  useEffect(() => {
-    if (!settings) return;
-    if (settings.biometricLock && settings.biometricCredentialId) {
+  // ── Biometric: lock on initial app open ──────────────────────────────
+  const [biometricChecked, setBiometricChecked] = useState(false);
+  const [prevSettings, setPrevSettings] = useState(settings);
+  if (settings !== prevSettings) {
+    setPrevSettings(settings);
+    if (!biometricChecked && settings?.biometricLock && settings?.biometricCredentialId) {
+      setBiometricChecked(true);
       setIsLocked(true);
     }
-  }, [settings?.biometricLock, settings?.biometricCredentialId]);
+  }
 
   // ── Theme ─────────────────────────────────────────────────────────────
+  const currentTheme = settings?.theme || 'dark';
   useEffect(() => {
-    if (!settings) return;
-    const applyTheme = (theme: string) => {
+    const applyTheme = (th: string) => {
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      const isDark = theme === 'dark' || (theme === 'system' && prefersDark);
+      const isDark = th === 'dark' || (th === 'system' && prefersDark);
       document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
     };
-    applyTheme(settings.theme || 'dark');
-    if (settings.theme === 'system') {
+    applyTheme(currentTheme);
+    if (currentTheme === 'system') {
       const mq = window.matchMedia('(prefers-color-scheme: dark)');
       const handler = () => applyTheme('system');
       mq.addEventListener('change', handler);
       return () => mq.removeEventListener('change', handler);
     }
-  }, [settings?.theme]);
+  }, [currentTheme]);
 
   // ── Offline voice package pre-warming from browser cache ──────────────
-  useEffect(() => {
-    if (settings && settings.offlineVoiceStatus === 'not-asked') {
+  const voiceStatus = settings?.offlineVoiceStatus;
+  const [prevVoiceStatus, setPrevVoiceStatus] = useState(voiceStatus);
+  if (voiceStatus !== prevVoiceStatus) {
+    setPrevVoiceStatus(voiceStatus);
+    if (voiceStatus === 'not-asked') {
       setShowOfflineConsent(true);
-    } else if (settings?.offlineVoiceStatus === 'ready') {
+    } else if (voiceStatus === 'ready') {
       setWhisperStatus('ready');
+    }
+  }
+
+  useEffect(() => {
+    if (voiceStatus === 'ready') {
       whisperReadyRef.current = true;
       // Pre-warm the Web Worker in the background so it is instantly ready offline
       ensureWhisperReady().catch(console.warn);
     }
-  }, [settings?.offlineVoiceStatus]);
+  }, [voiceStatus]);
 
   // ── Voice transcript handler via Gemini AI & Supabase Edge Function ──
   const handleVoiceTranscript = useCallback(async (text: string) => {
@@ -369,9 +379,10 @@ function App() {
       )}
 
       {/* ── Manual Transaction Modal ────────────────────────────── */}
-      <Modal isOpen={isManualTxOpen} onClose={() => setIsManualTxOpen(false)} title="Add Transaction">
-        <TransactionForm key="manual-tx" onSuccess={() => setIsManualTxOpen(false)} />
-      </Modal>
+      <TransactionModal
+        isOpen={isManualTxOpen}
+        onClose={() => setIsManualTxOpen(false)}
+      />
 
       {/* ── Voice Confirm Modal ─────────────────────────────────── */}
       <VoiceConfirmModal

@@ -70,15 +70,6 @@ export function VoiceMicButton({
     // aggressive permission prompts or breaks webkitSpeechRecognition on iOS Safari.
   }, []);
 
-  // ── Sync processing state with parent's Whisper transcribing state ──
-  useEffect(() => {
-    if (isWhisperTranscribing) {
-      setIsProcessing(true);
-    } else {
-      setIsProcessing(false);
-    }
-  }, [isWhisperTranscribing]);
-
   // ── Absolute Processing Timeout Failsafe ────────────────────
   // If parsing or network hangs, unconditionally reset isProcessing after 7s
   useEffect(() => {
@@ -112,8 +103,8 @@ export function VoiceMicButton({
       rec.onend = null;
       try {
         rec.stop();
-      } catch (_) {
-        try { rec.abort(); } catch (_) { /* ignore */ }
+      } catch {
+        try { rec.abort(); } catch { /* ignore */ }
       }
       recognitionRef.current = null;
     }
@@ -237,7 +228,7 @@ export function VoiceMicButton({
         try {
           // Save granted voice permission in local storage
           localStorage.setItem(MIC_PERMISSION_STORAGE_KEY, 'granted');
-        } catch (_) {}
+        } catch {}
         setIsListening(true);
         setIsProcessing(false);
       };
@@ -270,7 +261,7 @@ export function VoiceMicButton({
           if (event.error === 'not-allowed') {
             try {
               localStorage.setItem(MIC_PERMISSION_STORAGE_KEY, 'denied');
-            } catch (_) {}
+            } catch {}
             setErrorMessage(currentLang === 'ar-EG' ? 'تم رفض الوصول للميكروفون' : 'Microphone access denied');
             setTimeout(() => { setErrorMessage(null); onRequestKeyboard?.(false); }, 2000);
           } else if (event.error === 'no-speech') {
@@ -311,10 +302,10 @@ export function VoiceMicButton({
       timeoutRef.current = setTimeout(() => {
         if (sessionIdRef.current !== currentSessionId) return;
         if (recognitionRef.current === recognition) {
-          try { recognition.stop(); } catch (_) { /* ignore */ }
+          try { recognition.stop(); } catch {}
         }
       }, 12000);
-    } catch (e) {
+    } catch {
       setIsListening(false);
       setIsProcessing(false);
       stopAndCleanupRecognition();
@@ -332,7 +323,7 @@ export function VoiceMicButton({
       if (rec) {
         try {
           rec.stop();
-        } catch (_) {
+        } catch {
           stopAndCleanupRecognition();
           setIsProcessing(false);
         }

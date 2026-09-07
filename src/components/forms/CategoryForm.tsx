@@ -3,7 +3,8 @@ import { useStore } from '../../store/useStore';
 import type { Category } from '../../store/useStore';
 import { getTranslation } from '../../lib/i18n';
 import { Check, Trash } from '@phosphor-icons/react';
-import { CategoryIcon, availableIcons, popularEmojis } from '../ui/CategoryIcon';
+import { CategoryIcon } from '../ui/CategoryIcon';
+import { availableIcons, popularEmojis } from '../ui/categoryIconsList';
 import { ConfirmModal } from '../ui/ConfirmModal';
 
 interface CategoryFormProps {
@@ -209,23 +210,31 @@ export function CategoryForm({ onSuccess, initialData }: CategoryFormProps) {
 
       </div>
 
-      {/* Footer Actions */}
-      <div className="p-4 border-t border-brand-light/10 bg-brand-dark flex gap-3">
+      {/* Pinned Sticky Footer Actions */}
+      <div className="sticky bottom-0 shrink-0 p-4 border-t border-neutral-800 bg-neutral-900 flex gap-3 z-20">
         {initialData && (
           <button
             type="button"
             onClick={handleDelete}
-            className="p-4 rounded-2xl bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors active:scale-95"
+            className="p-3.5 rounded-xl border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-colors shrink-0 flex items-center justify-center"
+            title="Delete Category"
           >
-            <Trash size={24} />
+            <Trash size={20} />
           </button>
         )}
         <button
-          type="submit"
-          className="flex-1 bg-brand-teal hover:bg-[#4eb39b] text-brand-dark font-bold text-lg py-4 rounded-2xl transition-colors shadow-teal-glow flex justify-center items-center gap-2 active:scale-95"
+          type="button"
+          onClick={onSuccess}
+          className="flex-1 py-3 px-4 rounded-xl border border-neutral-800 text-neutral-300 hover:bg-neutral-800 transition-colors text-sm font-semibold"
         >
-          <Check weight="bold" size={24} />
-          Save
+          Cancel
+        </button>
+        <button
+          type="submit"
+          className="flex-[1.5] bg-[#0a7ea4] hover:bg-[#086F8A] text-white font-bold text-sm py-3 px-4 rounded-xl transition-all shadow-lg shadow-[#0a7ea4]/20 flex justify-center items-center gap-2 active:scale-95"
+        >
+          <Check weight="bold" size={18} />
+          {initialData ? 'Update Category' : 'Save Category'}
         </button>
       </div>
 

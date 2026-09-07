@@ -58,6 +58,7 @@ export interface AppState {
   
   // Transactions
   addTransaction: (tx: Omit<Transaction, 'id'> & { date?: string }) => Promise<void>;
+  updateTransaction: (id: string, updatedTx: Partial<Transaction>) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
   
   // Subscriptions
@@ -190,15 +191,24 @@ export const useStore = create<AppState>((set, get) => {
         date: txData.date || new Date().toISOString()
       };
 
-      // Update wallet balance
+      // Update source wallet balance
       const wallet = await db.get('wallets', tx.walletId);
       if (wallet) {
-        if (tx.type === 'expense') {
+        if (tx.type === 'expense' || tx.type === 'transfer') {
           wallet.balance -= tx.amount;
         } else if (tx.type === 'income') {
           wallet.balance += tx.amount;
         }
         await db.put('wallets', wallet);
+      }
+
+      // If transfer and destination wallet is specified, credit destination wallet
+      if (tx.type === 'transfer' && tx.targetWalletId && tx.targetWalletId !== tx.walletId) {
+        const targetWallet = await db.get('wallets', tx.targetWalletId);
+        if (targetWallet) {
+          targetWallet.balance += tx.amount;
+          await db.put('wallets', targetWallet);
+        }
       }
 
       // Auto-link to Subscriptions to roll over due date
@@ -240,6 +250,61 @@ export const useStore = create<AppState>((set, get) => {
       await get().initData();
     },
 
+    updateTransaction: async (id: string, updatedTx: Partial<Transaction>) => {
+      const db = await getDB();
+      const oldTx = await db.get('transactions', id);
+      if (!oldTx) return;
+
+      // 1. Revert effect of oldTx on wallets
+      const oldSourceWallet = await db.get('wallets', oldTx.walletId);
+      if (oldSourceWallet) {
+        if (oldTx.type === 'expense' || oldTx.type === 'transfer') {
+          oldSourceWallet.balance += oldTx.amount;
+        } else if (oldTx.type === 'income') {
+          oldSourceWallet.balance -= oldTx.amount;
+        }
+        await db.put('wallets', oldSourceWallet);
+      }
+
+      if (oldTx.type === 'transfer' && oldTx.targetWalletId && oldTx.targetWalletId !== oldTx.walletId) {
+        const oldTargetWallet = await db.get('wallets', oldTx.targetWalletId);
+        if (oldTargetWallet) {
+          oldTargetWallet.balance -= oldTx.amount;
+          await db.put('wallets', oldTargetWallet);
+        }
+      }
+
+      // 2. Merge into new transaction
+      const mergedTx: Transaction = {
+        ...oldTx,
+        ...updatedTx,
+        id: oldTx.id // Ensure ID remains immutable
+      };
+
+      // 3. Apply effect of mergedTx on wallets
+      const newSourceWallet = await db.get('wallets', mergedTx.walletId);
+      if (newSourceWallet) {
+        if (mergedTx.type === 'expense' || mergedTx.type === 'transfer') {
+          newSourceWallet.balance -= mergedTx.amount;
+        } else if (mergedTx.type === 'income') {
+          newSourceWallet.balance += mergedTx.amount;
+        }
+        await db.put('wallets', newSourceWallet);
+      }
+
+      if (mergedTx.type === 'transfer' && mergedTx.targetWalletId && mergedTx.targetWalletId !== mergedTx.walletId) {
+        const newTargetWallet = await db.get('wallets', mergedTx.targetWalletId);
+        if (newTargetWallet) {
+          newTargetWallet.balance += mergedTx.amount;
+          await db.put('wallets', newTargetWallet);
+        }
+      }
+
+      // 4. Save merged transaction
+      await db.put('transactions', mergedTx);
+      await get().initData();
+    },
+
     deleteTransaction: async (id) => {
       const db = await getDB();
       const tx = await db.get('transactions', id);
@@ -247,13 +312,22 @@ export const useStore = create<AppState>((set, get) => {
         // Reverse wallet balance impact
         const wallet = await db.get('wallets', tx.walletId);
         if (wallet) {
-          if (tx.type === 'expense') {
+          if (tx.type === 'expense' || tx.type === 'transfer') {
             wallet.balance += tx.amount;
           } else if (tx.type === 'income') {
             wallet.balance -= tx.amount;
           }
           await db.put('wallets', wallet);
         }
+
+        if (tx.type === 'transfer' && tx.targetWalletId && tx.targetWalletId !== tx.walletId) {
+          const targetWallet = await db.get('wallets', tx.targetWalletId);
+          if (targetWallet) {
+            targetWallet.balance -= tx.amount;
+            await db.put('wallets', targetWallet);
+          }
+        }
+
         await db.delete('transactions', id);
         await get().initData();
       }

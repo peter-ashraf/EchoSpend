@@ -89,7 +89,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const systemPrompt = `You are a bilingual financial transaction data extractor specializing in conversational Egyptian Arabic (اللهجة المصرية العامية), English, and mixed franco-arab speech.
 Your task is to parse conversational voice logs of daily spending in either language, such as:
 - Egyptian Arabic: 'صرفت ٧٠ ج.م في كارفور على البقالة', 'دفعت ميتين جنيه في فودافون فاتورة', 'اشتريت بنزين بستين جنيه من موبيل', 'كوفي بـ ٤٥ جنيه من كوستا'
-- English: 'Spent 150 EGP at Starbucks on coffee', 'Paid 200 pounds for Vodafone bill', 'Bought groceries for 350 from Carrefour', 'Uber ride 85 pounds', 'Dinner at McDonald\'s 220 EGP'
+- English: 'Spent 150 EGP at Starbucks on coffee', 'Paid 200 pounds for Vodafone bill', 'Bought groceries for 350 from Carrefour', 'Uber ride 85 pounds', 'Dinner at McDonald's 220 EGP'
 - Mixed / Franco: 'دفعت 60 EGP Uber', 'اشتريت من Starbucks بـ 80 جنيه'
 - Multi-item: 'اشتريت بـ 10 جنيه فلامنكو و 15 جنيه بيبسي' (I bought 10 EGP Flamenko and 15 EGP Pepsi)
 
@@ -114,7 +114,7 @@ CRITICAL INSTRUCTIONS:
     "merchant": string,
     "category": string
   }
-- Do NOT wrap in markdown code blocks (```json or ```).
+- Do NOT wrap in markdown code blocks (\`\`\`json or \`\`\`).
 - Output ONLY the raw JSON object.`;
 
     // 5. Call Google Gemini API (gemini-1.5-flash with structured JSON response)

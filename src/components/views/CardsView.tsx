@@ -37,7 +37,7 @@ export function CardsView() {
   const [accountTier, setAccountTier] = useState<NonNullable<Wallet['accountTier']>>('prime');
   const [creditTier, setCreditTier] = useState<NonNullable<Wallet['creditTier']>>('platinum');
   const [network, setNetwork] = useState<NonNullable<Wallet['network']>>('mastercard');
-  const [cardholderName, setCardholderName] = useState('PETER ASHRAF');
+  const [cardholderName, setCardholderName] = useState('CARDHOLDER NAME');
   const [expiryDate, setExpiryDate] = useState('12/28');
 
   const currencySymbol = settings?.currency || 'EGP';
@@ -73,7 +73,7 @@ export function CardsView() {
     setAccountTier('prime');
     setCreditTier('platinum');
     setNetwork('mastercard');
-    setCardholderName('PETER ASHRAF');
+    setCardholderName('CARDHOLDER NAME');
     setExpiryDate('12/28');
     setIsModalOpen(true);
   };
@@ -102,7 +102,7 @@ export function CardsView() {
     setAccountTier(w.accountTier || 'prime');
     setCreditTier(w.creditTier || 'platinum');
     setNetwork(w.network || 'mastercard');
-    setCardholderName(w.cardholderName || 'PETER RYAD');
+    setCardholderName(w.cardholderName || 'CARDHOLDER NAME');
     setExpiryDate(w.expiryDate || '12/28');
     setIsModalOpen(true);
   };

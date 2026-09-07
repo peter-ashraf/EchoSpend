@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Modal } from '../ui/Modal';
 import { ConfirmModal } from '../ui/ConfirmModal';
 import { useStore } from '../../store/useStore';
@@ -35,7 +35,12 @@ export function SubscriptionModal({ isOpen, onClose, subscription }: Subscriptio
   const [active, setActive] = useState(true);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  useEffect(() => {
+  const [prevSub, setPrevSub] = useState(subscription);
+  const [prevOpen, setPrevOpen] = useState(isOpen);
+
+  if (subscription !== prevSub || isOpen !== prevOpen) {
+    setPrevSub(subscription);
+    setPrevOpen(isOpen);
     if (subscription) {
       setName(subscription.name);
       setAmount(subscription.amount.toString());
@@ -47,10 +52,8 @@ export function SubscriptionModal({ isOpen, onClose, subscription }: Subscriptio
       setNotes(subscription.notes || '');
       setActive(subscription.active);
     } else {
-      // Default to tomorrow
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
-      
       setName('');
       setAmount('');
       setBillingCycle('monthly');
@@ -61,7 +64,7 @@ export function SubscriptionModal({ isOpen, onClose, subscription }: Subscriptio
       setNotes('');
       setActive(true);
     }
-  }, [subscription, isOpen, categories, wallets]);
+  }
 
   const handleApplyPreset = (preset: typeof PRESET_SERVICES[0]) => {
     setName(preset.name);

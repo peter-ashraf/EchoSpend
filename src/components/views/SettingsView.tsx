@@ -20,7 +20,7 @@ interface SettingsViewProps {
 }
 
 export function SettingsView({ onStartWhisperDownload, isWhisperDownloading }: SettingsViewProps) {
-  const { settings, categories, updateSettings, initData, removeWhisperCache, exportData, inspectBackupData, importData } = useStore();
+  const { settings, categories, updateSettings, removeWhisperCache, exportData, inspectBackupData, importData } = useStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [exportLoading, setExportLoading] = useState(false);
   const [exportToast, setExportToast] = useState<string | null>(null);
@@ -84,11 +84,24 @@ export function SettingsView({ onStartWhisperDownload, isWhisperDownloading }: S
 
   const handleResetAllData = async () => {
     localStorage.clear();
-    const dbs = await indexedDB.databases?.() || [];
-    for (const db of dbs) {
-      if (db.name) indexedDB.deleteDatabase(db.name);
+    sessionStorage.clear();
+    try {
+      indexedDB.deleteDatabase('echospend-db');
+    } catch {}
+    if (typeof indexedDB.databases === 'function') {
+      try {
+        const dbs = await indexedDB.databases();
+        for (const db of dbs) {
+          if (db.name) indexedDB.deleteDatabase(db.name);
+        }
+      } catch {}
     }
-    await initData();
+    if ('caches' in window) {
+      try {
+        const keys = await caches.keys();
+        await Promise.all(keys.map(k => caches.delete(k)));
+      } catch {}
+    }
     setIsResetModalOpen(false);
     window.location.reload();
   };
@@ -788,8 +801,30 @@ export function SettingsView({ onStartWhisperDownload, isWhisperDownloading }: S
       </div>
 
       {/* Budget Modal */}
-      <Modal isOpen={isBudgetModalOpen} onClose={() => setIsBudgetModalOpen(false)} title="Set Monthly Budget">
-        <form onSubmit={handleSaveBudget} className="space-y-4">
+      <Modal
+        isOpen={isBudgetModalOpen}
+        onClose={() => setIsBudgetModalOpen(false)}
+        title="Set Monthly Budget"
+        footer={
+          <>
+            <button
+              type="button"
+              onClick={() => setIsBudgetModalOpen(false)}
+              className="flex-1 py-3 px-4 rounded-xl border border-neutral-800 text-neutral-300 text-sm font-semibold hover:bg-neutral-800 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleSaveBudget}
+              className="flex-1 py-3 px-4 rounded-xl bg-[#0a7ea4] hover:bg-[#086F8A] text-white text-sm font-bold shadow-lg shadow-[#0a7ea4]/20 transition-all active:scale-95"
+            >
+              Save Target
+            </button>
+          </>
+        }
+      >
+        <form onSubmit={handleSaveBudget} className="p-4 space-y-4">
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1">
               Monthly Budget Amount ({currencySymbol})
@@ -806,27 +841,34 @@ export function SettingsView({ onStartWhisperDownload, isWhisperDownloading }: S
               className="w-full px-4 py-3 bg-neutral-900 border border-neutral-800 rounded-2xl text-white font-mono text-xl font-bold focus:outline-none focus:border-[#0a7ea4]"
             />
           </div>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => setIsBudgetModalOpen(false)}
-              className="flex-1 py-3 rounded-xl border border-neutral-800 text-neutral-300 text-sm font-semibold"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="flex-1 py-3 rounded-xl bg-[#0a7ea4] hover:bg-[#086F8A] text-white text-sm font-bold shadow-lg shadow-[#0a7ea4]/20"
-            >
-              Save Target
-            </button>
-          </div>
         </form>
       </Modal>
 
       {/* Reset Confirmation Modal */}
-      <Modal isOpen={isResetModalOpen} onClose={() => setIsResetModalOpen(false)} title="Reset All Data">
-        <div className="space-y-4">
+      <Modal
+        isOpen={isResetModalOpen}
+        onClose={() => setIsResetModalOpen(false)}
+        title="Reset All Data"
+        footer={
+          <>
+            <button
+              type="button"
+              onClick={() => setIsResetModalOpen(false)}
+              className="flex-1 py-3 px-4 rounded-xl border border-neutral-800 text-neutral-300 text-sm font-semibold hover:bg-neutral-800 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleResetAllData}
+              className="flex-1 py-3 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-bold shadow-lg shadow-red-600/30 transition-all active:scale-95"
+            >
+              Delete Everything
+            </button>
+          </>
+        }
+      >
+        <div className="p-4 space-y-4">
           <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/30 flex items-start gap-3">
             <Warning size={24} className="text-red-400 flex-shrink-0" weight="fill" />
             <div>
@@ -835,22 +877,6 @@ export function SettingsView({ onStartWhisperDownload, isWhisperDownloading }: S
                 This will permanently erase all transactions, custom wallets, and subscriptions from your device.
               </p>
             </div>
-          </div>
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={() => setIsResetModalOpen(false)}
-              className="flex-1 py-3 rounded-xl border border-neutral-800 text-neutral-300 text-sm font-semibold"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={handleResetAllData}
-              className="flex-1 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-bold shadow-lg shadow-red-600/30"
-            >
-              Delete Everything
-            </button>
           </div>
         </div>
       </Modal>
@@ -910,19 +936,16 @@ export function SettingsView({ onStartWhisperDownload, isWhisperDownloading }: S
         />
       </Modal>
 
-      <Modal isOpen={isRemoveWhisperModalOpen} onClose={() => setIsRemoveWhisperModalOpen(false)} title="Remove Offline Package">
-        <div className="space-y-4">
-          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3">
-            <Warning size={22} className="text-amber-400 flex-shrink-0" weight="fill" />
-            <p className="text-sm text-neutral-300">
-              This will remove the Whisper AI model (~40 MB) from your device. Voice input will require internet again.
-            </p>
-          </div>
-          <div className="flex gap-3">
+      <Modal
+        isOpen={isRemoveWhisperModalOpen}
+        onClose={() => setIsRemoveWhisperModalOpen(false)}
+        title="Remove Offline Package"
+        footer={
+          <>
             <button
               type="button"
               onClick={() => setIsRemoveWhisperModalOpen(false)}
-              className="flex-1 py-3 rounded-xl border border-neutral-800 text-neutral-300 text-sm font-semibold"
+              className="flex-1 py-3 px-4 rounded-xl border border-neutral-800 text-neutral-300 text-sm font-semibold hover:bg-neutral-800 transition-colors"
             >
               Cancel
             </button>
@@ -932,10 +955,19 @@ export function SettingsView({ onStartWhisperDownload, isWhisperDownloading }: S
                 setIsRemoveWhisperModalOpen(false);
                 await removeWhisperCache();
               }}
-              className="flex-1 py-3 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-sm font-bold"
+              className="flex-1 py-3 px-4 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-sm font-bold transition-all active:scale-95"
             >
               Remove Package
             </button>
+          </>
+        }
+      >
+        <div className="p-4 space-y-4">
+          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3">
+            <Warning size={22} className="text-amber-400 flex-shrink-0" weight="fill" />
+            <p className="text-sm text-neutral-300">
+              This will remove the Whisper AI model (~40 MB) from your device. Voice input will require internet again.
+            </p>
           </div>
         </div>
       </Modal>
@@ -958,8 +990,38 @@ export function SettingsView({ onStartWhisperDownload, isWhisperDownloading }: S
           }
         }} 
         title="Confirm Backup Restore"
+        footer={
+          <>
+            <button
+              type="button"
+              disabled={isRestoring}
+              onClick={() => {
+                setIsConfirmImportOpen(false);
+                setPendingBackup(null);
+              }}
+              className="flex-1 py-3 px-4 rounded-xl border border-neutral-800 text-neutral-300 text-sm font-semibold hover:bg-neutral-800 disabled:opacity-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={isRestoring}
+              onClick={handleExecuteRestore}
+              className="flex-1 py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 disabled:opacity-50 transition-all active:scale-95"
+            >
+              {isRestoring ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <span>Restoring...</span>
+                </>
+              ) : (
+                <span>Confirm & Restore</span>
+              )}
+            </button>
+          </>
+        }
       >
-        <div className="space-y-4">
+        <div className="p-4 space-y-4">
           <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 space-y-3">
             <div className="flex items-center gap-2 text-emerald-400">
               <ShieldCheck size={20} weight="bold" />
@@ -998,35 +1060,6 @@ export function SettingsView({ onStartWhisperDownload, isWhisperDownloading }: S
               Restoring this backup will replace all current wallets, transactions, and categories with the backup data.
             </p>
           </div>
-
-          <div className="flex gap-3 pt-2">
-            <button
-              type="button"
-              disabled={isRestoring}
-              onClick={() => {
-                setIsConfirmImportOpen(false);
-                setPendingBackup(null);
-              }}
-              className="flex-1 py-3 rounded-xl border border-neutral-800 text-neutral-300 text-sm font-semibold hover:bg-neutral-800 disabled:opacity-50"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              disabled={isRestoring}
-              onClick={handleExecuteRestore}
-              className="flex-1 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 disabled:opacity-50"
-            >
-              {isRestoring ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  <span>Restoring...</span>
-                </>
-              ) : (
-                <span>Confirm & Restore</span>
-              )}
-            </button>
-          </div>
         </div>
       </Modal>
 
@@ -1037,8 +1070,28 @@ export function SettingsView({ onStartWhisperDownload, isWhisperDownloading }: S
           if (!isDecrypting) setPasswordModalOpen(false);
         }} 
         title="Unlock Encrypted Backup"
+        footer={
+          <>
+            <button
+              type="button"
+              disabled={isDecrypting}
+              onClick={() => setPasswordModalOpen(false)}
+              className="flex-1 py-3 px-4 rounded-xl border border-neutral-800 text-neutral-300 text-sm font-semibold hover:bg-neutral-800 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={isDecrypting || !decryptPassword}
+              onClick={handlePasswordSubmit}
+              className="flex-1 py-3 px-4 rounded-xl bg-[#0a7ea4] hover:bg-[#086F8A] text-white text-sm font-bold shadow-lg shadow-[#0a7ea4]/20 disabled:opacity-50 flex items-center justify-center gap-2 transition-all active:scale-95"
+            >
+              {isDecrypting ? 'Decrypting...' : 'Unlock Backup'}
+            </button>
+          </>
+        }
       >
-        <form onSubmit={handlePasswordSubmit} className="space-y-4">
+        <form onSubmit={handlePasswordSubmit} className="p-4 space-y-4">
           <div className="p-3.5 rounded-2xl bg-[#0a7ea4]/10 border border-[#0a7ea4]/30 flex items-center gap-3">
             <Lock size={20} className="text-[#0a7ea4] flex-shrink-0" />
             <p className="text-xs text-neutral-300 leading-relaxed">
@@ -1064,24 +1117,6 @@ export function SettingsView({ onStartWhisperDownload, isWhisperDownloading }: S
             {passwordError && (
               <p className="text-xs text-red-400 mt-1.5 font-medium">{passwordError}</p>
             )}
-          </div>
-
-          <div className="flex gap-3 pt-2">
-            <button
-              type="button"
-              disabled={isDecrypting}
-              onClick={() => setPasswordModalOpen(false)}
-              className="flex-1 py-3 rounded-xl border border-neutral-800 text-neutral-300 text-sm font-semibold hover:bg-neutral-800"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isDecrypting || !decryptPassword}
-              className="flex-1 py-3 rounded-xl bg-[#0a7ea4] hover:bg-[#086F8A] text-white text-sm font-bold shadow-lg shadow-[#0a7ea4]/20 disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              {isDecrypting ? 'Decrypting...' : 'Unlock Backup'}
-            </button>
           </div>
         </form>
       </Modal>

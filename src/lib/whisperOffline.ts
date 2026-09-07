@@ -222,7 +222,7 @@ export function startRecording(opts: {
     stop: () => {
       isStopped = true;
       if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-        try { mediaRecorder.stop(); } catch (_) {}
+        try { mediaRecorder.stop(); } catch {}
       } else if (mediaStream) {
         mediaStream.getTracks().forEach(t => t.stop());
       }

@@ -68,6 +68,47 @@ export const translations = {
     transfer: 'Transfer',
     confirmVoiceEntry: 'Confirm Voice Entry',
     
+    // Subscriptions
+    subscriptions: 'Subscriptions',
+    monthlySpending: 'Monthly Spending',
+    recurringPayments: 'Recurring payments & renewals',
+    dueToday: 'Due Today',
+    dueTomorrow: 'Due Tomorrow',
+    upcomingRenewals: 'Upcoming Renewals',
+    activeSubscriptions: 'Active Subscriptions',
+    addSubscription: 'Add Subscription',
+    editSubscription: 'Edit Subscription',
+
+    // Cards & Cash
+    cardsAndCash: 'Cards & Cash',
+    bankCardsAndWallets: 'Bank cards, digital wallets & cash',
+    totalNetBalance: 'Total Net Balance',
+    addCard: 'Add Card',
+    addCash: 'Add Cash',
+    cardholderName: 'Cardholder Name',
+    noAccountsYet: 'No Accounts or Cards Yet',
+
+    // Analytics
+    trendsAndInsights: 'Trends & Insights',
+    weeklySpending: 'Weekly Spending',
+    categoryBreakdown: 'Category Breakdown',
+    topMerchants: 'Top Merchants',
+    thisWeek: 'This Week',
+
+    // General & Actions
+    confirm: 'Confirm',
+    cancel: 'Cancel',
+    delete: 'Delete',
+    update: 'Update',
+    save: 'Save',
+    edit: 'Edit',
+    back: 'Back',
+    close: 'Close',
+    success: 'Success',
+    error: 'Error',
+    done: 'Done',
+    privacyMode: 'Privacy Mode',
+    
     // Voice
     listening: 'Listening...',
     voiceError: 'Could not understand. Please try again.',
@@ -139,6 +180,47 @@ export const translations = {
     income: 'دخل',
     transfer: 'تحويل',
     confirmVoiceEntry: 'تأكيد الإدخال الصوتي',
+
+    // Subscriptions
+    subscriptions: 'الاشتراكات',
+    monthlySpending: 'الإنفاق الشهري',
+    recurringPayments: 'المدفوعات المتكررة والتجديدات',
+    dueToday: 'مستحق اليوم',
+    dueTomorrow: 'مستحق غداً',
+    upcomingRenewals: 'التجديدات القادمة',
+    activeSubscriptions: 'الاشتراكات النشطة',
+    addSubscription: 'إضافة اشتراك',
+    editSubscription: 'تعديل الاشتراك',
+
+    // Cards & Cash
+    cardsAndCash: 'البطاقات والنقد',
+    bankCardsAndWallets: 'البطاقات البنكية، المحافظ الرقمية والنقد',
+    totalNetBalance: 'إجمالي الرصيد الصافي',
+    addCard: 'إضافة بطاقة',
+    addCash: 'إضافة كاش',
+    cardholderName: 'اسم حامل البطاقة',
+    noAccountsYet: 'لا توجد حسابات أو بطاقات بعد',
+
+    // Analytics
+    trendsAndInsights: 'الاتجاهات والتحليلات',
+    weeklySpending: 'الإنفاق الأسبوعي',
+    categoryBreakdown: 'توزيع الفئات',
+    topMerchants: 'أعلى المتاجر',
+    thisWeek: 'هذا الأسبوع',
+
+    // General & Actions
+    confirm: 'تأكيد',
+    cancel: 'إلغاء',
+    delete: 'حذف',
+    update: 'تحديث',
+    save: 'حفظ',
+    edit: 'تعديل',
+    back: 'رجوع',
+    close: 'إغلاق',
+    success: 'نجاح',
+    error: 'خطأ',
+    done: 'تم',
+    privacyMode: 'وضع الخصوصية',
     
     // Voice
     listening: 'يستمع...',

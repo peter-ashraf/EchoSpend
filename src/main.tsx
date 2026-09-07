@@ -16,13 +16,10 @@ if (import.meta.env.DEV && 'serviceWorker' in navigator) {
 
 // In production, register the auto-updating PWA Service Worker
 if (import.meta.env.PROD) {
-  const updateSW = registerSW({
+  registerSW({
     immediate: true,
     onNeedRefresh() {
       window.dispatchEvent(new CustomEvent('pwa-need-refresh'));
-      setTimeout(() => {
-        updateSW(true);
-      }, 400);
     },
     onRegisteredSW(_swUrl, r) {
       if (r) {
