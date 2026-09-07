@@ -806,43 +806,62 @@ export function matchCategoryToId(categoryName: string, categories: Category[]):
 export function parseExpenseLocally(
   text: string,
   categories: Category[]
-): ExtractedExpenseData {
+): ExtractedExpenseData[] {
   try {
     const rawClean = (text || '').trim();
+    if (!rawClean) return [];
 
-    // 1. Amount and span extraction
-    const amountResult = parseMultilingualAmount(rawClean);
+    // Split by Arabic "and" to handle multiple distinct items offline (e.g. "x and y")
+    const segments = rawClean.split(/\s+\u0648\s+/);
+    const results: ExtractedExpenseData[] = [];
 
-    // 2. Merchant extraction (dictionary + preposition fallback)
-    const merchantResult = extractMerchant(rawClean, amountResult.span);
+    for (const segment of segments) {
+      const amountResult = parseMultilingualAmount(segment);
+      if (amountResult.amount && amountResult.amount > 0) {
+        const merchantResult = extractMerchant(segment, amountResult.span);
+        const catResult = classifyExpenseCategoryLocally(
+          segment,
+          merchantResult.intent,
+          categories
+        );
 
-    // 3. Category classification via token heuristics
-    const catResult = classifyExpenseCategoryLocally(
-      rawClean,
-      merchantResult.intent,
-      categories
-    );
+        results.push({
+          amount: amountResult.amount,
+          currency: 'EGP',
+          merchant: merchantResult.merchant,
+          category: catResult.categoryName,
+          type: catResult.type,
+          source: 'local_fallback',
+          confidence: merchantResult.confidence
+        });
+      }
+    }
 
-    return {
-      amount: amountResult.amount || 0,
-      currency: 'EGP',
-      merchant: merchantResult.merchant,
-      category: catResult.categoryName,
-      type: catResult.type,
-      source: 'local_fallback',
-      confidence: merchantResult.confidence
-    };
-  } catch (err) {
-    console.warn('Local parser fallback error, using safe baseline:', err);
-    return {
+    if (results.length > 0) {
+      return results;
+    }
+
+    // Fallback if no amounts found
+    return [{
       amount: 0,
       currency: 'EGP',
       merchant: 'General Expense',
-      category: categories[0]?.name || 'Food & Dining',
+      category: 'Food & Dining',
       type: 'expense',
       source: 'local_fallback',
-      confidence: 0.1
-    };
+      confidence: 0
+    }];
+  } catch (err) {
+    console.warn('Local parser fallback error, using safe baseline:', err);
+    return [{
+      amount: 0,
+      currency: 'EGP',
+      merchant: 'General Expense',
+      category: 'Food & Dining',
+      type: 'expense',
+      source: 'local_fallback',
+      confidence: 0
+    }];
   }
 }
 
@@ -858,7 +877,7 @@ export function parseExpenseLocally(
 export async function parseExpenseWithGemini(
   arabicTranscript: string,
   categories: Category[]
-): Promise<ExtractedExpenseData> {
+): Promise<ExtractedExpenseData[]> {
   const cleanTranscript = (arabicTranscript || '').trim();
 
   // If Supabase credentials are configured and browser is online, attempt Edge Function
@@ -873,31 +892,33 @@ export async function parseExpenseWithGemini(
         signal: controller.signal,
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-          apikey: SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
         },
-        body: JSON.stringify({ text: cleanTranscript }),
+        body: JSON.stringify({ transcript: cleanTranscript })
       });
-
       clearTimeout(timeoutTimer);
 
       if (response.ok) {
-        const data = await response.json();
-        const amt = typeof data.amount === 'number' ? data.amount : parseFloat(data.amount) || 0;
-        if (amt > 0 || (data.merchant && data.merchant !== 'General')) {
-          return {
-            amount: amt,
-            currency: 'EGP',
-            merchant: data.merchant || 'General',
-            category: data.category || 'Food & Dining',
-            source: 'gemini',
-          };
+        let data = await response.json();
+        if (!Array.isArray(data)) {
+          data = [data]; // Fallback if API returned a single object
         }
+
+        return data.map((item: any) => ({
+          amount: item.amount || 0,
+          currency: 'EGP',
+          merchant: item.merchant || 'General',
+          category: item.category || 'Food & Dining',
+          source: 'gemini',
+          type: 'expense',
+          confidence: 0.95
+        }));
       }
-      console.warn('Supabase Edge Function response incomplete, triggering powerful local parser.');
+      console.warn('Gemini parser API failed, executing graceful local fallback.');
     } catch (err) {
-      clearTimeout(timeoutTimer);
       console.warn('Edge function timed out or unreachable, triggering powerful local parser:', err);
+    } finally {
+      clearTimeout(timeoutTimer);
     }
   }
 

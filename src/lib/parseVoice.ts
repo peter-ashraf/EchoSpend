@@ -9,6 +9,7 @@ export interface ParsedVoiceTransaction {
   merchant?: string;
   note: string;
   transcript: string;
+  source?: 'gemini' | 'local_fallback';
 }
 
 /**
@@ -54,21 +55,24 @@ export function parseVoiceInput(
   categories: Category[],
   wallets: Wallet[],
   defaultWalletId: string
-): ParsedVoiceTransaction {
+): ParsedVoiceTransaction[] {
   const cleanRaw = (text || '').trim();
 
   // Run our powerful local parsing engine
-  const localParsed = parseExpenseLocally(cleanRaw, categories);
-  const categoryId = matchCategoryToId(localParsed.category, categories);
+  const localParsedArray = parseExpenseLocally(cleanRaw, categories);
   const walletId = matchWalletFromText(cleanRaw, wallets, defaultWalletId);
 
-  return {
-    amount: localParsed.amount || null,
-    categoryId: categoryId || categories[0]?.id || null,
-    walletId,
-    type: localParsed.type || 'expense',
-    merchant: localParsed.merchant,
-    note: cleanRaw,
-    transcript: cleanRaw,
-  };
+  return localParsedArray.map(localParsed => {
+    const categoryId = matchCategoryToId(localParsed.category, categories);
+    return {
+      amount: localParsed.amount || null,
+      categoryId: categoryId || categories[0]?.id || null,
+      walletId,
+      type: localParsed.type || 'expense',
+      merchant: localParsed.merchant,
+      note: cleanRaw,
+      transcript: cleanRaw,
+      source: localParsed.source
+    };
+  });
 }

@@ -27,7 +27,7 @@ function App() {
   const [activeTab, setActiveTab] = useState<NavTab>('dashboard');
   const [isManualTxOpen, setIsManualTxOpen] = useState(false);
   const [isSmsModalOpen, setIsSmsModalOpen] = useState(false);
-  const [voiceParsedData, setVoiceParsedData] = useState<ParsedVoiceTransaction | null>(null);
+  const [voiceParsedData, setVoiceParsedData] = useState<ParsedVoiceTransaction[] | null>(null);
 
   // ── Keyboard modal (root-level portal to avoid transform clipping) ──
   const [showKeyboardModal, setShowKeyboardModal] = useState(false);
@@ -118,24 +118,29 @@ function App() {
     const defaultWalletId = wallets[0]?.id || '';
     try {
       // Send raw Arabic transcript to Supabase Edge Function (powered by Gemini)
-      const extracted = await parseExpenseWithGemini(text, categories);
-      const matchedCategoryId = matchCategoryToId(extracted.category, categories);
-      const detectedWalletId = matchWalletFromText(text, wallets, defaultWalletId);
+      const extractedArray = await parseExpenseWithGemini(text, categories);
+      
+      const parsedArray = extractedArray.map(extracted => {
+        const matchedCategoryId = matchCategoryToId(extracted.category, categories);
+        const detectedWalletId = matchWalletFromText(text, wallets, defaultWalletId);
+        return {
+          amount: extracted.amount || null,
+          merchant: extracted.merchant || '',
+          categoryId: matchedCategoryId || categories[0]?.id || '',
+          walletId: detectedWalletId,
+          type: extracted.type || 'expense',
+          note: text,
+          transcript: text,
+          source: extracted.source
+        };
+      });
 
       // Populate confirmation modal with extracted values for user review (do not auto-save)
-      setVoiceParsedData({
-        amount: extracted.amount || null,
-        merchant: extracted.merchant || '',
-        categoryId: matchedCategoryId || categories[0]?.id || '',
-        walletId: detectedWalletId,
-        type: extracted.type || 'expense',
-        note: text,
-        transcript: text,
-      });
+      setVoiceParsedData(parsedArray);
     } catch (err) {
       console.warn('Voice AI parsing fallback to local parser:', err);
-      const parsedData = parseVoiceInput(text, categories, wallets, defaultWalletId);
-      setVoiceParsedData(parsedData);
+      const parsedDataArray = parseVoiceInput(text, categories, wallets, defaultWalletId);
+      setVoiceParsedData(parsedDataArray);
     }
   }, [categories, wallets]);
 
