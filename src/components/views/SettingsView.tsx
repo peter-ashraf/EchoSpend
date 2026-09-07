@@ -1180,13 +1180,23 @@ function GeminiTestSection() {
           <Sparkle size={16} className="text-[#0a7ea4]" weight="fill" />
           Gemini API Connection Test
         </h3>
-        <button
-          onClick={testConnection}
-          disabled={status === 'testing'}
-          className="px-3 py-1.5 bg-[#0a7ea4]/20 text-[#0a7ea4] text-xs font-bold rounded-lg hover:bg-[#0a7ea4]/30 transition-colors disabled:opacity-50"
-        >
-          {status === 'testing' ? 'Testing...' : 'Run Test'}
-        </button>
+        <div className="flex items-center gap-2">
+          {log && (
+            <button
+              onClick={() => navigator.clipboard.writeText(log)}
+              className="px-3 py-1.5 bg-neutral-800 text-neutral-300 text-xs font-bold rounded-lg hover:bg-neutral-700 transition-colors"
+            >
+              Copy Log
+            </button>
+          )}
+          <button
+            onClick={testConnection}
+            disabled={status === 'testing'}
+            className="px-3 py-1.5 bg-[#0a7ea4]/20 text-[#0a7ea4] text-xs font-bold rounded-lg hover:bg-[#0a7ea4]/30 transition-colors disabled:opacity-50"
+          >
+            {status === 'testing' ? 'Testing...' : 'Run Test'}
+          </button>
+        </div>
       </div>
       
       {log && (

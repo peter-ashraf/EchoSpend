@@ -117,8 +117,8 @@ Example:
   { "amount": 15, "currency": "EGP", "merchant": "Pepsi", "category": "Food & Dining" }
 ]`;
 
-    // 5. Call Google Gemini API (gemini-1.5-flash with structured JSON response)
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`;
+    // 5. Call Google Gemini API (gemini-1.5-flash-latest with structured JSON response)
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${geminiApiKey}`;
 
     const geminiPayload = {
       contents: [
