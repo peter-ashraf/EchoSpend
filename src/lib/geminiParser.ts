@@ -811,29 +811,42 @@ export function parseExpenseLocally(
     const rawClean = (text || '').trim();
     if (!rawClean) return [];
 
-    // Split by Arabic "and" to handle multiple distinct items offline (e.g. "x and y")
-    const segments = rawClean.split(/\s+\u0648\s+/);
     const results: ExtractedExpenseData[] = [];
+    let remainingText = rawClean;
+    let iterations = 0;
 
-    for (const segment of segments) {
-      const amountResult = parseMultilingualAmount(segment);
-      if (amountResult.amount && amountResult.amount > 0) {
-        const merchantResult = extractMerchant(segment, amountResult.span);
-        const catResult = classifyExpenseCategoryLocally(
-          segment,
-          merchantResult.intent,
-          categories
-        );
+    // Iteratively find amounts and slice the string after each match
+    // This perfectly handles missing 'و' or attached words.
+    while (remainingText.trim().length > 0 && iterations < 15) {
+      iterations++;
+      const amountResult = parseMultilingualAmount(remainingText);
+      
+      if (!amountResult.amount || !amountResult.span) {
+        break; // No more amounts found
+      }
 
-        results.push({
-          amount: amountResult.amount,
-          currency: 'EGP',
-          merchant: merchantResult.merchant,
-          category: catResult.categoryName,
-          type: catResult.type,
-          source: 'local_fallback',
-          confidence: merchantResult.confidence
-        });
+      const merchantResult = extractMerchant(remainingText, amountResult.span);
+      const catResult = classifyExpenseCategoryLocally(
+        remainingText,
+        merchantResult.intent,
+        categories
+      );
+
+      results.push({
+        amount: amountResult.amount,
+        currency: 'EGP',
+        merchant: merchantResult.merchant,
+        category: catResult.categoryName,
+        type: catResult.type,
+        source: 'local_fallback',
+        confidence: merchantResult.confidence
+      });
+
+      const spanIndex = remainingText.indexOf(amountResult.span);
+      if (spanIndex !== -1) {
+        remainingText = remainingText.substring(spanIndex + amountResult.span.length);
+      } else {
+        break;
       }
     }
 
