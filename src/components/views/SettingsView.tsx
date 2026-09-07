@@ -1160,7 +1160,7 @@ function GeminiTestSection() {
       setLog(prev => prev + `Status Code: ${res.status}\n`);
       
       const data = await res.text();
-      setLog(prev => prev + `Response Body:\n${data.substring(0, 150)}${data.length > 150 ? '...' : ''}\n`);
+      setLog(prev => prev + `Response Body:\n${data}\n`);
 
       if (res.ok) {
         setStatus('success');

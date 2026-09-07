@@ -147,14 +147,27 @@ Example:
     if (!geminiResponse.ok) {
       const errText = await geminiResponse.text();
       console.error('Gemini API Error:', geminiResponse.status, errText);
+      
+      // If 404, fetch list of available models to help debug
+      let availableModels = '';
+      if (geminiResponse.status === 404) {
+        try {
+          const modelsRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${geminiApiKey}`);
+          const modelsData = await modelsRes.json();
+          availableModels = '\n\nAvailable Models:\n' + JSON.stringify(modelsData.models?.map((m: any) => m.name), null, 2);
+        } catch (e) {
+          availableModels = '\n(Failed to fetch models list)';
+        }
+      }
+
       return new Response(
-        JSON.stringify({
-          error: `Gemini API returned error: ${geminiResponse.statusText}`,
-          details: errText,
+        JSON.stringify({ 
+          error: `Gemini API returned error: ${geminiResponse.statusText}`, 
+          details: errText + availableModels 
         }),
-        {
-          status: 502,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        { 
+          status: 502, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
       );
     }
