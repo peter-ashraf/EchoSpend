@@ -61,7 +61,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     }
 
     // 3. Parse input JSON payload
-    let body: ParseExpenseRequest = {};
+    let body: ParseExpenseRequest & { ping?: boolean } = {};
     try {
       body = await req.json();
     } catch {
@@ -72,6 +72,13 @@ Deno.serve(async (req: Request): Promise<Response> => {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         }
       );
+    }
+
+    if (body.ping) {
+      return new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     const rawText = (body.text || body.transcript || body.query || '').trim();

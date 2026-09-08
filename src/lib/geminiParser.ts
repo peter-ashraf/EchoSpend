@@ -33,6 +33,30 @@ export function isSupabaseConfigured(): boolean {
   );
 }
 
+export async function pingGeminiAPI(): Promise<boolean> {
+  if (!isSupabaseConfigured() || (typeof navigator !== 'undefined' && !navigator.onLine)) {
+    return false;
+  }
+  try {
+    const endpoint = `${SUPABASE_URL}/functions/v1/parse-expense`;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 3000);
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+      },
+      body: JSON.stringify({ ping: true })
+    });
+    clearTimeout(timeout);
+    return res.ok;
+  } catch (err) {
+    return false;
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. ADVANCED MULTILINGUAL NUMBER WORDS & DIGIT ENGINE
 // ─────────────────────────────────────────────────────────────────────────────
@@ -579,7 +603,32 @@ export function extractMerchant(
     return { merchant: prepMerchant, confidence: 0.8 };
   }
 
-  // 3. High-information fallback or generic
+  // 3. Smart Stop-Word Filtering Fallback
+  let smartFallback = text;
+  if (matchedNumberSpan) {
+    smartFallback = smartFallback.replace(matchedNumberSpan, ' ');
+  }
+  
+  // Remove currencies and common symbols
+  smartFallback = smartFallback.replace(/\b(?:[$€£]|egp|le|l\.e|pounds?|dollars?|bucks)\b/gi, ' ');
+  smartFallback = smartFallback.replace(/(?:^|\s)(?:ج\.م|جم|جنيه|جنيهات|قروش|قرش)(?:$|\s)/g, ' ');
+  
+  // Remove filler and stop words
+  const stopWords = ['اشتريت', 'جبت', 'دفعت', 'حاسبت', 'صرفت', 'انا', 'اللي', 'عشان', 'علشان', 'تمن', 'حق', 'بـ', 'ب', 'على', 'في', 'من', 'و', 'ل', 'لـ', 'bought', 'paid', 'spent', 'for', 'the', 'a', 'an', 'and', 'in', 'on', 'to'];
+  const regexStop = new RegExp(`(?:^|\\s)(?:${stopWords.join('|')})(?:$|\\s)`, 'gi');
+  
+  let prev;
+  do {
+    prev = smartFallback;
+    smartFallback = smartFallback.replace(regexStop, ' ');
+  } while (prev !== smartFallback);
+
+  smartFallback = smartFallback.trim();
+  if (smartFallback.length >= 2) {
+    return { merchant: smartFallback, confidence: 0.6 };
+  }
+
+  // 4. Ultimate generic fallback
   return { merchant: 'General Expense', confidence: 0.5 };
 }
 
@@ -825,9 +874,33 @@ export function parseExpenseLocally(
         break; // No more amounts found
       }
 
-      const merchantResult = extractMerchant(remainingText, amountResult.span);
+      const spanIndex = remainingText.indexOf(amountResult.span);
+      const afterSpan = remainingText.substring(spanIndex + amountResult.span.length);
+      const nextAmountResult = parseMultilingualAmount(afterSpan);
+      
+      let chunk = remainingText;
+      let nextIndex = remainingText.length;
+      
+      if (nextAmountResult.amount && nextAmountResult.span) {
+        const nextSpanLocalIndex = afterSpan.indexOf(nextAmountResult.span);
+        nextIndex = spanIndex + amountResult.span.length + nextSpanLocalIndex;
+        
+        // Split exactly at the 'و' or 'and' if it precedes the next amount.
+        const textBeforeNext = remainingText.substring(spanIndex + amountResult.span.length, nextIndex);
+        const lastAndIndex = textBeforeNext.lastIndexOf(' و ');
+        const lastAndIndexEn = textBeforeNext.toLowerCase().lastIndexOf(' and ');
+        
+        if (lastAndIndex !== -1) {
+          nextIndex = spanIndex + amountResult.span.length + lastAndIndex;
+        } else if (lastAndIndexEn !== -1) {
+          nextIndex = spanIndex + amountResult.span.length + lastAndIndexEn;
+        }
+        chunk = remainingText.substring(0, nextIndex);
+      }
+
+      const merchantResult = extractMerchant(chunk, amountResult.span);
       const catResult = classifyExpenseCategoryLocally(
-        remainingText,
+        chunk,
         merchantResult.intent,
         categories
       );
@@ -842,9 +915,8 @@ export function parseExpenseLocally(
         confidence: merchantResult.confidence
       });
 
-      const spanIndex = remainingText.indexOf(amountResult.span);
-      if (spanIndex !== -1) {
-        remainingText = remainingText.substring(spanIndex + amountResult.span.length);
+      if (nextIndex < remainingText.length) {
+        remainingText = remainingText.substring(nextIndex);
       } else {
         break;
       }

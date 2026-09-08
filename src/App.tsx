@@ -114,9 +114,13 @@ function App() {
   }, [voiceStatus]);
 
   // ── Voice transcript handler via Gemini AI & Supabase Edge Function ──
-  const handleVoiceTranscript = useCallback(async (text: string) => {
+  const handleVoiceTranscript = useCallback(async (text: string, forceLocal = false) => {
     const defaultWalletId = wallets[0]?.id || '';
     try {
+      if (forceLocal) {
+        throw new Error('Forced local parser by user');
+      }
+      
       // Send raw Arabic transcript to Supabase Edge Function (powered by Gemini)
       const extractedArray = await parseExpenseWithGemini(text, categories);
       

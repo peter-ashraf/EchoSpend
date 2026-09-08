@@ -97,6 +97,26 @@ export function VoiceConfirmModal({ isOpen, onClose, data, onConfirm }: VoiceCon
             <p className="text-sm font-medium text-white italic" dir="auto">"{transcript}"</p>
           </div>
         </div>
+        {items.length > 1 && (
+          <div className="p-4 rounded-2xl bg-[#0a7ea4]/10 border border-[#0a7ea4]/30 flex items-center justify-between mb-4">
+            <label className="text-xs font-bold text-[#0a7ea4] uppercase tracking-wider flex items-center gap-1">
+              <CreditCard size={15} /> Set All Paid With
+            </label>
+            <select
+              onChange={(e) => {
+                const val = e.target.value;
+                if (!val) return;
+                setItems(prev => prev.map(item => ({ ...item, walletId: val })));
+                e.target.value = "";
+              }}
+              className="px-3 py-2 bg-neutral-900 border border-[#0a7ea4]/30 rounded-xl text-white text-xs font-semibold focus:outline-none focus:border-[#0a7ea4]"
+              defaultValue=""
+            >
+              <option value="" disabled>Change all...</option>
+              {wallets.map(w => <option key={w.id} value={w.id}>{w.type === 'cash' ? `💵 ${w.name} (Cash)` : `💳 ${w.name}`}</option>)}
+            </select>
+          </div>
+        )}
 
         {items.map((item, index) => (
           <div key={index} className="relative p-4 rounded-2xl bg-neutral-900/50 border border-neutral-800 space-y-4">

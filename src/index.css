@@ -139,18 +139,27 @@
   /* Surface and layout backgrounds in light mode */
   [data-theme="light"] .bg-neutral-950 { background-color: #f1f5f9 !important; }
   [data-theme="light"] .bg-neutral-900 { background-color: #ffffff !important; }
+  [data-theme="light"] .bg-neutral-900\/50 { background-color: rgba(255, 255, 255, 0.8) !important; }
   [data-theme="light"] .bg-neutral-900\/60 { background-color: rgba(255, 255, 255, 0.88) !important; }
   [data-theme="light"] .bg-neutral-900\/80 { background-color: rgba(255, 255, 255, 0.92) !important; }
   [data-theme="light"] .bg-neutral-900\/90 { background-color: rgba(255, 255, 255, 0.97) !important; }
-  [data-theme="light"] .bg-neutral-950\/40 { background-color: #f1f5f9 !important; }
+  [data-theme="light"] .bg-neutral-950\/40 { background-color: rgba(241, 245, 249, 0.6) !important; }
   [data-theme="light"] .bg-neutral-950\/60 { background-color: rgba(241, 245, 249, 0.85) !important; }
   [data-theme="light"] .bg-neutral-950\/70 { background-color: rgba(241, 245, 249, 0.85) !important; }
   [data-theme="light"] .bg-neutral-950\/80 { background-color: rgba(241, 245, 249, 0.9) !important; }
   [data-theme="light"] .bg-neutral-950\/90 { background-color: rgba(241, 245, 249, 0.95) !important; }
+  [data-theme="light"] .bg-neutral-950\/95 { background-color: rgba(241, 245, 249, 0.98) !important; }
   [data-theme="light"] .bg-neutral-800 { background-color: #e2e8f0 !important; }
   [data-theme="light"] .bg-neutral-800\/40 { background-color: rgba(226, 232, 240, 0.6) !important; }
   [data-theme="light"] .bg-neutral-800\/60 { background-color: rgba(226, 232, 240, 0.8) !important; }
   [data-theme="light"] .bg-neutral-800\/80 { background-color: #cbd5e1 !important; }
+
+  /* Alpha Teal Overrides for Light Mode */
+  [data-theme="light"] .bg-\[\#0a7ea4\]\/10 { background-color: rgba(10, 126, 164, 0.08) !important; }
+  [data-theme="light"] .bg-\[\#0a7ea4\]\/15 { background-color: rgba(10, 126, 164, 0.12) !important; }
+  [data-theme="light"] .bg-\[\#0a7ea4\]\/20 { background-color: rgba(10, 126, 164, 0.15) !important; }
+  [data-theme="light"] .border-\[\#0a7ea4\]\/30 { border-color: rgba(10, 126, 164, 0.25) !important; }
+  [data-theme="light"] .border-\[\#0a7ea4\]\/40 { border-color: rgba(10, 126, 164, 0.35) !important; }
 
   /* Borders in light mode */
   [data-theme="light"] .border-neutral-800 { border-color: #e2e8f0 !important; }

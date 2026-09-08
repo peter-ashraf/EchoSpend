@@ -2,9 +2,10 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { Microphone, StopCircle, Sparkle, Keyboard, WifiSlash, CloudArrowDown, CheckCircle, Warning } from '@phosphor-icons/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { startRecording } from '../../lib/whisperOffline';
+import { pingGeminiAPI } from '../../lib/geminiParser';
 
 interface VoiceMicButtonProps {
-  onTranscript: (text: string) => Promise<void> | void;
+  onTranscript: (text: string, forceLocal?: boolean) => Promise<void> | void;
   voiceLanguage?: 'ar-EG' | 'en-US';
   onVoiceLanguageChange?: (lang: 'ar-EG' | 'en-US') => void;
   onParsingStart?: () => void;
@@ -41,6 +42,8 @@ export function VoiceMicButton({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successPreview, setSuccessPreview] = useState<string | null>(null);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  const [connectionState, setConnectionState] = useState<'idle' | 'checking' | 'failed' | 'ok'>('idle');
+  const forceLocalRef = useRef(false);
 
   // For offline recording via MediaRecorder
   const offlineRecorderRef = useRef<{ stop: () => void } | null>(null);
@@ -132,7 +135,9 @@ export function VoiceMicButton({
     
     try {
       // Pass transcript to parent to execute Gemini parsing via Supabase Edge Function
-      await Promise.resolve(onTranscript(text.trim()));
+      await Promise.resolve(onTranscript(text.trim(), forceLocalRef.current));
+      // Reset after success
+      forceLocalRef.current = false;
     } catch (err) {
       console.warn('Voice parsing error in handleCapturedText:', err);
     } finally {
@@ -184,14 +189,15 @@ export function VoiceMicButton({
   }, []);
 
   // ── Online: Native Web Speech API (window.SpeechRecognition / webkitSpeechRecognition) ──
-  const startListening = useCallback(() => {
+  const startListening = useCallback(async (skipPing = false) => {
     setErrorMessage(null);
     setSuccessPreview(null);
     setLiveTranscript('');
     setIsProcessing(false);
+    setConnectionState('idle');
 
     // ── Offline path ──────────────────────────────────────────
-    if (!navigator.onLine) {
+    if (!navigator.onLine || forceLocalRef.current) {
       if (offlineVoiceStatus === 'ready') {
         startOfflineRecording();
       } else if (offlineVoiceStatus === 'not-asked') {
@@ -200,6 +206,16 @@ export function VoiceMicButton({
         onRequestKeyboard?.(true);
       }
       return;
+    }
+
+    if (!skipPing) {
+      setConnectionState('checking');
+      const isUp = await pingGeminiAPI();
+      if (!isUp) {
+        setConnectionState('failed');
+        return; // wait for user choice
+      }
+      setConnectionState('ok');
     }
 
     // ── Online: Native SpeechRecognition API ──────────────────
@@ -339,10 +355,63 @@ export function VoiceMicButton({
     else startListening();
   };
 
-  const isActive = isListening || isProcessing || !!isWhisperTranscribing;
+  const isActive = isListening || isProcessing || !!isWhisperTranscribing || connectionState === 'checking';
 
   return (
     <div className="flex flex-col items-center select-none">
+
+      {/* Connection Check / Fallback UI */}
+      <AnimatePresence>
+        {connectionState === 'checking' && (
+          <motion.div
+            initial={{ opacity: 0, y: -8, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="mb-2 flex items-center gap-2 bg-neutral-900/90 border border-[#0a7ea4]/30 px-4 py-2 rounded-full shadow-lg"
+          >
+            <Sparkle size={14} className="text-[#0a7ea4] animate-spin" />
+            <span className="text-xs font-bold text-neutral-300">Checking AI Connection...</span>
+          </motion.div>
+        )}
+        {connectionState === 'failed' && (
+          <motion.div
+            initial={{ opacity: 0, y: -8, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="mb-3 max-w-[340px] w-full bg-neutral-950/95 backdrop-blur-xl border border-red-500/40 rounded-2xl p-4 shadow-2xl shadow-red-500/15 flex flex-col items-center text-center gap-3 z-30"
+          >
+            <div className="flex items-center gap-2 text-sm font-bold text-red-400">
+              <Warning size={18} weight="fill" />
+              <span>Gemini API Unavailable</span>
+            </div>
+            <p className="text-xs text-neutral-400">Would you like to use the local offline parser instead?</p>
+            <div className="flex w-full gap-2 mt-1">
+              <button
+                onClick={() => setConnectionState('idle')}
+                className="flex-1 py-2 rounded-xl border border-neutral-800 text-neutral-400 hover:text-white text-xs font-semibold"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => startListening(false)}
+                className="flex-1 py-2 rounded-xl bg-neutral-800 text-white hover:bg-neutral-700 text-xs font-semibold"
+              >
+                Retry
+              </button>
+              <button
+                onClick={() => {
+                  forceLocalRef.current = true;
+                  setConnectionState('ok');
+                  startListening(true);
+                }}
+                className="flex-[1.5] py-2 rounded-xl bg-[#0a7ea4] text-white hover:bg-[#086F8A] text-xs font-bold shadow-md"
+              >
+                Use Local Parser
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Offline Banner */}
       <AnimatePresence>
