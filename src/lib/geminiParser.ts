@@ -1,6 +1,11 @@
 import type { Category } from './db';
 
-// ── Supabase Configuration ──────────────────────────────────────────────────
+// ── Configuration ──────────────────────────────────────────────────────────
+// Direct Gemini API key (primary, fastest path — no middleman)
+export const GEMINI_API_KEY: string =
+  import.meta.env.VITE_GEMINI_API_KEY || '';
+
+// Supabase Edge Function (secondary fallback — used if no direct key)
 export const SUPABASE_URL: string = (
   import.meta.env.VITE_SUPABASE_URL || 'https://YOUR_PROJECT_REF.supabase.co'
 ).replace(/\/+$/, '');
@@ -19,6 +24,13 @@ export interface ExtractedExpenseData {
 }
 
 /**
+ * Checks if the direct Gemini API key is available for browser-side calls
+ */
+export function isDirectGeminiConfigured(): boolean {
+  return typeof GEMINI_API_KEY === 'string' && GEMINI_API_KEY.trim().length > 10;
+}
+
+/**
  * Checks if Supabase Edge Function credentials have been configured
  */
 export function isSupabaseConfigured(): boolean {
@@ -33,10 +45,31 @@ export function isSupabaseConfigured(): boolean {
   );
 }
 
+/**
+ * Pings the active AI backend to verify it is reachable.
+ * Prefers the direct Gemini API (no middleman), falls back to checking Supabase.
+ */
 export async function pingGeminiAPI(): Promise<boolean> {
-  if (!isSupabaseConfigured() || (typeof navigator !== 'undefined' && !navigator.onLine)) {
-    return false;
+  if (typeof navigator !== 'undefined' && !navigator.onLine) return false;
+
+  // If we have a direct key, just verify basic network connectivity to Google
+  if (isDirectGeminiConfigured()) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 3000);
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models?key=${GEMINI_API_KEY}`,
+        { signal: controller.signal }
+      );
+      clearTimeout(timeout);
+      return res.ok || res.status === 403; // 403 = key invalid but server reachable
+    } catch {
+      return false;
+    }
   }
+
+  // Fallback: ping the Supabase edge function
+  if (!isSupabaseConfigured()) return false;
   try {
     const endpoint = `${SUPABASE_URL}/functions/v1/parse-expense`;
     const controller = new AbortController();
@@ -52,7 +85,7 @@ export async function pingGeminiAPI(): Promise<boolean> {
     });
     clearTimeout(timeout);
     return res.ok;
-  } catch (err) {
+  } catch {
     return false;
   }
 }
@@ -954,59 +987,155 @@ export function parseExpenseLocally(
 // 5. AUTOMATIC FAILOVER INTEGRATION
 // ─────────────────────────────────────────────────────────────────────────────
 
+const GEMINI_SYSTEM_PROMPT = `You are a bilingual financial transaction data extractor specializing in conversational Egyptian Arabic (اللهجة المصرية العامية), English, and mixed franco-arab speech.
+Your task is to parse conversational voice logs of daily spending in either language, such as:
+- Egyptian Arabic: 'صرفت ٧٠ ج.م في كارفور على البقالة', 'دفعت ميتين جنيه في فودافون فاتورة', 'اشتريت بنزين بستين جنيه من موبيل', 'كوفي بـ ٤٥ جنيه من كوستا'
+- English: 'Spent 150 EGP at Starbucks on coffee', 'Paid 200 pounds for Vodafone bill', 'Bought groceries for 350 from Carrefour', 'Uber ride 85 pounds', 'Dinner at McDonald's 220 EGP'
+- Mixed / Franco: 'دفعت 60 EGP Uber', 'اشتريت من Starbucks بـ 80 جنيه'
+- Multi-item: 'اشتريت بـ 10 جنيه فلامنكو و 15 جنيه بيبسي'
+
+Extract the following fields accurately:
+1. amount: The numeric value spent. Convert numbers in any format to a standard positive JavaScript number.
+2. currency: Strictly the string "EGP".
+3. merchant: The store, brand, or items purchased (e.g. 'Carrefour', 'Uber').
+4. category: Classify the expense into one of these standard categories:
+   - "Food & Dining" (groceries, restaurants, cafes, supermarkets, coffee, snacks, food items, meat, vegetables)
+   - "Transportation" (Uber, Careem, metro, taxi, petrol/gas, bus, parking, car service)
+   - "Shopping" (clothing, electronics, retail, hardware, gifts, personal items)
+   - "Subscriptions & Bills" (mobile bills, internet, electricity, water, gas, telecom)
+   - "Entertainment" (cinema, gaming, events, hobbies, movies)
+   - "Health & Fitness" (pharmacy, doctor, medicine, gym, clinic)
+   - "Other" (uncategorized or miscellaneous)
+
+CRITICAL INSTRUCTIONS:
+- You MUST return a JSON ARRAY of objects. Even if there is only one expense, return it inside an array [ {...} ].
+- If multiple items and prices are mentioned in the same sentence (e.g. 10 for X and 15 for Y), you MUST split them into distinct objects in the array with their corresponding amounts, merchants, and categories.
+- Do NOT wrap in markdown code blocks.
+- Output ONLY the raw JSON array.
+Example:
+[
+  { "amount": 10, "currency": "EGP", "merchant": "Flamenko", "category": "Food & Dining" },
+  { "amount": 15, "currency": "EGP", "merchant": "Pepsi", "category": "Food & Dining" }
+]`;
+
+function normalizeGeminiResponse(data: any[]): ExtractedExpenseData[] {
+  return data.map((item: any) => ({
+    amount: typeof item.amount === 'number' ? item.amount : parseFloat(item.amount) || 0,
+    currency: 'EGP',
+    merchant: (item.merchant || 'General').trim(),
+    category: (item.category || 'Food & Dining').trim(),
+    source: 'gemini',
+    type: 'expense',
+    confidence: 0.95
+  }));
+}
+
 /**
- * Sends transcript to the Supabase Edge Function (powered by Gemini 1.5 Flash).
- * Seamlessly fails over to our powerful local engine whenever offline, timed out (5s),
- * or unconfigured, ensuring 100% reliability and zero failed parses.
+ * PRIMARY: Calls the Gemini API directly from the browser — zero middleman, lowest latency.
+ */
+async function callGeminiDirect(transcript: string): Promise<ExtractedExpenseData[]> {
+  const model = 'gemini-1.5-flash-latest';
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 12000); // 12s — Gemini is fast directly
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      signal: controller.signal,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ role: 'user', parts: [{ text: transcript }] }],
+        systemInstruction: { parts: [{ text: GEMINI_SYSTEM_PROMPT }] },
+        generationConfig: { response_mime_type: 'application/json', temperature: 0.1 }
+      })
+    });
+    clearTimeout(timer);
+
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`Gemini direct API error ${res.status}: ${errText}`);
+    }
+
+    const geminiData = await res.json();
+    const rawText: string = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    if (!rawText) throw new Error('Gemini returned empty response');
+
+    let parsed = JSON.parse(rawText.replace(/^```json\s*/, '').replace(/\s*```$/, ''));
+    if (!Array.isArray(parsed)) parsed = [parsed];
+    return normalizeGeminiResponse(parsed);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/**
+ * SECONDARY: Calls Gemini via the Supabase Edge Function as a backup path.
+ */
+async function callGeminiViaSupabase(transcript: string): Promise<ExtractedExpenseData[]> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 10000); // 10s for supabase cold starts
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/parse-expense`, {
+      method: 'POST',
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+      },
+      body: JSON.stringify({ transcript })
+    });
+    clearTimeout(timer);
+
+    if (!res.ok) throw new Error(`Supabase edge function error: ${res.status}`);
+
+    let data = await res.json();
+    if (!Array.isArray(data)) data = [data];
+    return normalizeGeminiResponse(data);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/**
+ * Main entry point. Tries: Direct Gemini → Supabase Edge Function → Local parser.
+ * Uses whichever path is available, never silently loses data.
  */
 export async function parseExpenseWithGemini(
   arabicTranscript: string,
   categories: Category[]
 ): Promise<ExtractedExpenseData[]> {
   const cleanTranscript = (arabicTranscript || '').trim();
+  const isOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
 
-  // If Supabase credentials are configured and browser is online, attempt Edge Function
-  if (isSupabaseConfigured() && typeof navigator !== 'undefined' && navigator.onLine) {
-    const controller = new AbortController();
-    const timeoutTimer = setTimeout(() => controller.abort(), 5000);
-
-    try {
-      const endpoint = `${SUPABASE_URL}/functions/v1/parse-expense`;
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        signal: controller.signal,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-        },
-        body: JSON.stringify({ transcript: cleanTranscript })
-      });
-      clearTimeout(timeoutTimer);
-
-      if (response.ok) {
-        let data = await response.json();
-        if (!Array.isArray(data)) {
-          data = [data]; // Fallback if API returned a single object
-        }
-
-        return data.map((item: any) => ({
-          amount: item.amount || 0,
-          currency: 'EGP',
-          merchant: item.merchant || 'General',
-          category: item.category || 'Food & Dining',
-          source: 'gemini',
-          type: 'expense',
-          confidence: 0.95
-        }));
+  if (isOnline) {
+    // ── PATH 1: Direct browser → Gemini API (fastest, no cold starts) ──────
+    if (isDirectGeminiConfigured()) {
+      try {
+        const result = await callGeminiDirect(cleanTranscript);
+        console.info('[Gemini] Direct API call succeeded.');
+        return result;
+      } catch (err) {
+        console.warn('[Gemini] Direct API call failed, trying Supabase fallback:', err);
       }
-      console.warn('Gemini parser API failed, executing graceful local fallback.');
-    } catch (err) {
-      console.warn('Edge function timed out or unreachable, triggering powerful local parser:', err);
-    } finally {
-      clearTimeout(timeoutTimer);
+    }
+
+    // ── PATH 2: Supabase Edge Function (secondary) ───────────────────────
+    if (isSupabaseConfigured()) {
+      try {
+        const result = await callGeminiViaSupabase(cleanTranscript);
+        console.info('[Gemini] Supabase edge function succeeded.');
+        return result;
+      } catch (err) {
+        console.warn('[Gemini] Supabase edge function failed, using local parser:', err);
+      }
     }
   }
 
-  // Instant fallback to our heavy-duty local engine
+  // ── PATH 3: Powerful local parser (always works, offline-safe) ─────────
+  console.info('[Gemini] Using local parser.');
   return parseExpenseLocally(cleanTranscript, categories);
 }
+
