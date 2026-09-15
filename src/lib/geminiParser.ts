@@ -1115,7 +1115,7 @@ async function callGeminiViaSupabase(transcript: string): Promise<ExtractedExpen
  */
 export async function parseExpenseWithGemini(
   arabicTranscript: string,
-  categories: Category[]
+  _categories: Category[]
 ): Promise<ExtractedExpenseData[]> {
   const cleanTranscript = (arabicTranscript || '').trim();
   const isOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;

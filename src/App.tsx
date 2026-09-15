@@ -14,7 +14,7 @@ import { VoiceConfirmModal } from './components/modals/VoiceConfirmModal';
 import { VoiceMicButton } from './components/ui/VoiceMicButton';
 import { BiometricLockScreen } from './components/modals/BiometricLockScreen';
 import { OfflineVoiceConsentModal } from './components/modals/OfflineVoiceConsentModal';
-import { parseVoiceInput, matchWalletFromText, type ParsedVoiceTransaction } from './lib/parseVoice';
+import { matchWalletFromText, type ParsedVoiceTransaction } from './lib/parseVoice';
 import { parseExpenseWithGemini, matchCategoryToId } from './lib/geminiParser';
 import type { ParsedSmsResult } from './lib/parseSms';
 import { downloadWhisperModel, transcribeBlob, terminateWhisper, ensureWhisperReady } from './lib/whisperOffline';
