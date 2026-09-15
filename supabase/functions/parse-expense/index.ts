@@ -124,9 +124,6 @@ Example:
   { "amount": 15, "currency": "EGP", "merchant": "Pepsi", "category": "Food & Dining" }
 ]`;
 
-    // 5. Call Google Gemini API (gemini-1.5-flash-latest with structured JSON response)
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${geminiApiKey}`;
-
     const geminiPayload = {
       contents: [
         {
@@ -143,21 +140,40 @@ Example:
       },
     };
 
-    const geminiResponse = await fetch(geminiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(geminiPayload),
-    });
+    // 5. Call Google Gemini API with fallback mechanism for high-demand (503) spikes
+    const modelsToTry = [
+      'gemini-flash-latest', 
+      'gemini-2.5-flash' // Secondary fallback model if latest is overloaded
+    ];
 
-    if (!geminiResponse.ok) {
-      const errText = await geminiResponse.text();
-      console.error('Gemini API Error:', geminiResponse.status, errText);
+    let geminiResponse;
+    let currentModel = '';
+
+    for (const model of modelsToTry) {
+      currentModel = model;
+      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`;
+      
+      geminiResponse = await fetch(geminiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(geminiPayload),
+      });
+
+      // If it's successful, or if it's an error OTHER than 503/429 (overload), break the loop and return it
+      if (geminiResponse.ok || (geminiResponse.status !== 503 && geminiResponse.status !== 429)) {
+        break;
+      }
+      
+      console.warn(`Model ${model} overloaded (${geminiResponse.status}). Trying next fallback...`);
+    }
+
+    if (!geminiResponse || !geminiResponse.ok) {
+      const errText = geminiResponse ? await geminiResponse.text() : 'All models failed';
+      console.error('Gemini API Error after retries:', geminiResponse?.status, errText);
       
       // If 404, fetch list of available models to help debug
       let availableModels = '';
-      if (geminiResponse.status === 404) {
+      if (geminiResponse?.status === 404) {
         try {
           const modelsRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${geminiApiKey}`);
           const modelsData = await modelsRes.json();
