@@ -142,9 +142,8 @@ function App() {
       // Populate confirmation modal with extracted values for user review (do not auto-save)
       setVoiceParsedData(parsedArray);
     } catch (err) {
-      console.warn('Voice AI parsing fallback to local parser:', err);
-      const parsedDataArray = parseVoiceInput(text, categories, wallets, defaultWalletId);
-      setVoiceParsedData(parsedDataArray);
+      console.error('Voice AI parsing failed:', err);
+      throw err;
     }
   }, [categories, wallets]);
 

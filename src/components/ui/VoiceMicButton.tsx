@@ -138,8 +138,9 @@ export function VoiceMicButton({
       await Promise.resolve(onTranscript(text.trim(), forceLocalRef.current));
       // Reset after success
       forceLocalRef.current = false;
-    } catch (err) {
+    } catch (err: any) {
       console.warn('Voice parsing error in handleCapturedText:', err);
+      setErrorMessage(err.message || (currentLang === 'ar-EG' ? 'فشل التعرف — اضغط للمحاولة' : 'Parsing failed — tap to retry'));
     } finally {
       setIsProcessing(false);
     }

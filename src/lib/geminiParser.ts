@@ -52,6 +52,8 @@ export function isSupabaseConfigured(): boolean {
 export async function pingGeminiAPI(): Promise<boolean> {
   if (typeof navigator !== 'undefined' && !navigator.onLine) return false;
 
+  let directPingSuccess = false;
+
   // If we have a direct key, just verify basic network connectivity to Google
   if (isDirectGeminiConfigured()) {
     try {
@@ -62,10 +64,18 @@ export async function pingGeminiAPI(): Promise<boolean> {
         { signal: controller.signal }
       );
       clearTimeout(timeout);
-      return res.ok || res.status === 403; // 403 = key invalid but server reachable
+      
+      // 200 OK, 400 Bad Request (invalid key), 403 Forbidden all mean the Google server is REACHABLE.
+      if (res.ok || res.status === 400 || res.status === 403) {
+        directPingSuccess = true;
+      }
     } catch {
-      return false;
+      directPingSuccess = false;
     }
+  }
+
+  if (directPingSuccess) {
+    return true;
   }
 
   // Fallback: ping the Supabase edge function
@@ -1034,7 +1044,7 @@ function normalizeGeminiResponse(data: any[]): ExtractedExpenseData[] {
  * PRIMARY: Calls the Gemini API directly from the browser — zero middleman, lowest latency.
  */
 async function callGeminiDirect(transcript: string): Promise<ExtractedExpenseData[]> {
-  const model = 'gemini-1.5-flash-latest';
+  const model = 'gemini-flash-latest';
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
 
   const controller = new AbortController();
@@ -1134,8 +1144,7 @@ export async function parseExpenseWithGemini(
     }
   }
 
-  // ── PATH 3: Powerful local parser (always works, offline-safe) ─────────
-  console.info('[Gemini] Using local parser.');
-  return parseExpenseLocally(cleanTranscript, categories);
+  // ✨ PATH 3: Local parser fallback has been disabled by user request.
+  console.error('[Gemini] All Gemini pathways failed.');
+  throw new Error('Gemini API is unavailable or failed to parse the text.');
 }
-
