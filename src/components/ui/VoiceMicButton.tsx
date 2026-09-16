@@ -93,27 +93,6 @@ export function VoiceMicButton({
   }, [isProcessing, isWhisperTranscribing, currentLang]);
 
   // ── Cleanup a Web Speech API session safely ────────────────
-  const stopAndCleanupRecognition = useCallback(() => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
-    }
-    const rec = recognitionRef.current;
-    if (rec) {
-      rec.onstart = null;
-      rec.onresult = null;
-      rec.onerror = null;
-      rec.onend = null;
-      try {
-        rec.stop();
-      } catch {
-        try { rec.abort(); } catch { /* ignore */ }
-      }
-      recognitionRef.current = null;
-    }
-    setIsListening(false);
-  }, []);
-
   // ── Handle captured transcript with failsafe ───────────────
   const handleCapturedText = useCallback(async (text: string) => {
     if (!text || text.trim().length === 0) {
@@ -150,6 +129,34 @@ export function VoiceMicButton({
       setLiveTranscript('');
     }, 3500);
   }, [currentLang, onParsingStart, onTranscript]);
+
+  const stopAndCleanupRecognition = useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    const rec = recognitionRef.current;
+    if (rec) {
+      rec.onstart = null;
+      rec.onresult = null;
+      rec.onerror = null;
+      rec.onend = null;
+      try {
+        rec.stop();
+      } catch {
+        try { rec.abort(); } catch { /* ignore */ }
+      }
+      recognitionRef.current = null;
+    }
+    setIsListening(false);
+
+    // Deliver captured text if available, INSTEAD of throwing it away!
+    const text = capturedTranscriptRef.current || liveTranscript;
+    capturedTranscriptRef.current = '';
+    if (text && text.trim().length > 0) {
+      handleCapturedText(text.trim());
+    }
+  }, [liveTranscript, handleCapturedText]);
 
   // ── Offline recording (MediaRecorder → Whisper) ──────────────
   const startOfflineRecording = useCallback(() => {

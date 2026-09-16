@@ -51,9 +51,10 @@ export function VoiceConfirmModal({ isOpen, onClose, data, onConfirm }: VoiceCon
     for (const item of validItems) {
       await addTransaction({
         amount: parseFloat(item.amount as any),
-        merchant: item.merchant?.trim() || 'Voice Expense',
+        merchant: item.merchant?.trim() || 'Voice Entry',
         categoryId: item.categoryId || categories[0]?.id || '',
         walletId: item.walletId || wallets[0]?.id || '',
+        targetWalletId: item.type === 'transfer' && item.targetWalletId ? item.targetWalletId : undefined,
         type: item.type || 'expense',
         note: item.note || 'Voice Entry',
         date: new Date().toISOString(),
@@ -127,6 +128,24 @@ export function VoiceConfirmModal({ isOpen, onClose, data, onConfirm }: VoiceCon
               </div>
             )}
             <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1">Transaction Type</label>
+              <div className="flex bg-neutral-900 border border-neutral-800 p-1 rounded-xl mb-4">
+                {(['expense', 'income', 'transfer'] as const).map(t => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => handleItemChange(index, 'type', t)}
+                    className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-colors capitalize ${
+                      item.type === t 
+                        ? (t === 'expense' ? 'bg-red-500/20 text-red-400' : t === 'income' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-blue-500/20 text-blue-400') 
+                        : 'text-neutral-500 hover:text-neutral-300'
+                    }`}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+
               <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1">Amount ({currencySymbol})</label>
               <div className="relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-[#0a7ea4]">{currencySymbol}</span>
@@ -141,14 +160,24 @@ export function VoiceConfirmModal({ isOpen, onClose, data, onConfirm }: VoiceCon
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
+              {item.type === 'transfer' ? (
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1 flex items-center gap-1"><CreditCard size={13} className="text-[#0a7ea4]" /> To Wallet</label>
+                  <select value={item.targetWalletId || ''} onChange={(e) => handleItemChange(index, 'targetWalletId', e.target.value)} className="w-full px-3 py-2.5 bg-neutral-900 border border-neutral-800 rounded-xl text-white text-xs font-semibold focus:outline-none focus:border-[#0a7ea4]">
+                    <option value="" disabled>Select...</option>
+                    {wallets.filter(w => w.id !== item.walletId).map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+                  </select>
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1 flex items-center gap-1"><Tag size={13} className="text-[#0a7ea4]" /> Category</label>
+                  <select value={item.categoryId || ''} onChange={(e) => handleItemChange(index, 'categoryId', e.target.value)} className="w-full px-3 py-2.5 bg-neutral-900 border border-neutral-800 rounded-xl text-white text-xs font-semibold focus:outline-none focus:border-[#0a7ea4]">
+                    {categories.filter(c => c.type === item.type).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                </div>
+              )}
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1 flex items-center gap-1"><Tag size={13} className="text-[#0a7ea4]" /> Category</label>
-                <select value={item.categoryId || ''} onChange={(e) => handleItemChange(index, 'categoryId', e.target.value)} className="w-full px-3 py-2.5 bg-neutral-900 border border-neutral-800 rounded-xl text-white text-xs font-semibold focus:outline-none focus:border-[#0a7ea4]">
-                  {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1 flex items-center gap-1"><CreditCard size={13} className="text-[#0a7ea4]" /> Paid With</label>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1 flex items-center gap-1"><CreditCard size={13} className="text-[#0a7ea4]" /> {item.type === 'transfer' ? 'From Wallet' : (item.type === 'income' ? 'To Wallet' : 'Paid With')}</label>
                 <select value={item.walletId || ''} onChange={(e) => handleItemChange(index, 'walletId', e.target.value)} className="w-full px-3 py-2.5 bg-neutral-900 border border-neutral-800 rounded-xl text-white text-xs font-semibold focus:outline-none focus:border-[#0a7ea4]">
                   {wallets.map(w => <option key={w.id} value={w.id}>{w.type === 'cash' ? `💵 ${w.name} (Cash)` : `💳 ${w.name}`}</option>)}
                 </select>

@@ -5,7 +5,8 @@ export interface ParsedVoiceTransaction {
   amount: number | null;
   categoryId: string | null;
   walletId: string | null;
-  type: 'expense' | 'income';
+  targetWalletId?: string | null;
+  type: 'expense' | 'income' | 'transfer';
   merchant?: string;
   note: string;
   transcript: string;

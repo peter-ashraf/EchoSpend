@@ -19,7 +19,8 @@ export interface ExtractedExpenseData {
   merchant: string;
   category: string;
   source: 'gemini' | 'local_fallback';
-  type?: 'expense' | 'income';
+  type?: 'expense' | 'income' | 'transfer';
+  targetWallet?: string;
   confidence?: number;
 }
 
@@ -1016,6 +1017,11 @@ Extract the following fields accurately:
    - "Entertainment" (cinema, gaming, events, hobbies, movies)
    - "Health & Fitness" (pharmacy, doctor, medicine, gym, clinic)
    - "Other" (uncategorized or miscellaneous)
+5. type: Classify the transaction as "expense", "income", or "transfer".
+   - "expense": spending money, buying things, paying bills.
+   - "income": receiving money, salary, refunds.
+   - "transfer": moving money between your own accounts, paying a credit card debt from your cash/bank (e.g. "I paid my credit card", "transferred to savings").
+6. targetWallet: If the type is "transfer", extract the destination account name (e.g. "Credit Card", "Savings", "NBE"). Otherwise omit.
 
 CRITICAL INSTRUCTIONS:
 - You MUST return a JSON ARRAY of objects. Even if there is only one expense, return it inside an array [ {...} ].
@@ -1035,7 +1041,8 @@ function normalizeGeminiResponse(data: any[]): ExtractedExpenseData[] {
     merchant: (item.merchant || 'General').trim(),
     category: (item.category || 'Food & Dining').trim(),
     source: 'gemini',
-    type: 'expense',
+    type: ['expense', 'income', 'transfer'].includes(item.type?.toLowerCase()) ? item.type.toLowerCase() : 'expense',
+    targetWallet: item.targetWallet || '',
     confidence: 0.95
   }));
 }
@@ -1072,7 +1079,12 @@ async function callGeminiDirect(transcript: string): Promise<ExtractedExpenseDat
     const rawText: string = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
     if (!rawText) throw new Error('Gemini returned empty response');
 
-    let parsed = JSON.parse(rawText.replace(/^```json\s*/, '').replace(/\s*```$/, ''));
+    let parsed;
+    try {
+      parsed = JSON.parse(rawText.replace(/^```json\s*/, '').replace(/\s*```$/, ''));
+    } catch (e) {
+      throw new Error('NOT_UNDERSTOOD');
+    }
     if (!Array.isArray(parsed)) parsed = [parsed];
     return normalizeGeminiResponse(parsed);
   } finally {
@@ -1120,31 +1132,38 @@ export async function parseExpenseWithGemini(
   const cleanTranscript = (arabicTranscript || '').trim();
   const isOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
 
+  let lastError: Error | null = null;
+
   if (isOnline) {
-    // ── PATH 1: Direct browser → Gemini API (fastest, no cold starts) ──────
+    // ✨ PATH 1: Direct browser → Gemini API (fastest, no cold starts) ──────
     if (isDirectGeminiConfigured()) {
       try {
         const result = await callGeminiDirect(cleanTranscript);
         console.info('[Gemini] Direct API call succeeded.');
         return result;
-      } catch (err) {
+      } catch (err: any) {
+        if (err.message === 'NOT_UNDERSTOOD') {
+          throw new Error('I couldn\'t understand any expenses from that. Please try again.');
+        }
         console.warn('[Gemini] Direct API call failed, trying Supabase fallback:', err);
+        lastError = err;
       }
     }
 
-    // ── PATH 2: Supabase Edge Function (secondary) ───────────────────────
+    // ✨ PATH 2: Supabase Edge Function (secondary) ───────────────────────
     if (isSupabaseConfigured()) {
       try {
         const result = await callGeminiViaSupabase(cleanTranscript);
         console.info('[Gemini] Supabase edge function succeeded.');
         return result;
-      } catch (err) {
-        console.warn('[Gemini] Supabase edge function failed, using local parser:', err);
+      } catch (err: any) {
+        console.warn('[Gemini] Supabase edge function failed:', err);
+        lastError = err;
       }
     }
   }
 
   // ✨ PATH 3: Local parser fallback has been disabled by user request.
   console.error('[Gemini] All Gemini pathways failed.');
-  throw new Error('Gemini API is unavailable or failed to parse the text.');
+  throw lastError || new Error('Gemini API is unavailable or failed to parse the text.');
 }

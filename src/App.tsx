@@ -127,11 +127,19 @@ function App() {
       const parsedArray = extractedArray.map(extracted => {
         const matchedCategoryId = matchCategoryToId(extracted.category, categories);
         const detectedWalletId = matchWalletFromText(text, wallets, defaultWalletId);
+        
+        // Find destination wallet if it's a transfer
+        let targetWalletId = null;
+        if (extracted.type === 'transfer' && extracted.targetWallet) {
+          targetWalletId = matchWalletFromText(extracted.targetWallet, wallets, '');
+        }
+
         return {
           amount: extracted.amount || null,
           merchant: extracted.merchant || '',
           categoryId: matchedCategoryId || categories[0]?.id || '',
           walletId: detectedWalletId,
+          targetWalletId,
           type: extracted.type || 'expense',
           note: text,
           transcript: text,

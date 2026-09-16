@@ -22,6 +22,8 @@ interface ParsedExpenseResponse {
   currency: 'EGP';
   merchant: string;
   category: string;
+  type?: 'expense' | 'income' | 'transfer';
+  targetWallet?: string;
 }
 
 Deno.serve(async (req: Request): Promise<Response> => {
@@ -112,6 +114,11 @@ Extract the following fields accurately:
    - "Entertainment" (cinema, gaming, events, hobbies, movies)
    - "Health & Fitness" (pharmacy, doctor, medicine, gym, clinic)
    - "Other" (uncategorized or miscellaneous)
+5. type: Classify the transaction as "expense", "income", or "transfer".
+   - "expense": spending money, buying things, paying bills.
+   - "income": receiving money, salary, refunds.
+   - "transfer": moving money between your own accounts, paying a credit card debt from your cash/bank (e.g. "I paid my credit card", "transferred to savings").
+6. targetWallet: If the type is "transfer", extract the destination account name (e.g. "Credit Card", "Savings", "NBE"). Otherwise omit.
 
 CRITICAL INSTRUCTIONS:
 - You MUST return a JSON ARRAY of objects. Even if there is only one expense, return it inside an array [ {...} ].
@@ -228,6 +235,8 @@ Example:
       currency: 'EGP',
       merchant: typeof item.merchant === 'string' && item.merchant.trim() ? item.merchant.trim() : 'General',
       category: typeof item.category === 'string' && item.category.trim() ? item.category.trim() : 'Food & Dining',
+      type: ['expense', 'income', 'transfer'].includes(item.type?.toLowerCase()) ? item.type.toLowerCase() : 'expense',
+      targetWallet: typeof item.targetWallet === 'string' ? item.targetWallet.trim() : undefined,
     }));
 
     // 8. Return structured JSON with CORS headers
